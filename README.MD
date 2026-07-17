@@ -82,6 +82,12 @@ services:
 
 ---
 
+## 🤝 Credits
+
+Stray is built using ideas, connection designs, and payloads derived from the awesome [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original authors for laying the groundwork!
+
+---
+
 ## ⚖️ License
 
 Stray is licensed under the **PolyForm Noncommercial License 1.0.0**. See the [LICENSE.MD](file:///c:/Users/Prince%20Prashant/Desktop/Stray/LICENSE.MD) file for details.
