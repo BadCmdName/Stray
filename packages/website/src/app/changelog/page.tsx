@@ -46,8 +46,8 @@ export default function Changelog() {
         <div className="mb-12">
           <h1 className="text-4xl font-black text-white uppercase tracking-tight mb-3">Changelog</h1>
           <p className="text-xs text-zinc-400 font-medium">
-            Release logs and repository iterations for Stray. Verify commits on our{" "}
-            <a href="https://github.com/BadCmdName/Stray" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-bold">GitHub Repository</a>.
+            Release logs and repository iterations for Stray. Verify commit history directly on the{" "}
+            <a href="https://github.com/BadCmdName/Stray/commits/main/" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-bold">GitHub Commits Stream</a>.
           </p>
         </div>
 

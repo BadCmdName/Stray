@@ -1,12 +1,18 @@
 import Link from "next/link";
 
+const WarningIcon = () => (
+  <svg className="h-5 w-5 text-rose-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
 export default function Disclaimer() {
   return (
-    <div className="min-h-screen bg-[#121214] text-zinc-100 flex flex-col font-sans select-none">
-      <header className="border-b-4 border-zinc-900 bg-[#1a1a1e] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div className="min-h-screen bg-[#0e0e11] text-zinc-100 flex flex-col font-sans select-none">
+      <header className="border-b-4 border-zinc-900 bg-[#16161a] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-3">
-          <img src="/Stray.svg" alt="Stray Logo" className="h-10 w-10" />
-          <span className="text-2xl font-black tracking-wider text-white uppercase">STRAY</span>
+          <img src="/Stray.svg" alt="Stray Logo" className="h-9 w-9" />
+          <span className="text-xl font-black tracking-wider text-white uppercase">STRAY</span>
         </Link>
         <Link href="/" className="text-sm font-semibold text-zinc-400 hover:text-white transition">
           Back to Home
@@ -18,26 +24,29 @@ export default function Disclaimer() {
         <p className="text-zinc-500 text-xs mb-6">Last Updated: July 2026</p>
 
         <div className="flex flex-col gap-6 text-sm text-zinc-300 leading-relaxed font-medium">
-          <section className="bg-rose-950/20 border-2 border-rose-900 text-rose-300 p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
-            <strong>⚠️ IMPORTANT WARNING:</strong> Stray is a selfbot application client. Operating a custom presence daemon on a personal Discord user account is a breach of Discord&rsquo;s Developer Terms of Service and user guidelines. Use of this utility risks permanent account termination.
+          <section className="bg-rose-950/20 border-2 border-rose-900 text-rose-300 p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] flex gap-3 items-center">
+            <WarningIcon />
+            <p>
+              <strong>IMPORTANT WARNING:</strong> Stray is a selfbot application client. Operating a custom presence daemon on a personal Discord user account is a breach of Discord&rsquo;s Developer Terms of Service and user guidelines. Use of this utility risks permanent account termination.
+            </p>
           </section>
 
-          <section className="bg-[#1a1a1e] border-2 border-zinc-800 rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.4)]">
-            <h2 className="text-lg font-black text-white mb-2 uppercase">1. Educational Purpose</h2>
+          <section className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)]">
+            <h2 className="text-base font-black text-white mb-2 uppercase">1. Educational Purpose</h2>
             <p>
               Stray is created and distributed as an educational experiment in WebSocket networking protocol compliance, device headers spoofing, and API payload modeling. The source code is intended for research, personal learning, and academic verification only.
             </p>
           </section>
 
-          <section className="bg-[#1a1a1e] border-2 border-zinc-800 rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.4)]">
-            <h2 className="text-lg font-black text-white mb-2 uppercase">2. Liability Limitation</h2>
+          <section className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)]">
+            <h2 className="text-base font-black text-white mb-2 uppercase">2. Liability Limitation</h2>
             <p>
               Under no circumstances shall the creators, maintainers, or website distributors of Stray (stray.bcnstudio.tech) be held liable for any damages, suspensions, restrictions, or data losses resulting from downloading, compiling, running, or altering this software.
             </p>
           </section>
 
-          <section className="bg-[#1a1a1e] border-2 border-zinc-800 rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.4)]">
-            <h2 className="text-lg font-black text-white mb-2 uppercase">3. User Responsibility</h2>
+          <section className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)]">
+            <h2 className="text-base font-black text-white mb-2 uppercase">3. User Responsibility</h2>
             <p>
               You, the user, assume full responsibility for your actions. If you choose to connect the Stray daemon to an active user token, you accept all associated risks, including loss of account credentials and account bans.
             </p>
@@ -45,7 +54,7 @@ export default function Disclaimer() {
         </div>
       </main>
 
-      <footer className="border-t-4 border-zinc-900 bg-[#16161a] px-8 py-6 text-center text-xs text-zinc-500">
+      <footer className="border-t-4 border-zinc-900 bg-[#131316] px-8 py-6 text-center text-xs text-zinc-500">
         <p>© {new Date().getFullYear()} Stray. Built for self-hosted noncommercial use.</p>
       </footer>
     </div>
