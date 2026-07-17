@@ -151,20 +151,20 @@ class GatewayClient {
           if (t === "READY") {
             this.sessionId = d.session_id;
             this.resumeGatewayUrl = d.resume_gateway_url;
-            console.log(`Stray Cat successfully claimed territory as ${d.user.username}#${d.user.discriminator}! Meow.`);
+            console.log(`Stray: Logged in as ${d.user.username}#${d.user.discriminator}`);
           }
         }
       } catch (err) {
-        console.error("Failed to fetch catnip from gateway:", err);
+        console.error("Stray: Error processing gateway message:", err);
       }
     };
 
     this.ws.onclose = (event) => {
-      console.log(`Stray Cat fell off the fence. Gateway disconnected. Code: ${event.code}, Reason: ${event.reason}`);
+      console.log(`Stray: Gateway disconnected. Code: ${event.code}, Reason: ${event.reason}`);
       this.clearHeartbeat();
 
       if (event.code === 4004 || event.code >= 4010) {
-        console.error("The owner caught us. Exiting.");
+        console.error("Stray: Terminal close code received. Exiting.");
         process.exit(1);
       }
 
@@ -172,7 +172,7 @@ class GatewayClient {
     };
 
     this.ws.onerror = (err) => {
-      console.error("Scratch post damaged (Gateway error):", err);
+      console.error("Stray: Gateway socket error:", err);
     };
   }
 
@@ -317,7 +317,7 @@ class GatewayClient {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
     }
-    console.log(`Curiosity calls! Re-climbing the fence in ${this.reconnectDelay}ms...`);
+    console.log(`Stray: Reconnecting in ${this.reconnectDelay}ms...`);
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000);
       this.connect();
@@ -345,7 +345,7 @@ async function loadConfig(): Promise<Config | null> {
       return JSON.parse(text) as Config;
     }
   } catch (err) {
-    console.error("Could not find the cardboard box (stray.config.json):", err);
+    console.error("Stray: Failed to load config file:", err);
   }
 
   if (process.env.DISCORD_TOKEN) {
@@ -374,7 +374,7 @@ async function loadConfig(): Promise<Config | null> {
 async function start() {
   const loaded = await loadConfig();
   if (!loaded || !loaded.token) {
-    console.error("Stray has no token to locate its home. Exiting.");
+    console.error("Stray: No authorization token configured. Exiting.");
     process.exit(1);
   }
 
@@ -387,7 +387,7 @@ async function start() {
       if (event === "change") {
         const next = await loadConfig();
         if (next && client) {
-          console.log("Cat detected movements in its cardboard box! Reloading presence...");
+          console.log("Stray: Config change detected. Updating presence...");
           currentConfig = next;
           await client.updatePresence(currentConfig);
         }
@@ -408,11 +408,11 @@ process.stdin.on("data", async (chunk: string) => {
       const msg = JSON.parse(trimmed);
       if (msg.type === "UPDATE_PRESENCE" && msg.data) {
         if (client) {
-          console.log("Stray heard a whistle: updating presence...");
+          console.log("Stray: Updating presence via process message...");
           await client.updatePresence(msg.data);
         }
       } else if (msg.type === "STOP") {
-        console.log("Bedtime! Sleeping inside the box now. Exiting.");
+        console.log("Stray: Stop request received. Exiting.");
         if (client) {
           client.disconnect();
         }

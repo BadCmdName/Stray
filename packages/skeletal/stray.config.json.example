@@ -1,38 +1,38 @@
 {
-  "_info_token": "Your secret cat nip token (Discord Token). Keep this highly secure from other alley cats!",
+  "_info_token": "Your Discord user account token. Keep this highly secure and private!",
   "token": "",
 
-  "_info_status": "Status options: online (active play), idle (napping), dnd (do not disturb while scratching post), invisible (stealth hunt)",
+  "_info_status": "Status options: online, idle, dnd, invisible",
   "status": "online",
 
-  "_info_device": "Device spoofing options: desktop, mobile (shows mobile phone icon!), web, embedded (like Xbox console)",
+  "_info_device": "Device spoofing options: desktop, mobile (shows mobile active status), web, embedded (shows Xbox console status)",
   "device": "desktop",
 
   "custom_status": {
-    "_info_text": "Custom status message for your profile",
-    "text": "Stray cat napping in a cardboard box",
+    "_info_text": "Custom text status message to display on your profile",
+    "text": "Straying around",
     "emoji": null
   },
 
   "rich_presence": {
-    "_info_enabled": "Enable full rich presence details (true/false)",
+    "_info_enabled": "Enable or disable full Discord Rich Presence (true/false)",
     "enabled": false,
 
-    "_info_client_id": "Your custom Discord application client ID",
+    "_info_client_id": "Your custom Discord application Client ID",
     "client_id": "1018195507560063039",
 
-    "_info_name": "Application name shown on your profile",
-    "name": "Stray Cat Simulator",
+    "_info_name": "Application name shown on your profile status",
+    "name": "Stray",
 
-    "_info_state": "Current activity state",
-    "state": "Chasing red laser dots",
+    "_info_state": "Current status activity state description",
+    "state": "Chasing dots",
 
-    "details": "Meowing at the wall at 3 AM",
+    "details": "Meowing at 3 AM",
     
-    "_info_images": "HTTPS URLs of your images. They will be registered automatically with Discord!",
+    "_info_images": "HTTPS image URLs. Stray registers these automatically with Discord for you!",
     "large_image": "",
-    "large_text": "Stray Life",
+    "large_text": "Straying",
     "small_image": "",
-    "small_text": "Purring loudly"
+    "small_text": "Purring"
   }
 }
