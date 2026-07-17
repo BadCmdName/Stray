@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  stray-skeletal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./stray.config.json:/app/stray.config.json
+    restart: always

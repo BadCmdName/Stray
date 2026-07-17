@@ -1,11 +1,12 @@
 {
   "name": "stray-skeletal",
   "version": "1.0.0",
-  "description": "Stray Skeletal Daemon",
+  "description": "Stray Skeletal Daemon - Funny cat-themed lightweight Discord Presence keeper.",
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts"
+    "start": "bun run index.ts",
+    "build": "bun build --compile --minify --outfile dist/stray-skeletal index.ts"
   },
   "dependencies": {},
   "devDependencies": {
