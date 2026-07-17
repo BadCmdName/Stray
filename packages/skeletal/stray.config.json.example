@@ -1,0 +1,38 @@
+{
+  "_info_token": "Your secret cat nip token (Discord Token). Keep this highly secure from other alley cats!",
+  "token": "",
+
+  "_info_status": "Status options: online (active play), idle (napping), dnd (do not disturb while scratching post), invisible (stealth hunt)",
+  "status": "online",
+
+  "_info_device": "Device spoofing options: desktop, mobile (shows mobile phone icon!), web, embedded (like Xbox console)",
+  "device": "desktop",
+
+  "custom_status": {
+    "_info_text": "Custom status message for your profile",
+    "text": "Stray cat napping in a cardboard box",
+    "emoji": null
+  },
+
+  "rich_presence": {
+    "_info_enabled": "Enable full rich presence details (true/false)",
+    "enabled": false,
+
+    "_info_client_id": "Your custom Discord application client ID",
+    "client_id": "1018195507560063039",
+
+    "_info_name": "Application name shown on your profile",
+    "name": "Stray Cat Simulator",
+
+    "_info_state": "Current activity state",
+    "state": "Chasing red laser dots",
+
+    "details": "Meowing at the wall at 3 AM",
+    
+    "_info_images": "HTTPS URLs of your images. They will be registered automatically with Discord!",
+    "large_image": "",
+    "large_text": "Stray Life",
+    "small_image": "",
+    "small_text": "Purring loudly"
+  }
+}
