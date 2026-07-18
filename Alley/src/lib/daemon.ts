@@ -1,3 +1,5 @@
+import WebSocket from "ws";
+
 export interface StrayConfig {
   token: string;
   status: string;
@@ -47,23 +49,27 @@ class StrayClient {
         }
       }
 
-      this.ws = new WebSocket("wss://gateway.discord.gg/?v=9&encoding=json");
+      this.ws = new WebSocket("wss://gateway.discord.gg/?v=9&encoding=json", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      });
 
-      this.ws.onopen = () => {};
+      this.ws.on("open", () => {});
 
-      this.ws.onmessage = (event: MessageEvent) => {
-        const msg = JSON.parse(event.data);
+      this.ws.on("message", (data: any) => {
+        const msg = JSON.parse(data.toString());
         this.handleMessage(msg, largeImage, smallImage);
-      };
+      });
 
-      this.ws.onclose = () => {
+      this.ws.on("close", () => {
         this.cleanupTimers();
         if (this.active) {
           this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
         }
-      };
+      });
 
-      this.ws.onerror = () => {};
+      this.ws.on("error", () => {});
     } catch {
       if (this.active) {
         this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
