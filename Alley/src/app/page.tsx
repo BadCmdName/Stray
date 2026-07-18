@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const CheckIcon = () => (
   <svg className="h-4 w-4 text-emerald-450 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -48,6 +48,8 @@ export default function Home() {
   const [verifyingToken, setVerifyingToken] = useState(false);
   const [tokenValidationMsg, setTokenValidationMsg] = useState<{ text: string; isError: boolean } | null>(null);
   const [verifiedProfile, setVerifiedProfile] = useState<{ id: string; username: string; discriminator: string; avatar: string | null } | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const consoleEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -66,6 +68,29 @@ export default function Home() {
         setAuthChecked(true);
       });
   }, []);
+
+  useEffect(() => {
+    if (session) {
+      const interval = setInterval(() => {
+        fetch("/api/status")
+          .then((res) => res.json())
+          .then((data) => {
+            setIsRunning(data.isRunning || false);
+            if (data.logs) {
+              setLogs(data.logs);
+            }
+          })
+          .catch(() => {});
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (consoleEndRef.current) {
+      consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs]);
 
   const loadConfig = () => {
     fetch("/api/status")
@@ -92,6 +117,9 @@ export default function Home() {
           }
         }
         setIsRunning(data.isRunning || false);
+        if (data.logs) {
+          setLogs(data.logs);
+        }
       })
       .catch(() => {});
   };
@@ -252,7 +280,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex items-center justify-center font-sans p-6 select-none">
         <div className="w-full max-w-md bg-[#18181b] border-2 border-zinc-800 rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] flex flex-col items-center text-center">
-          <img src="/Stray.svg" alt="Stray Logo" className="h-16 w-16 mb-6" />
+          <img src="/Stray.svg" alt="Stray Logo" className="h-16 w-16 mb-6 animate-bounce" />
           <h1 className="text-3xl font-black text-white uppercase tracking-wider mb-2">STRAY ALLEY</h1>
           <p className="text-xs text-zinc-400 font-medium mb-8 max-w-xs leading-relaxed">
             Authorized presence controller playground. Enter your Stray Key to connect.
@@ -300,7 +328,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans select-none">
       <header className="border-b-4 border-zinc-900 bg-[#18181b] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <img src="/Stray.svg" alt="Stray Logo" className="h-8 w-8 animate-pulse" />
+          <img src="/Stray.svg" alt="Stray Logo" className="h-8 w-8" />
           <span className="text-lg font-black tracking-wider text-white uppercase">STRAY ALLEY</span>
         </div>
         <div className="flex items-center gap-4">
@@ -318,10 +346,10 @@ export default function Home() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7 bg-[#18181b] border-2 border-zinc-850 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-          <div className="flex justify-between items-center border-b border-zinc-850 pb-3">
+          <div className="flex justify-between items-center border-b border-zinc-855 pb-3">
             <h2 className="text-base font-black text-white uppercase tracking-wider">Stray Parameters</h2>
             <div className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-550 animate-ping" : "bg-zinc-650"}`} />
+              <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-650"}`} />
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                 {isRunning ? "Online" : "Stealth"}
               </span>
@@ -432,7 +460,7 @@ export default function Home() {
                       value={rpcClientId}
                       onChange={(e) => setRpcClientId(e.target.value)}
                       placeholder="1018195507560063039"
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-855 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
                     />
                   </div>
 
@@ -504,7 +532,7 @@ export default function Home() {
                       value={rpcSmallImage}
                       onChange={(e) => setRpcSmallImage(e.target.value)}
                       placeholder="https://..."
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-855 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
                     />
                   </div>
 
@@ -592,7 +620,7 @@ export default function Home() {
                 <div className="py-4 flex flex-col gap-3">
                   <span className="text-[10px] text-zinc-500 block font-bold uppercase tracking-wider">Playing a Game</span>
                   <div className="flex gap-4 items-start">
-                    <div className="relative h-16 w-16 bg-[#09090b] rounded-xl flex items-center justify-center text-zinc-550 overflow-hidden border-2 border-zinc-850">
+                    <div className="relative h-16 w-16 bg-[#09090b] rounded-xl flex items-center justify-center text-zinc-555 overflow-hidden border-2 border-zinc-850">
                       {rpcLargeImage ? (
                         <img src={rpcLargeImage} alt="Large RPC asset" className="h-full w-full object-cover" />
                       ) : (
@@ -614,6 +642,30 @@ export default function Home() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        <div className="col-span-12 bg-[#18181b] border-2 border-zinc-850 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-zinc-850 pb-3">
+            <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection Logs</h2>
+            <button
+              onClick={() => setLogs([])}
+              className="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 uppercase tracking-wide transition"
+            >
+              Clear UI View
+            </button>
+          </div>
+          <div className="bg-[#09090b] border border-zinc-850 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col gap-1.5 scrollbar-thin">
+            {logs.length === 0 ? (
+              <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
+            ) : (
+              logs.map((log, index) => (
+                <span key={index} className="whitespace-pre-wrap break-all leading-relaxed">
+                  {log}
+                </span>
+              ))
+            )}
+            <div ref={consoleEndRef} />
           </div>
         </div>
       </main>

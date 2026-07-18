@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Stray Alley",
   description: "Private self-hosted Discord presence playground.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-32x32.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/favicon.ico?v=1",
+    shortcut: "/favicon-32x32.png?v=1",
+    apple: "/apple-touch-icon.png?v=1",
   }
 };
 

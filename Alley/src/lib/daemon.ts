@@ -18,6 +18,31 @@ export interface StrayConfig {
   };
 }
 
+declare global {
+  var strayLogs: Map<string, string[]> | undefined;
+  var activeStrayClients: Map<string, StrayClient> | undefined;
+}
+
+if (!globalThis.strayLogs) {
+  globalThis.strayLogs = new Map();
+}
+
+if (!globalThis.activeStrayClients) {
+  globalThis.activeStrayClients = new Map();
+}
+
+export function addLog(userId: string, message: string) {
+  const logs = globalThis.strayLogs?.get(userId) || [];
+  const time = new Date().toLocaleTimeString();
+  logs.push(`[${time}] ${message}`);
+  if (logs.length > 50) logs.shift();
+  globalThis.strayLogs?.set(userId, logs);
+}
+
+export function getLogs(userId: string): string[] {
+  return globalThis.strayLogs?.get(userId) || [];
+}
+
 class StrayClient {
   private userId: string;
   private config: StrayConfig;
@@ -34,6 +59,7 @@ class StrayClient {
 
   async connect() {
     if (!this.active) return;
+    addLog(this.userId, "Initiating gateway connection...");
     try {
       let largeImage = this.config.rich_presence?.large_image || "";
       let smallImage = this.config.rich_presence?.small_image || "";
@@ -42,9 +68,11 @@ class StrayClient {
         const token = this.config.token;
         const clientId = this.config.rich_presence.client_id;
         if (largeImage.startsWith("http")) {
+          addLog(this.userId, "Registering large rich presence asset...");
           largeImage = await registerAsset(token, clientId, largeImage);
         }
         if (smallImage.startsWith("http")) {
+          addLog(this.userId, "Registering small rich presence asset...");
           smallImage = await registerAsset(token, clientId, smallImage);
         }
       }
@@ -55,22 +83,34 @@ class StrayClient {
         }
       });
 
-      this.ws.on("open", () => {});
-
-      this.ws.on("message", (data: any) => {
-        const msg = JSON.parse(data.toString());
-        this.handleMessage(msg, largeImage, smallImage);
+      this.ws.on("open", () => {
+        addLog(this.userId, "Connection established. Awaiting gateway hello...");
       });
 
-      this.ws.on("close", () => {
+      this.ws.on("message", (data: any) => {
+        try {
+          const msg = JSON.parse(data.toString());
+          this.handleMessage(msg, largeImage, smallImage);
+        } catch (err: any) {
+          addLog(this.userId, `Failed to parse gateway message: ${err.message}`);
+        }
+      });
+
+      this.ws.on("close", (code: number, reason: Buffer) => {
+        const reasonStr = reason ? reason.toString() : "No reason provided";
+        addLog(this.userId, `Connection closed (Code: ${code}, Reason: ${reasonStr})`);
         this.cleanupTimers();
         if (this.active) {
+          addLog(this.userId, "Reconnecting in 5 seconds...");
           this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
         }
       });
 
-      this.ws.on("error", () => {});
-    } catch {
+      this.ws.on("error", (err: any) => {
+        addLog(this.userId, `Socket connection error: ${err.message}`);
+      });
+    } catch (err: any) {
+      addLog(this.userId, `Failed to connect: ${err.message}`);
       if (this.active) {
         this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
       }
@@ -82,9 +122,14 @@ class StrayClient {
       this.sequence = msg.s;
     }
 
+    if (msg.t === "READY") {
+      addLog(this.userId, `Gateway session is READY. User: ${msg.d.user.username}`);
+    }
+
     switch (msg.op) {
       case 10:
         const interval = msg.d.heartbeat_interval;
+        addLog(this.userId, `Hello received. Starting heartbeat every ${interval}ms`);
         this.heartbeatInterval = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ op: 1, d: this.sequence }));
@@ -99,19 +144,16 @@ class StrayClient {
 
   private identify(largeImage: string, smallImage: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    addLog(this.userId, "Identifying with Discord gateway...");
 
     let os = "Windows";
-    let browser = "Discord Client";
-    let device = "Discord Client";
+    let browser = "Chrome";
+    let device = "";
 
     if (this.config.device === "mobile") {
       os = "Android";
       browser = "Discord Android";
       device = "Discord Android";
-    } else if (this.config.device === "web") {
-      os = "Windows";
-      browser = "Chrome";
-      device = "";
     } else if (this.config.device === "embedded") {
       os = "Xbox One";
       browser = "Discord Embedded";
@@ -151,37 +193,17 @@ class StrayClient {
     const payload = {
       op: 2,
       d: {
-        token: this.config.token,
-        capabilities: 125,
+        token: this.config.token.trim(),
         properties: {
           $os: os,
           $browser: browser,
           $device: device,
-          $system_locale: "en-US",
-          $browser_user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          $browser_version: "120.0",
-          $os_version: "10",
-          $referrer: "",
-          $referring_domain: "",
-          $referrer_current: "",
-          $referring_domain_current: "",
-          $release_channel: "stable",
-          $client_build_number: 250000,
-          $client_event_source: null,
         },
         presence: {
           status: this.config.status,
           since: 0,
           activities,
           afk: false,
-        },
-        compress: false,
-        client_state: {
-          guild_versions: {},
-          highest_last_message_id: "0",
-          read_state_version_0: 0,
-          user_guild_settings_version: -1,
-          user_settings_version: -1,
         },
       },
     };
@@ -205,6 +227,7 @@ class StrayClient {
     this.cleanupTimers();
     if (this.ws) {
       try {
+        addLog(this.userId, "Client stopped by dashboard user.");
         this.ws.close();
       } catch {}
       this.ws = null;
@@ -218,7 +241,7 @@ async function registerAsset(token: string, clientId: string, imageUrl: string):
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: token,
+        Authorization: token.trim(),
       },
       body: JSON.stringify({ urls: [imageUrl] }),
     });
@@ -228,14 +251,6 @@ async function registerAsset(token: string, clientId: string, imageUrl: string):
   } catch {
     return imageUrl;
   }
-}
-
-declare global {
-  var activeStrayClients: Map<string, StrayClient> | undefined;
-}
-
-if (!globalThis.activeStrayClients) {
-  globalThis.activeStrayClients = new Map();
 }
 
 const activeClients = globalThis.activeStrayClients;

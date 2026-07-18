@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getDaemonStatus } from "@/lib/daemon";
+import { getDaemonStatus, getLogs } from "@/lib/daemon";
 import { decrypt } from "@/lib/encryption";
 import { getUser } from "@/lib/db";
 
@@ -21,6 +21,7 @@ export async function GET() {
 
   return NextResponse.json({
     isRunning: getDaemonStatus(session.userId),
+    logs: getLogs(session.userId),
     config: user
       ? {
           token,
