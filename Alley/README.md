@@ -11,7 +11,7 @@ This folder contains the self-hosted Stray Alley web portal to configure your cu
 * npm (comes with Node.js)
 
 ### 2. Set Up Environment
-Create a `.env` file in this directory (`packages/alley/.env`):
+Create a `.env` file in this directory (`Alley/.env`):
 ```bash
 ALLOWED_USER_IDS="your_discord_user_id"
 ```

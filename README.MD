@@ -23,11 +23,11 @@ Ensure you have Node.js (v18+) and npm installed.
 ### 1. Clone the Codebase
 ```bash
 git clone https://github.com/BadCmdName/Stray.git
-cd Stray/packages/alley
+cd Stray/Alley
 ```
 
 ### 2. Configure Allowed Users
-Create a `.env` file in the `packages/alley` folder:
+Create a `.env` file in the `Alley` folder:
 ```bash
 ALLOWED_USER_IDS="1018195507560063039"
 ```

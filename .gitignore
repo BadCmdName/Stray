@@ -1,4 +1,3 @@
-Ghost-Selfbot/
 node_modules/
 .env
 .env.local
@@ -11,3 +10,9 @@ stray.config.json
 dist/
 build/
 bun.lockb
+db.json
+Alley/db.json
+Alley/.env
+Alley/node_modules/
+Alley/.next/
+Website
