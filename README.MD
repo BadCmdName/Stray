@@ -25,7 +25,7 @@ Stray Alley is a self-hosted, secure Discord presence playground built on Next.j
 </p>
 
 <p align="center">
-  <img src="public/image2.png" alt="Live Status Preview Console" width="100%" />
+  <img src="public/image2-clean.png" alt="Live Status Preview Console" width="100%" />
 </p>
 
 ---
@@ -45,7 +45,7 @@ Stray Alley is a self-hosted, secure Discord presence playground built on Next.j
 
 ## Quick Start
 
-Ensure you have Node.js (v18+) and npm installed.
+Ensure you have Node.js (v18+) and npm (or Bun) installed.
 
 ### 1. Download the Release
 Download the latest release zip package from the [Stray Releases](https://github.com/BadCmdName/Stray/releases) page. Extract the files and navigate into the `Alley` directory.
@@ -57,10 +57,19 @@ ALLOWED_USER_IDS="1018195507560063039"
 ```
 
 ### 3. Install & Start
+
+Using **npm**:
 ```bash
 npm install
 npm run build
 npm start
+```
+
+Using **Bun**:
+```bash
+bun install
+bun run build
+bun run start
 ```
 
 Open `http://localhost:3000` in your browser, click login to generate and paste your key, and customize your presence.

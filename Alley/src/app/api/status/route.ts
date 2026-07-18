@@ -27,7 +27,10 @@ export async function GET() {
           token,
           status: user.status,
           device: user.device,
-          custom_status: { text: user.customStatusText || "" },
+          custom_status: {
+            text: user.customStatusText || "",
+            emoji: user.customStatusEmoji || "",
+          },
           rich_presence: {
             enabled: user.rpcEnabled,
             client_id: user.rpcClientId || "",

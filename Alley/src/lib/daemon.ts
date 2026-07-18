@@ -1,10 +1,11 @@
 import WebSocket from "ws";
+import * as emoji from "node-emoji";
 
 export interface StrayConfig {
   token: string;
   status: string;
   device: string;
-  custom_status?: { text: string };
+  custom_status?: { text: string; emoji?: string };
   rich_presence?: {
     enabled: boolean;
     client_id: string;
@@ -41,6 +42,38 @@ export function addLog(userId: string, message: string) {
 
 export function getLogs(userId: string): string[] {
   return globalThis.strayLogs?.get(userId) || [];
+}
+
+function parseEmoji(emojiStr: string) {
+  if (!emojiStr) return null;
+  const trimmed = emojiStr.trim();
+  const customEmojiRegex = /^<a?:?([a-zA-Z0-9_]+):([0-9]+)>$/;
+  const match = trimmed.match(customEmojiRegex);
+  if (match) {
+    return {
+      name: match[1],
+      id: match[2],
+      animated: trimmed.startsWith("<a:"),
+    };
+  }
+
+  if (trimmed.startsWith(":") && trimmed.endsWith(":")) {
+    const code = trimmed.slice(1, -1);
+    const resolved = emoji.get(code);
+    if (resolved && resolved !== code) {
+      return {
+        name: resolved,
+        id: null,
+        animated: false,
+      };
+    }
+  }
+
+  return {
+    name: trimmed,
+    id: null,
+    animated: false,
+  };
 }
 
 class StrayClient {
@@ -124,6 +157,7 @@ class StrayClient {
 
     if (msg.t === "READY") {
       addLog(this.userId, `Gateway session is READY. User: ${msg.d.user.username}`);
+      this.updatePresence(largeImage, smallImage);
     }
 
     switch (msg.op) {
@@ -162,12 +196,12 @@ class StrayClient {
 
     const activities: any[] = [];
 
-    if (this.config.custom_status?.text) {
+    if (this.config.custom_status?.text || this.config.custom_status?.emoji) {
       activities.push({
         type: 4,
         name: "Custom Status",
-        state: this.config.custom_status.text,
-        emoji: null,
+        state: this.config.custom_status?.text || "",
+        emoji: this.config.custom_status?.emoji ? parseEmoji(this.config.custom_status.emoji) : null,
       });
     }
 
@@ -195,9 +229,9 @@ class StrayClient {
       d: {
         token: this.config.token.trim(),
         properties: {
-          $os: os,
-          $browser: browser,
-          $device: device,
+          os: os,
+          browser: browser,
+          device: device,
         },
         presence: {
           status: this.config.status,
@@ -205,6 +239,53 @@ class StrayClient {
           activities,
           afk: false,
         },
+      },
+    };
+
+    this.ws.send(JSON.stringify(payload));
+  }
+
+  private updatePresence(largeImage: string, smallImage: string) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    addLog(this.userId, "Broadcasting presence update payload...");
+
+    const activities: any[] = [];
+
+    if (this.config.custom_status?.text || this.config.custom_status?.emoji) {
+      activities.push({
+        type: 4,
+        name: "Custom Status",
+        state: this.config.custom_status?.text || "",
+        emoji: this.config.custom_status?.emoji ? parseEmoji(this.config.custom_status.emoji) : null,
+      });
+    }
+
+    if (this.config.rich_presence?.enabled) {
+      activities.push({
+        type: 0,
+        name: this.config.rich_presence.name,
+        application_id: this.config.rich_presence.client_id,
+        state: this.config.rich_presence.state,
+        details: this.config.rich_presence.details,
+        assets: {
+          large_image: largeImage || undefined,
+          large_text: this.config.rich_presence.large_text || undefined,
+          small_image: smallImage || undefined,
+          small_text: this.config.rich_presence.small_text || undefined,
+        },
+        timestamps: {
+          start: Date.now(),
+        },
+      });
+    }
+
+    const payload = {
+      op: 3,
+      d: {
+        since: 0,
+        activities,
+        status: this.config.status,
+        afk: false,
       },
     };
 
@@ -220,6 +301,25 @@ class StrayClient {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+  }
+
+  goInvisibleAndStop() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try {
+        addLog(this.userId, "Going stealth (invisible)...");
+        const payload = {
+          op: 3,
+          d: {
+            since: 0,
+            activities: [],
+            status: "invisible",
+            afk: false,
+          },
+        };
+        this.ws.send(JSON.stringify(payload));
+      } catch {}
+    }
+    this.stop();
   }
 
   stop() {
@@ -265,7 +365,7 @@ export function startDaemon(userId: string, config: StrayConfig) {
 export function stopDaemon(userId: string) {
   const client = activeClients.get(userId);
   if (client) {
-    client.stop();
+    client.goInvisibleAndStop();
     activeClients.delete(userId);
   }
 }

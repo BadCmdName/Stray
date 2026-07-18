@@ -22,6 +22,7 @@ export async function POST(request: Request) {
         status: config.status,
         device: config.device,
         customStatusText: config.custom_status?.text || null,
+        customStatusEmoji: config.custom_status?.emoji || null,
         rpcEnabled: config.rich_presence?.enabled || false,
         rpcClientId: config.rich_presence?.client_id || null,
         rpcName: config.rich_presence?.name || null,

@@ -11,6 +11,7 @@ export interface UserConfig {
   status: string;
   device: string;
   customStatusText: string | null;
+  customStatusEmoji: string | null;
   rpcEnabled: boolean;
   rpcClientId: string | null;
   rpcName: string | null;
@@ -70,6 +71,7 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     status: "online",
     device: "desktop",
     customStatusText: null,
+    customStatusEmoji: null,
     rpcEnabled: false,
     rpcClientId: null,
     rpcName: null,

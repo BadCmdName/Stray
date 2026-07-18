@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import * as emoji from "node-emoji";
 
 const CheckIcon = () => (
   <svg className="h-4 w-4 text-emerald-450 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -9,13 +10,13 @@ const CheckIcon = () => (
 );
 
 const UserIcon = () => (
-  <svg className="h-10 w-10 text-zinc-550" fill="currentColor" viewBox="0 0 24 24">
+  <svg className="h-10 w-10 text-zinc-650" fill="currentColor" viewBox="0 0 24 24">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
   </svg>
 );
 
 const GameIcon = () => (
-  <svg className="h-7 w-7 text-zinc-550" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg className="h-7 w-7 text-zinc-650" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
   </svg>
 );
@@ -30,6 +31,7 @@ export default function Home() {
   const [status, setStatus] = useState("online");
   const [device, setDevice] = useState("desktop");
   const [customStatus, setCustomStatus] = useState("Straying around");
+  const [customStatusEmoji, setCustomStatusEmoji] = useState("");
   const [rpcEnabled, setRpcEnabled] = useState(false);
   const [rpcClientId, setRpcClientId] = useState("1018195507560063039");
   const [rpcName, setRpcName] = useState("Stray");
@@ -49,7 +51,6 @@ export default function Home() {
   const [tokenValidationMsg, setTokenValidationMsg] = useState<{ text: string; isError: boolean } | null>(null);
   const [verifiedProfile, setVerifiedProfile] = useState<{ id: string; username: string; discriminator: string; avatar: string | null } | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const consoleEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -86,12 +87,6 @@ export default function Home() {
     }
   }, [session]);
 
-  useEffect(() => {
-    if (consoleEndRef.current) {
-      consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [logs]);
-
   const loadConfig = () => {
     fetch("/api/status")
       .then((res) => res.json())
@@ -101,6 +96,7 @@ export default function Home() {
           setStatus(data.config.status || "online");
           setDevice(data.config.device || "desktop");
           setCustomStatus(data.config.custom_status?.text || "");
+          setCustomStatusEmoji(data.config.custom_status?.emoji || "");
           if (data.config.rich_presence) {
             setRpcEnabled(data.config.rich_presence.enabled || false);
             setRpcClientId(data.config.rich_presence.client_id || "");
@@ -180,7 +176,7 @@ export default function Home() {
             token,
             status,
             device,
-            custom_status: { text: customStatus },
+            custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
               client_id: rpcClientId,
@@ -211,7 +207,7 @@ export default function Home() {
             token,
             status,
             device,
-            custom_status: { text: customStatus },
+            custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
               client_id: rpcClientId,
@@ -257,6 +253,50 @@ export default function Home() {
     } catch {}
   };
 
+  const getRpcImageUrl = (clientId: string, imageKey: string) => {
+    if (!imageKey) return null;
+    if (imageKey.startsWith("http://") || imageKey.startsWith("https://")) {
+      return imageKey;
+    }
+    if (imageKey.startsWith("mp:external/")) {
+      const match = imageKey.match(/mp:external\/[^\/]+\/https\/(.+)/);
+      if (match) return `https://${match[1]}`;
+    }
+    if (clientId) {
+      return `https://cdn.discordapp.com/app-assets/${clientId}/${imageKey}.png`;
+    }
+    return null;
+  };
+
+  const renderEmoji = (emojiStr: string) => {
+    if (!emojiStr) return null;
+    const trimmed = emojiStr.trim();
+    const customEmojiRegex = /^<a?:?([a-zA-Z0-9_]+):([0-9]+)>$/;
+    const match = trimmed.match(customEmojiRegex);
+    if (match) {
+      const emojiId = match[2];
+      const isAnimated = trimmed.startsWith("<a:");
+      const ext = isAnimated ? "gif" : "png";
+      return (
+        <img
+          src={`https://cdn.discordapp.com/emojis/${emojiId}.${ext}?size=44&quality=lossless`}
+          alt={match[1]}
+          className="h-4.5 w-4.5 object-contain inline-block shrink-0 align-middle mr-1.5"
+        />
+      );
+    }
+
+    if (trimmed.startsWith(":") && trimmed.endsWith(":")) {
+      const code = trimmed.slice(1, -1);
+      const resolved = emoji.get(code);
+      if (resolved && resolved !== code) {
+        return <span className="inline-block mr-1.5 align-middle select-all">{resolved}</span>;
+      }
+    }
+
+    return <span className="inline-block mr-1.5 align-middle select-all">{trimmed}</span>;
+  };
+
   const statusColors: Record<string, string> = {
     online: "bg-[#10b981]",
     idle: "bg-[#f59e0b]",
@@ -267,6 +307,9 @@ export default function Home() {
   const avatarUrl = verifiedProfile?.avatar
     ? `https://cdn.discordapp.com/avatars/${verifiedProfile.id}/${verifiedProfile.avatar}.png`
     : null;
+
+  const rpcLargeImgSrc = getRpcImageUrl(rpcClientId, rpcLargeImage);
+  const rpcSmallImgSrc = getRpcImageUrl(rpcClientId, rpcSmallImage);
 
   if (!authChecked) {
     return (
@@ -280,7 +323,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex items-center justify-center font-sans p-6 select-none">
         <div className="w-full max-w-md bg-[#18181b] border-2 border-zinc-800 rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] flex flex-col items-center text-center">
-          <img src="/Stray.svg" alt="Stray Logo" className="h-16 w-16 mb-6 animate-bounce" />
+          <img src="/Stray.svg" alt="Stray Logo" className="h-16 w-16 mb-6" />
           <h1 className="text-3xl font-black text-white uppercase tracking-wider mb-2">STRAY ALLEY</h1>
           <p className="text-xs text-zinc-400 font-medium mb-8 max-w-xs leading-relaxed">
             Authorized presence controller playground. Enter your Stray Key to connect.
@@ -298,7 +341,7 @@ export default function Home() {
               value={keyInput}
               onChange={(e) => setKeyInput(e.target.value)}
               placeholder="Paste your Stray Key here..."
-              className="w-full bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-3.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition font-mono"
+              className="w-full bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-3.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition font-mono"
             />
             <button
               type="submit"
@@ -325,14 +368,14 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans select-none animate-fadeIn">
       <header className="border-b-4 border-zinc-900 bg-[#18181b] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <img src="/Stray.svg" alt="Stray Logo" className="h-8 w-8" />
           <span className="text-lg font-black tracking-wider text-white uppercase">STRAY ALLEY</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs font-bold text-zinc-400 bg-[#09090b] border border-zinc-850 px-3 py-1.5 rounded-lg">
+          <span className="text-xs font-bold text-zinc-400 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-lg">
             {session.username}
           </span>
           <button
@@ -345,8 +388,8 @@ export default function Home() {
       </header>
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 bg-[#18181b] border-2 border-zinc-850 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-          <div className="flex justify-between items-center border-b border-zinc-855 pb-3">
+        <div className="lg:col-span-7 bg-[#18181b] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+          <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
             <h2 className="text-base font-black text-white uppercase tracking-wider">Stray Parameters</h2>
             <div className="flex items-center gap-2">
               <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-650"}`} />
@@ -364,12 +407,12 @@ export default function Home() {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Paste your Discord authorization token..."
-                className="flex-1 bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition"
+                className="flex-1 bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
               />
               <button
                 onClick={() => triggerTokenCheck(token)}
                 disabled={verifyingToken}
-                className="bg-zinc-800 border-2 border-black text-zinc-200 px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="bg-zinc-800 border-2 border-black text-zinc-250 px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 {verifyingToken ? "Verifying..." : "Verify Token"}
               </button>
@@ -388,7 +431,7 @@ export default function Home() {
                 <select
                   value={device}
                   onChange={(e) => setDevice(e.target.value)}
-                  className="w-full bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition appearance-none cursor-pointer"
+                  className="w-full bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
                 >
                   <option value="desktop">Desktop Client</option>
                   <option value="mobile">Mobile Application</option>
@@ -409,7 +452,7 @@ export default function Home() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition appearance-none cursor-pointer"
+                  className="w-full bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
                 >
                   <option value="online">Online</option>
                   <option value="idle">Idle / Away</option>
@@ -426,17 +469,26 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Custom status text</label>
-            <input
-              type="text"
-              value={customStatus}
-              onChange={(e) => setCustomStatus(e.target.value)}
-              placeholder="What is stray doing..."
-              className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition"
-            />
+            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Custom status details</label>
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={customStatusEmoji}
+                onChange={(e) => setCustomStatusEmoji(e.target.value)}
+                placeholder=":sob: or <a:name:id>"
+                className="w-1/4 bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition text-center"
+              />
+              <input
+                type="text"
+                value={customStatus}
+                onChange={(e) => setCustomStatus(e.target.value)}
+                placeholder="What is stray doing..."
+                className="flex-1 bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+              />
+            </div>
           </div>
 
-          <div className="border-t border-zinc-850 pt-6 flex flex-col gap-4">
+          <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Rich Activity (RPC)</span>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -446,7 +498,7 @@ export default function Home() {
                   onChange={(e) => setRpcEnabled(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-450 border border-zinc-700"></div>
+                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
               </label>
             </div>
 
@@ -460,7 +512,7 @@ export default function Home() {
                       value={rpcClientId}
                       onChange={(e) => setRpcClientId(e.target.value)}
                       placeholder="1018195507560063039"
-                      className="bg-[#09090b] border-2 border-zinc-855 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
 
@@ -471,7 +523,7 @@ export default function Home() {
                       value={rpcName}
                       onChange={(e) => setRpcName(e.target.value)}
                       placeholder="Stray"
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
@@ -484,7 +536,7 @@ export default function Home() {
                       value={rpcState}
                       onChange={(e) => setRpcState(e.target.value)}
                       placeholder="Chasing dots"
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
 
@@ -495,20 +547,20 @@ export default function Home() {
                       value={rpcDetails}
                       onChange={(e) => setRpcDetails(e.target.value)}
                       placeholder="Meowing at 3 AM"
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Large Image URL</label>
+                    <label className="text-xs font-bold text-zinc-400 uppercase">Large Image URL / Asset Key</label>
                     <input
                       type="text"
                       value={rpcLargeImage}
                       onChange={(e) => setRpcLargeImage(e.target.value)}
-                      placeholder="https://..."
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      placeholder="https://... or asset key"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
 
@@ -519,20 +571,20 @@ export default function Home() {
                       value={rpcLargeText}
                       onChange={(e) => setRpcLargeText(e.target.value)}
                       placeholder="Straying"
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Small Image URL</label>
+                    <label className="text-xs font-bold text-zinc-400 uppercase">Small Image URL / Asset Key</label>
                     <input
                       type="text"
                       value={rpcSmallImage}
                       onChange={(e) => setRpcSmallImage(e.target.value)}
-                      placeholder="https://..."
-                      className="bg-[#09090b] border-2 border-zinc-855 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      placeholder="https://... or asset key"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
 
@@ -543,7 +595,7 @@ export default function Home() {
                       value={rpcSmallText}
                       onChange={(e) => setRpcSmallText(e.target.value)}
                       placeholder="Purring"
-                      className="bg-[#09090b] border-2 border-zinc-850 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                      className="bg-[#09090b] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
@@ -551,7 +603,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 border-t border-zinc-850 pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 border-t border-zinc-800 pt-6">
             <button
               onClick={handleSave}
               disabled={isSaving || isPublishing || isStopping}
@@ -564,7 +616,7 @@ export default function Home() {
               disabled={isSaving || isPublishing || isStopping}
               className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
             >
-              {isPublishing ? "Publishing..." : "Publish"}
+              {isPublishing ? "Publishing..." : isRunning ? "Re-Publish" : "Publish"}
             </button>
             {isRunning && (
               <button
@@ -581,7 +633,7 @@ export default function Home() {
         <div className="lg:col-span-5 flex flex-col gap-6">
           <h2 className="text-base font-black text-white pb-1 uppercase tracking-wider">Live Preview</h2>
           
-          <div className="bg-[#18181b] border-2 border-zinc-850 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+          <div className="bg-[#18181b] border-2 border-zinc-800 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
             <div className="h-20 bg-zinc-800 relative" />
             <div className="px-4 pb-6 relative">
               <div className="absolute -top-10 left-4 h-20 w-20 bg-[#18181b] rounded-full border-4 border-[#18181b] flex items-center justify-center relative">
@@ -609,26 +661,31 @@ export default function Home() {
                 </p>
               </div>
 
-              {customStatus && (
-                <div className="py-3 border-b border-zinc-800">
-                  <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
-                  <p className="text-xs text-zinc-300 italic">“{customStatus}”</p>
+              {(customStatus || customStatusEmoji) && (
+                <div className="py-3 border-b border-zinc-800 flex items-center min-h-[48px]">
+                  <div className="w-full">
+                    <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
+                    <div className="flex items-center text-xs text-zinc-350 italic">
+                      {renderEmoji(customStatusEmoji)}
+                      {customStatus && <span>“{customStatus}”</span>}
+                    </div>
+                  </div>
                 </div>
               )}
 
               {rpcEnabled && (
                 <div className="py-4 flex flex-col gap-3">
-                  <span className="text-[10px] text-zinc-500 block font-bold uppercase tracking-wider">Playing a Game</span>
+                  <span className="text-[10px] text-zinc-550 block font-bold uppercase tracking-wider">Playing a Game</span>
                   <div className="flex gap-4 items-start">
-                    <div className="relative h-16 w-16 bg-[#09090b] rounded-xl flex items-center justify-center text-zinc-555 overflow-hidden border-2 border-zinc-850">
-                      {rpcLargeImage ? (
-                        <img src={rpcLargeImage} alt="Large RPC asset" className="h-full w-full object-cover" />
+                    <div className="relative h-16 w-16 bg-[#09090b] rounded-xl flex items-center justify-center text-zinc-500 overflow-hidden border-2 border-zinc-800">
+                      {rpcLargeImgSrc ? (
+                        <img src={rpcLargeImgSrc} alt="Large RPC asset" className="h-full w-full object-cover" />
                       ) : (
                         <GameIcon />
                       )}
-                      {rpcSmallImage && (
+                      {rpcSmallImgSrc && (
                         <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-900">
-                          <img src={rpcSmallImage} alt="Small RPC asset" className="h-6 w-6 rounded-full object-cover" />
+                          <img src={rpcSmallImgSrc} alt="Small RPC asset" className="h-6 w-6 rounded-full object-cover" />
                         </div>
                       )}
                     </div>
@@ -636,7 +693,7 @@ export default function Home() {
                       <h4 className="text-xs font-bold text-white truncate">{rpcName || "Stray"}</h4>
                       {rpcDetails && <p className="text-[10px] text-zinc-350 truncate mt-0.5">{rpcDetails}</p>}
                       {rpcState && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcState}</p>}
-                      <p className="text-[9px] text-zinc-500 mt-1 uppercase font-semibold">1:37 elapsed</p>
+                      <p className="text-[9px] text-zinc-555 mt-1 uppercase font-semibold">1:37 elapsed</p>
                     </div>
                   </div>
                 </div>
@@ -645,27 +702,26 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="col-span-12 bg-[#18181b] border-2 border-zinc-850 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
-          <div className="flex justify-between items-center border-b border-zinc-850 pb-3">
+        <div className="col-span-12 bg-[#18181b] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection Logs</h2>
             <button
               onClick={() => setLogs([])}
-              className="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 uppercase tracking-wide transition"
+              className="text-[10px] font-bold text-zinc-550 hover:text-zinc-300 uppercase tracking-wide transition"
             >
               Clear UI View
             </button>
           </div>
-          <div className="bg-[#09090b] border border-zinc-850 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col gap-1.5 scrollbar-thin">
+          <div className="bg-[#09090b] border border-zinc-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
               <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
             ) : (
-              logs.map((log, index) => (
-                <span key={index} className="whitespace-pre-wrap break-all leading-relaxed">
+              [...logs].reverse().map((log, index) => (
+                <span key={index} className="whitespace-pre-wrap break-all leading-relaxed font-semibold">
                   {log}
                 </span>
               ))
             )}
-            <div ref={consoleEndRef} />
           </div>
         </div>
       </main>
