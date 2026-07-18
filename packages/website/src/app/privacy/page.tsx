@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
           <section className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)]">
             <h2 className="text-base font-black text-white mb-2 uppercase">2. Token & Credentials Protection</h2>
             <p>
-              Your Discord authorization token never touches our servers. The token is stored locally on your own computer, board, or database instance. When using the self-hosted Stray Dashboard, token credentials are encrypted locally using AES-256-GCM algorithms, with decryption keys stored exclusively inside your personal environment parameters.
+              Your Discord authorization token never touches our servers. The token is stored locally on your own computer, board, or database instance. When using the self-hosted Stray Alley, token credentials are encrypted locally using AES-256-GCM algorithms, with decryption keys stored exclusively inside your personal environment parameters.
             </p>
           </section>
 

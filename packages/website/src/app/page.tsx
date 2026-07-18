@@ -30,7 +30,7 @@ export default function Home() {
       <header className="border-b-4 border-zinc-900 bg-[#16161a] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <img src="/Stray.svg" alt="Stray Logo" className="h-9 w-9" />
-          <span className="text-xl font-black tracking-wider text-white uppercase">STRAY</span>
+          <span className="text-xl font-black tracking-wider text-white uppercase">STRAY ALLEY</span>
         </div>
         <nav className="flex items-center gap-6 text-xs font-black uppercase text-zinc-400">
           <Link href="/downloads" className="hover:text-amber-500 transition">Downloads</Link>
@@ -50,7 +50,7 @@ export default function Home() {
           </h1>
           
           <p className="text-sm md:text-base text-zinc-400 max-w-2xl mb-10 leading-relaxed font-medium">
-            Stray is an open-source, self-hosted Discord presence experiment. Built to test custom gateway activities, spoof active devices, and learn WebSocket mechanics safely on your own server.
+            Stray Alley is an open-source, self-hosted Discord presence customizer. Log in with secure Discord OAuth2 authorization, encrypt account tokens in your database, and manage spoofed presence connections directly.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 w-full justify-center">
@@ -84,7 +84,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-base font-black text-white mb-2 uppercase">Bun Native</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed font-medium">
-                  Runs directly on Bun WebSockets. Extremely low memory footprint and zero external production dependencies.
+                  Runs directly inside Bun. Highly responsive WebSocket handshakes and near-zero memory footprint.
                 </p>
               </div>
 
@@ -111,73 +111,45 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-24 px-8 max-w-6xl mx-auto w-full">
+        <section className="py-24 px-8 max-w-4xl mx-auto w-full">
           <h2 className="text-3xl font-black text-center text-white mb-16 uppercase tracking-wider">
-            Deployment Layouts
+            Self-Hosted Alley Features
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-8 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)]">
-              <div>
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">Version A</span>
-                <h3 className="text-xl font-black text-white mb-4 uppercase">Stray Skeletal</h3>
-                <p className="text-zinc-400 text-xs mb-6 leading-relaxed font-medium">
-                  A headless Discord gateway wrapper script running on Bun. Highly compatible with Raspberry Pi, local servers, or Docker instances.
-                </p>
-                <ul className="text-xs text-zinc-350 flex flex-col gap-3 mb-8 font-medium">
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Zero production package overhead</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Gateway reconnection handlers</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Preconfigured Docker compose templates</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Native executable compilation scripts</span>
-                  </li>
-                </ul>
-              </div>
-              <Link href="/downloads" className="w-full text-center py-3 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-300 hover:text-white rounded-xl font-bold uppercase transition text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
-                Skeletal Setup
-              </Link>
-            </div>
-
-            <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-8 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)]">
-              <div>
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">Version B</span>
-                <h3 className="text-xl font-black text-white mb-4 uppercase">Stray Dashboard</h3>
-                <p className="text-zinc-400 text-xs mb-6 leading-relaxed font-medium">
-                  A self-hosted management UI panel. Built on Next.js to provide visual active status configuration and profile previews.
-                </p>
-                <ul className="text-xs text-zinc-350 flex flex-col gap-3 mb-8 font-medium">
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Real-time presence card previewer</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Secure AES database cipher utilities</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Visual status and RPC details forms</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckIcon />
-                    <span>Background daemon process controllers</span>
-                  </li>
-                </ul>
-              </div>
-              <Link href="/downloads" className="w-full text-center py-3 bg-amber-400 border-2 border-black text-black rounded-xl font-black uppercase transition text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
-                Dashboard Setup
-              </Link>
-            </div>
+          <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)]">
+            <h3 className="text-xl font-black text-white mb-4 uppercase">Stray Alley Features</h3>
+            <p className="text-zinc-400 text-xs mb-6 leading-relaxed font-medium">
+              An all-in-one web portal to manage your Discord Presence profiles visually. Configure the core parameters, test settings, and deploy gateway clients in the background.
+            </p>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-zinc-350 font-medium mb-8">
+              <li className="flex items-center gap-3">
+                <CheckIcon />
+                <span>Discord OAuth2 User Authentication</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckIcon />
+                <span>Secure AES-256-GCM token storage</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckIcon />
+                <span>Save Changes & Publish buttons</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckIcon />
+                <span>Real-time presence card previewer</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckIcon />
+                <span>Bun native background worker client</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckIcon />
+                <span>Docker container compose templates</span>
+              </li>
+            </ul>
+            <Link href="/downloads" className="inline-block text-center px-8 py-3 bg-amber-400 border-2 border-black text-black rounded-xl font-black uppercase transition text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
+              Download Files
+            </Link>
           </div>
         </section>
       </main>

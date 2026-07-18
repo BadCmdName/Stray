@@ -1,11 +1,5 @@
 import Link from "next/link";
 
-const PackageIcon = () => (
-  <svg className="h-6 w-6 text-zinc-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-
 const DashboardIcon = () => (
   <svg className="h-6 w-6 text-zinc-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -24,7 +18,7 @@ export default function Downloads() {
       <header className="border-b-4 border-zinc-900 bg-[#16161a] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-3">
           <img src="/Stray.svg" alt="Stray Logo" className="h-9 w-9" />
-          <span className="text-xl font-black tracking-wider text-white uppercase">STRAY</span>
+          <span className="text-xl font-black tracking-wider text-white uppercase">STRAY ALLEY</span>
         </Link>
         <nav className="flex items-center gap-6 text-sm font-black uppercase text-zinc-400">
           <Link href="/downloads" className="text-amber-400">Downloads</Link>
@@ -43,60 +37,51 @@ export default function Downloads() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)] flex flex-col justify-between">
-            <div>
-              <div className="h-10 w-10 bg-amber-400 rounded-lg border-2 border-black flex items-center justify-center mb-4">
-                <PackageIcon />
-              </div>
-              <h2 className="text-lg font-black text-white mb-2 uppercase">Stray Skeletal</h2>
-              <p className="text-xs text-zinc-400 mb-6 font-medium">
-                The lightweight daemon. Ideal for low-memory environments, containers, or direct execution via Bun.
-              </p>
-              
-              <pre className="bg-[#0e0e11] border border-zinc-850 p-4 rounded-xl text-[10px] font-mono text-zinc-300 overflow-x-auto mb-6">
-{`# Setup local daemon
-git clone https://github.com/BadCmdName/Stray.git
-cd Stray/packages/skeletal
-cp stray.config.json.example stray.config.json
-bun install
-bun start`}
-              </pre>
+        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 bg-amber-400 rounded-lg border-2 border-black flex items-center justify-center">
+              <DashboardIcon />
             </div>
-            
-            <a
-              href="https://github.com/BadCmdName/Stray/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full text-center py-3 bg-amber-400 border-2 border-black text-black rounded-xl font-black uppercase transition text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
-            >
-              Download Files
-            </a>
+            <h2 className="text-xl font-black text-white uppercase">Stray Alley Setup Guide</h2>
           </div>
 
-          <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.4)] flex flex-col justify-between">
+          <div className="flex flex-col gap-6 text-xs text-zinc-350 leading-relaxed font-medium">
             <div>
-              <div className="h-10 w-10 bg-amber-400 rounded-lg border-2 border-black flex items-center justify-center mb-4">
-                <DashboardIcon />
-              </div>
-              <h2 className="text-lg font-black text-white mb-2 uppercase">Stray Dashboard</h2>
-              <p className="text-xs text-zinc-400 mb-6 font-medium">
-                The visual dashboard app. Run this self-hosted panels template to manage active presence variables visually.
-              </p>
+              <h3 className="text-sm font-black text-white uppercase mb-2">1. Clone & Install</h3>
+              <pre className="bg-[#0e0e11] border border-zinc-850 p-4 rounded-xl font-mono text-zinc-300 overflow-x-auto">
+{`git clone https://github.com/BadCmdName/Stray.git
+cd Stray/packages/alley
+bun install`}
+              </pre>
+            </div>
 
-              <pre className="bg-[#0e0e11] border border-zinc-850 p-4 rounded-xl text-[10px] font-mono text-zinc-300 overflow-x-auto mb-6">
-{`# Setup visual panel
-cd Stray/packages/dashboard
-bun install
+            <div>
+              <h3 className="text-sm font-black text-white uppercase mb-2">2. Environment Credentials</h3>
+              <p className="mb-2">Create a `.env` file in `packages/alley/` with the following parameters:</p>
+              <pre className="bg-[#0e0e11] border border-zinc-850 p-4 rounded-xl font-mono text-zinc-300 overflow-x-auto">
+{`DATABASE_URL="postgresql://user:pass@localhost:5432/stray"
+ENCRYPTION_KEY="your_32_bytes_hex_encryption_key"
+JWT_SECRET="your_secure_session_secret"
+DISCORD_CLIENT_ID="your_discord_application_id"
+DISCORD_CLIENT_SECRET="your_discord_application_secret"
+DISCORD_REDIRECT_URI="http://localhost:3000/api/auth/callback"
+ALLOWED_USER_IDS="1018195507560063039,another_discord_id"`}
+              </pre>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-black text-white uppercase mb-2">3. Setup Database & Run</h3>
+              <pre className="bg-[#0e0e11] border border-zinc-850 p-4 rounded-xl font-mono text-zinc-300 overflow-x-auto">
+{`bunx prisma db push
 bun run dev`}
               </pre>
             </div>
+          </div>
 
+          <div className="mt-8">
             <a
-              href="https://github.com/BadCmdName/Stray"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full text-center py-3 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-200 hover:text-white rounded-xl font-bold uppercase transition text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+              href="https://github.com/BadCmdName/Stray/archive/refs/heads/main.zip"
+              className="inline-block text-center px-8 py-3.5 bg-amber-400 border-2 border-black text-black rounded-xl font-black uppercase transition text-xs tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
             >
               Download Files
             </a>
@@ -108,18 +93,26 @@ bun run dev`}
             <div className="h-10 w-10 bg-amber-400 rounded-lg border-2 border-black flex items-center justify-center">
               <DockerIcon />
             </div>
-            <h2 className="text-lg font-black text-white uppercase">Docker Compose Configuration</h2>
+            <h2 className="text-lg font-black text-white uppercase">Docker Compose Deployment</h2>
           </div>
           <p className="text-xs text-zinc-400 mb-4 font-medium">
-            Run the daemon inside an isolated alpine container by copying this compose file:
+            Alternatively, deploy using Docker Compose with environment bindings:
           </p>
           <pre className="bg-[#0e0e11] border border-zinc-850 p-4 rounded-xl text-xs font-mono text-zinc-300 overflow-x-auto">
 {`version: '3.8'
 services:
-  stray-skeletal:
-    image: bun:1.0-alpine
-    volumes:
-      - ./stray.config.json:/app/stray.config.json
+  stray-alley:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/stray
+      - ENCRYPTION_KEY=your_key
+      - JWT_SECRET=your_secret
+      - DISCORD_CLIENT_ID=your_id
+      - DISCORD_CLIENT_SECRET=your_secret
+      - DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/callback
+      - ALLOWED_USER_IDS=your_discord_user_id
     restart: always`}
           </pre>
         </div>
