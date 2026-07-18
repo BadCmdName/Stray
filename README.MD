@@ -1,56 +1,51 @@
 # Stray Alley
 
-Stray Alley is a self-hosted, secure Discord presence playground built on Next.js and Bun. It features active session device spoofing, custom rich activity presence, and client connection management.
+Stray Alley is a self-hosted, secure Discord presence playground built on Next.js. It features active session device spoofing, custom rich activity presence, and client connection management.
 
 ---
 
 ## Features
 
-* **Bun Integration:** Runs directly on Bun. Highly responsive WebSocket gateway connections and near-zero memory footprint.
+* **Node.js Native:** Fully compatible with standard Node.js runtimes. Easy to deploy on cloud services (Render, Railway, etc.).
+* **Zero Database Configuration:** Uses a local JSON file database (`db.json`) that sets itself up on first boot. No SQLite or PostgreSQL servers needed.
+* **Auto-generated Secrets:** Dynamically generates and persists cryptographic keys for token encryption and session signing.
+* **Hassle-Free Login:** Uses the official Stray application login proxy, eliminating the need to create personal Discord Developer applications.
+* **Single Environment Variable:** The only setting required in your environment is the list of authorized Discord user IDs.
 * **Device Spoofing:** Pretend you are logged in on a custom device (Mobile Android client, Desktop, Web, or Xbox console).
-* **Rich Presence & Custom Statuses:** Live updates for playing, custom text, details, and dynamic image assets.
-* **Symmetric Token Security:** Store account credentials encrypted locally inside your database using AES-256-GCM.
-* **Secure Access List:** Restrict dashboard access by listing authorized Discord IDs inside your environment configuration.
-* **Interactive Dashboard:** Save configuration changes locally or Publish them online instantly.
+* **Rich Presence:** Live updates for custom activity states, details, timestamps, and dynamic image assets.
 
 ---
 
 ## Quick Start
 
-Ensure you have [Bun](https://bun.sh) and PostgreSQL installed on your system.
+Ensure you have Node.js (v18+) and npm installed.
 
-### 1. Clone the Repository
+### 1. Clone the Codebase
 ```bash
 git clone https://github.com/BadCmdName/Stray.git
 cd Stray/packages/alley
 ```
 
-### 2. Configure Environment Parameters
+### 2. Configure Allowed Users
 Create a `.env` file in the `packages/alley` folder:
 ```bash
-DATABASE_URL="postgresql://user:pass@localhost:5432/stray"
-ENCRYPTION_KEY="your_32_bytes_hex_encryption_key"
-JWT_SECRET="your_secure_session_secret"
-DISCORD_CLIENT_ID="your_discord_application_id"
-DISCORD_CLIENT_SECRET="your_discord_application_secret"
-DISCORD_REDIRECT_URI="http://localhost:3000/api/auth/callback"
 ALLOWED_USER_IDS="1018195507560063039"
 ```
 
-### 3. Sync Database and Start
+### 3. Install & Start
 ```bash
-bun install
-bunx prisma db push
-bun run dev
+npm install
+npm run build
+npm start
 ```
 
-Open `http://localhost:3000` in your web browser, log in through your Discord Application, and start configuring your custom status parameters.
+Open `http://localhost:3000` in your browser, click login to authenticate with Discord, and configure your presence.
 
 ---
 
 ## Credits
 
-Stray is built using ideas, connection designs, and payloads derived from the [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original authors for laying the groundwork.
+Stray is built using designs and connection payloads derived from the awesome [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creators.
 
 ---
 

@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
-
-const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret_catnip_321";
+import { getDb } from "./db";
 
 export interface SessionPayload {
   userId: string;
@@ -11,17 +10,19 @@ export interface SessionPayload {
 }
 
 export function signSession(payload: SessionPayload): string {
+  const db = getDb();
   const data = Buffer.from(JSON.stringify(payload)).toString("base64");
-  const signature = crypto.createHmac("sha256", JWT_SECRET).update(data).digest("base64");
+  const signature = crypto.createHmac("sha256", db.jwtSecret).update(data).digest("base64");
   return `${data}.${signature}`;
 }
 
 export function verifySession(token: string): SessionPayload | null {
   try {
+    const db = getDb();
     const parts = token.split(".");
     if (parts.length !== 2) return null;
     const [data, signature] = parts;
-    const expectedSignature = crypto.createHmac("sha256", JWT_SECRET).update(data).digest("base64");
+    const expectedSignature = crypto.createHmac("sha256", db.jwtSecret).update(data).digest("base64");
     if (signature !== expectedSignature) return null;
     const payload: SessionPayload = JSON.parse(Buffer.from(data, "base64").toString("utf-8"));
     if (Date.now() > payload.expires) return null;

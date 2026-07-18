@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getDaemonStatus } from "@/lib/daemon";
 import { decrypt } from "@/lib/encryption";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { getUser } from "@/lib/db";
 
 export async function GET() {
   const session = await getSession();
@@ -12,9 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-  });
+  const user = getUser(session.userId);
 
   let token = "";
   if (user?.discordToken) {
