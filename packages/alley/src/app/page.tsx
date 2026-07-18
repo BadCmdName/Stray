@@ -30,6 +30,7 @@ export default function Home() {
   const [authChecked, setAuthChecked] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState("");
 
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("online");
@@ -51,16 +52,6 @@ export default function Home() {
   const [isStopping, setIsStopping] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const err = params.get("error");
-    if (err) {
-      if (err === "not_allowed") {
-        setAuthError("Your Discord ID is not allowed in security list.");
-      } else {
-        setAuthError("Authentication check failed. Please verify credentials.");
-      }
-    }
-
     fetch("/api/auth/me")
       .then((res) => {
         if (!res.ok) throw new Error();
@@ -102,6 +93,26 @@ export default function Home() {
         setIsRunning(data.isRunning || false);
       })
       .catch(() => {});
+  };
+
+  const handleKeySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: keyInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.error || "Login verification failed.");
+      } else {
+        window.location.reload();
+      }
+    } catch {
+      setAuthError("Failed to connect to the authentication server.");
+    }
   };
 
   const handleSave = async () => {
@@ -215,7 +226,7 @@ export default function Home() {
           <img src="/Stray.svg" alt="Stray Logo" className="h-16 w-16 mb-6" />
           <h1 className="text-3xl font-black text-white uppercase tracking-wider mb-2">STRAY ALLEY</h1>
           <p className="text-xs text-zinc-400 font-medium mb-8 max-w-xs leading-relaxed">
-            Authorized presence controller playground. Log in using your Discord application credentials.
+            Authorized presence controller playground. Enter your Stray Key to connect.
           </p>
 
           {authError && (
@@ -224,13 +235,33 @@ export default function Home() {
             </div>
           )}
 
-          <a
-            href="/api/auth/login"
-            className="w-full py-4 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none flex items-center justify-center gap-3"
-          >
-            <BoltIcon />
-            <span>Enter Stray Alley</span>
-          </a>
+          <form onSubmit={handleKeySubmit} className="w-full flex flex-col gap-4">
+            <input
+              type="text"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder="Paste your Stray Key here..."
+              className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition font-mono"
+            />
+            <button
+              type="submit"
+              className="w-full py-4 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+            >
+              Enter Stray Alley
+            </button>
+          </form>
+
+          <div className="mt-6 text-xs font-semibold text-zinc-550">
+            Need a key?{" "}
+            <a
+              href="https://stray.bcnstudio.tech/api/auth/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-500 hover:text-amber-400 transition underline"
+            >
+              Get your Stray Key here
+            </a>
+          </div>
         </div>
       </div>
     );
