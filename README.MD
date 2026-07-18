@@ -1,18 +1,45 @@
+<p align="center">
+  <img src="Alley/public/Stray.png" alt="Stray Logo" width="120" height="120" />
+</p>
+
 # Stray Alley
 
 Stray Alley is a self-hosted, secure Discord presence playground built on Next.js. It features active session device spoofing, custom rich activity presence, and client connection management.
 
+> [!WARNING]
+> **Violation of Discord Terms of Service (ToS):** Operating selfbots or custom presence scripts on personal user accounts is against the Discord Terms of Service. Using this project could result in your account being permanently banned or restricted. Use at your own risk.
+
+> [!CAUTION]
+> **Keep Your Token Safe:** Your Discord Account Token gives full access to your account. Stray Alley encrypts your token locally in `db.json` using AES-256-GCM (automatically generating encryption keys on start), but you must ensure your host environment remains secure. Never share your token.
+
 ---
 
-## Features
+## Previews
 
-* **Node.js Native:** Fully compatible with standard Node.js runtimes. Easy to deploy on cloud services (Render, Railway, etc.).
-* **Zero Database Configuration:** Uses a local JSON file database (`db.json`) that sets itself up on first boot. No SQLite or PostgreSQL servers needed.
-* **Auto-generated Secrets:** Dynamically generates and persists cryptographic keys for token encryption and session signing.
-* **Hassle-Free Login:** Uses the official Stray application login proxy, eliminating the need to create personal Discord Developer applications.
-* **Single Environment Variable:** The only setting required in your environment is the list of authorized Discord user IDs.
+<p align="center">
+  <img src="public/image.png" alt="Dashboard Setup Screen" width="100%" />
+</p>
+
+<p align="center">
+  <img src="public/image1.png" alt="RPC Parameters Customization" width="100%" />
+</p>
+
+<p align="center">
+  <img src="public/image2.png" alt="Live Status Preview Console" width="100%" />
+</p>
+
+---
+
+## Perks & Key Benefits
+
+* **Interactive Live Preview:** A beautiful, responsive Discord profile card visualizer lets you configure and preview custom statuses and Rich Presence states instantly as you type.
+* **Ultra-Low Latency (~7ms Handshake):** Lightweight Node.js WebSocket engine initiates connection handshakes and updates presence properties in milliseconds.
+* **Stealth Log-Out:** Instantly goes invisible and offline when you stop the service, bypassing the usual 30-second to 2-minute Discord session timeout delay.
+* **Live Connection Logging:** A built-in terminal log viewport displays gateway milestones (Hellos, Heartbeats, READY states, and error close codes) in real-time.
+* **Zero Database Configuration:** Completely self-contained using a zero-dependency local JSON file database (`db.json`) that sets itself up on first boot.
+* **Dynamic RPC Asset Loading:** Enter direct image URLs or application asset keys. The dashboard automatically resolves Developer Portal keys to the Discord CDN.
+* **Emoji Integration:** Support for standard Unicode emojis and custom Discord emojis (including static and animated GIFs) directly inside status updates.
 * **Device Spoofing:** Pretend you are logged in on a custom device (Mobile Android client, Desktop, Web, or Xbox console).
-* **Rich Presence:** Live updates for custom activity states, details, timestamps, and dynamic image assets.
 
 ---
 
@@ -20,11 +47,8 @@ Stray Alley is a self-hosted, secure Discord presence playground built on Next.j
 
 Ensure you have Node.js (v18+) and npm installed.
 
-### 1. Clone the Codebase
-```bash
-git clone https://github.com/BadCmdName/Stray.git
-cd Stray/Alley
-```
+### 1. Download the Release
+Download the latest release zip package from the [Stray Releases](https://github.com/BadCmdName/Stray/releases) page. Extract the files and navigate into the `Alley` directory.
 
 ### 2. Configure Allowed Users
 Create a `.env` file in the `Alley` folder:
@@ -39,18 +63,16 @@ npm run build
 npm start
 ```
 
-Open `http://localhost:3000` in your browser, click login to authenticate with Discord, and configure your presence.
+Open `http://localhost:3000` in your browser, click login to generate and paste your key, and customize your presence.
 
 ---
 
 ## Credits
 
-Stray is built using designs and connection payloads derived from the awesome [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creators.
+Stray is built using designs and connection payloads inspired by the [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creator.
 
 ---
 
 ## License
 
 Stray is licensed under the **PolyForm Noncommercial License 1.0.0**. See the `LICENSE.MD` file for details.
-
-*Disclaimer: This is for educational and personal customization purposes. Using custom client presence scripts is against the Discord Terms of Service. Use at your own risk.*
