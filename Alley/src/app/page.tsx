@@ -481,7 +481,14 @@ export default function Home() {
             </svg>
             <span>
               Stray {updateNotification.latestVersion} is released!{" "}
-              {updateNotification.isFork ? "Resync your fork now!" : "Clone the latest build!"}
+              {updateNotification.isFork
+                ? "Resync your fork now!"
+                : (typeof window !== "undefined" &&
+                   (window.location.hostname === "localhost" ||
+                    window.location.hostname === "127.0.0.1" ||
+                    window.location.hostname === "[::1]"))
+                ? "Clone the latest build!"
+                : "Please manually deploy to the latest commit!"}
             </span>
           </div>
           <a

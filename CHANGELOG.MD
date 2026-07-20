@@ -4,6 +4,15 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ---
 
+## v1.0.3 - 2026-07-20
+
+### Added
+- Live gateway log streaming option to Discord Webhooks.
+- Forced connection reconnecting within 1 second on gateway session conflicts or timeouts.
+- Dynamic version mismatch alert banners customized for local hosting (`Clone the latest build!`), git forks (`Resync your fork now!`), and direct cloud deployments (`Please manually deploy to the latest commit!`).
+
+---
+
 ## v1.0.1 - 2026-07-20
 
 ### Added
