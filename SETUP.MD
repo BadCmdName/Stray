@@ -53,6 +53,12 @@ Once the server starts, open `http://localhost:3000` in your web browser. Click 
 
 ## 3. Cloud Deployment (Render, Railway, Koyeb, etc.)
 
+> [!IMPORTANT]
+> **Deploy from your own Fork (Do NOT use the public repository directly):** 
+> If you deploy Render/Railway services pointing directly to our public repository (`https://github.com/BadCmdName/Stray`), any code updates we commit to our repository will trigger an automatic redeployment of your server. This will wipe your local `db.json` database configuration and take your presence offline.
+> 
+> To prevent this, always **Fork the repository** to your own GitHub account first, configure your cloud service to deploy from your personal fork, and manually sync your fork when you want to retrieve the latest stable updates.
+
 Stray Alley is built as a Next.js monorepo. Follow these parameters when deploying directly from your GitHub fork:
 
 * **Repository Branch:** `main`

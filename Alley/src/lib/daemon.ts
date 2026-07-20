@@ -1,5 +1,6 @@
 import WebSocket from "ws";
 import * as emoji from "node-emoji";
+import { getUser } from "./db";
 
 export interface StrayConfig {
   token: string;
@@ -38,6 +39,19 @@ export function addLog(userId: string, message: string) {
   logs.push(`[${time}] ${message}`);
   if (logs.length > 50) logs.shift();
   globalThis.strayLogs?.set(userId, logs);
+
+  const user = getUser(userId);
+  if (user?.webhookUrl) {
+    fetch(user.webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: `\`\`\`[${time}] ${message}\`\`\``,
+        username: "Stray Alley Logs",
+        avatar_url: "https://stray.bcnstudio.tech/Stray.png",
+      }),
+    }).catch(() => {});
+  }
 }
 
 export function getLogs(userId: string): string[] {
@@ -134,8 +148,18 @@ class StrayClient {
         addLog(this.userId, `Connection closed (Code: ${code}, Reason: ${reasonStr})`);
         this.cleanupTimers();
         if (this.active) {
-          addLog(this.userId, "Reconnecting in 5 seconds...");
-          this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
+          if (code === 4004) {
+            addLog(this.userId, "Token is invalid (Code 4004). Stopping client.");
+            this.active = false;
+            return;
+          }
+          if (code === 4005 || code === 4009) {
+            addLog(this.userId, "Session conflict or timeout detected. Forcing immediate reconnect...");
+            this.reconnectTimeout = setTimeout(() => this.connect(), 1000);
+          } else {
+            addLog(this.userId, "Reconnecting in 5 seconds...");
+            this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
+          }
         }
       });
 
