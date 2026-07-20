@@ -21,6 +21,7 @@ export interface UserConfig {
   rpcLargeText: string | null;
   rpcSmallImage: string | null;
   rpcSmallText: string | null;
+  termsAccepted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,6 +82,7 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     rpcLargeText: null,
     rpcSmallImage: null,
     rpcSmallText: null,
+    termsAccepted: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
