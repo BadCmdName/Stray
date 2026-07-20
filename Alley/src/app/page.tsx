@@ -52,6 +52,10 @@ export default function Home() {
   const [verifiedProfile, setVerifiedProfile] = useState<{ id: string; username: string; discriminator: string; avatar: string | null } | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [remainingTimeText, setRemainingTimeText] = useState("");
+  const [isTokenValidOnOpen, setIsTokenValidOnOpen] = useState(false);
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => {
@@ -86,6 +90,30 @@ export default function Home() {
       return () => clearInterval(interval);
     }
   }, [session]);
+
+  useEffect(() => {
+    let interval: any;
+    if (showLogoutModal && session?.keyExpires) {
+      const updateTimer = () => {
+        const diff = session.keyExpires - Date.now();
+        if (diff > 0) {
+          setIsTokenValidOnOpen(true);
+          const totalSecs = Math.floor(diff / 1000);
+          const mins = Math.floor(totalSecs / 60);
+          const secs = totalSecs % 60;
+          setRemainingTimeText(`${mins}:${secs < 10 ? "0" : ""}${secs}`);
+        } else {
+          setIsTokenValidOnOpen(false);
+          setRemainingTimeText("");
+        }
+      };
+      updateTimer();
+      interval = setInterval(updateTimer, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showLogoutModal, session]);
 
   const loadConfig = () => {
     fetch("/api/status")
@@ -368,7 +396,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e0e11] text-[#f4f4f5] flex flex-col font-sans select-none animate-fadeIn">
+    <div className="min-h-screen bg-[#0e0e11] text-[#f4f4f5] flex flex-col font-sans select-none animate-fadeIn relative">
       <header className="border-b-4 border-zinc-900 bg-[#16161a] px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <img src="/Stray.svg" alt="Stray Logo" className="h-8 w-8" />
@@ -379,8 +407,8 @@ export default function Home() {
             {session.username}
           </span>
           <button
-            onClick={handleLogout}
-            className="px-4 py-1.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            onClick={() => setShowLogoutModal(true)}
+            className="px-4 py-1.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             Leave Alley
           </button>
@@ -634,7 +662,7 @@ export default function Home() {
           <h2 className="text-base font-black text-white pb-1 uppercase tracking-wider">Live Preview</h2>
           
           <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-            <div className="h-20 bg-zinc-800 relative" />
+            <div className="h-20 bg-zinc-850 relative" />
             <div className="px-4 pb-6 relative">
               <div className="absolute -top-10 left-4 h-20 w-20 bg-[#16161a] rounded-full border-4 border-[#16161a] flex items-center justify-center relative">
                 {avatarUrl ? (
@@ -725,6 +753,40 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#16161a] border-2 border-rose-500 max-w-sm sm:max-w-md w-full rounded-2xl p-6 sm:p-8 shadow-[5px_5px_0px_0px_rgba(244,63,94,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
+            <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-wider">Leave Alley?</h3>
+            
+            {isTokenValidOnOpen ? (
+              <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                Your previous token is still valid, you can login until{" "}
+                <span className="text-amber-400 font-black font-mono">{remainingTimeText}</span>!
+              </p>
+            ) : (
+              <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                Your previous token has expired, you will need to generate a new one to login again!
+              </p>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-350 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                Nevermind
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

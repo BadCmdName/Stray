@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       username: payload.username,
       avatar: payload.avatar || undefined,
       expires,
+      keyExpires: payload.expires,
     });
 
     const cookieStore = await cookies();

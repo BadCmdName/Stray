@@ -7,6 +7,7 @@ export interface SessionPayload {
   username: string;
   avatar?: string;
   expires: number;
+  keyExpires?: number;
 }
 
 export function signSession(payload: SessionPayload): string {
