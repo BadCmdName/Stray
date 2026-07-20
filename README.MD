@@ -14,6 +14,15 @@ Stray Alley is a self-hosted, secure Discord presence playground built on Next.j
 
 ---
 
+## Documentation
+
+To install, configure, or troubleshoot Stray Alley, navigate to the documents below:
+
+* **[Installation and Setup Guide](SETUP.MD):** Step-by-step local setup, cloud deployments (Render, Railway, etc.), and UptimeRobot keep-alive setup.
+* **[Changelog](CHANGELOG.MD):** Detailed version history and features summary.
+
+---
+
 ## Previews
 
 <p align="center">
@@ -43,74 +52,11 @@ Stray Alley is a self-hosted, secure Discord presence playground built on Next.j
 
 ---
 
-## Quick Start
-
-Ensure you have Node.js (v18+) and npm (or Bun) installed.
-
-### 1. Download the Release
-Download the latest release zip package from the [Stray Releases](https://github.com/BadCmdName/Stray/releases) page. Extract the files and navigate into the `Alley` directory.
-
-### 2. Configure Allowed Users
-Create a `.env` file in the `Alley` folder:
-```bash
-ALLOWED_USER_IDS="1018195507560063039"
-```
-
-### 3. Install & Start
-
-Using **npm**:
-```bash
-npm install
-npm run build
-npm start
-```
-
-Using **Bun**:
-```bash
-bun install
-bun run build
-bun run start
-```
-
-Open `http://localhost:3000` in your browser, click login to generate and paste your key, and customize your presence.
-
-### 4. Deploying to Cloud Services (Render, Railway, etc.)
-When deploying to remote hosting services directly from the public Git repository:
-* **Root Directory:** Set to `Alley` (since the repository is a monorepo).
-* **Build Command:** Set to `npm install && npm run build` (or `bun install && bun run build`) to ensure dependencies are installed.
-* **Start Command:** Set to `npm start` (or `bun run start`).
-* **Health Check Path:** Set to `/api/ping` (this monitors the service health and keeps the container active).
-* **Environment Variable:** Add `ALLOWED_USER_IDS` with your Discord user ID.
-* **Persistence:** Ensure the service mounts a persistent volume or has write access to persist the `db.json` file across deployments (otherwise config and session logs will reset when the server restarts).
-
-> [!WARNING]
-> **Beta Branch Deployments:** Do NOT deploy from the `beta` branch. The `beta` branch is strictly for internal testing and development. Absolutely no support will be provided for deployments running on the `beta` branch. Always deploy from the `main` branch or use the latest stable release package.
-
----
-
-## Prevent Idle Shutdowns (Keep-Alive Integration)
-
-If you host Stray Alley on free hosting providers (such as Render, Koyeb, Glitch, etc.), the server may automatically shut down or sleep after 15 to 60 minutes of inactivity. Since the gateway client relies on a persistent WebSocket connection, a server shutdown will cause your presence status to go offline.
-
-Stray Alley includes a built-in keep-alive endpoint: `/api/ping`. Pinging this endpoint periodically resets the inactivity timer of the host.
-
-### Setting Up UptimeRobot
-1. Create a free account at [UptimeRobot](https://uptimerobot.com/).
-2. Navigate to your dashboard and click **Add New Monitor**.
-3. Configure the monitor parameters:
-   * **Monitor Type:** HTTP(s)
-   * **Friendly Name:** Stray Keep-Alive
-   * **URL (or IP):** `https://your-app-name.onrender.com/api/ping` (Replace with your actual self-hosted server domain URL)
-   * **Monitoring Interval:** Every 5 minutes (or 10 minutes)
-4. Click **Create Monitor** and confirm.
-
-UptimeRobot will now request `/api/ping` every 5 minutes, keeping your self-hosted instance active 24/7!
-
----
-
 ## Credits
 
-Stray is built using designs and connection payloads inspired by the [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creator.
+Stray's base is built using connection payloads inspired by the [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creator.
+
+Stray's Auto-Quest Complete is built using [DQACS](https://github.com/aiko-chan-ai/Discord-Quest-Auto-Completion-Selfbot). Massive thanks to the original creator.
 
 ---
 
