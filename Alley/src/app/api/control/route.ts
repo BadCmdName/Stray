@@ -15,23 +15,22 @@ export async function POST(request: Request) {
     const { action, config } = body;
 
     if (config) {
-      const encryptedToken = config.token ? encrypt(config.token) : "";
       saveUser(session.userId, {
         username: session.username,
-        discordToken: encryptedToken,
-        status: config.status,
-        device: config.device,
-        customStatusText: config.custom_status?.text || null,
-        customStatusEmoji: config.custom_status?.emoji || null,
-        rpcEnabled: config.rich_presence?.enabled || false,
-        rpcClientId: config.rich_presence?.client_id || null,
-        rpcName: config.rich_presence?.name || null,
-        rpcState: config.rich_presence?.state || null,
-        rpcDetails: config.rich_presence?.details || null,
-        rpcLargeImage: config.rich_presence?.large_image || null,
-        rpcLargeText: config.rich_presence?.large_text || null,
-        rpcSmallImage: config.rich_presence?.small_image || null,
-        rpcSmallText: config.rich_presence?.small_text || null,
+        ...(config.token !== undefined ? { discordToken: config.token ? encrypt(config.token) : "" } : {}),
+        ...(config.status !== undefined ? { status: config.status } : {}),
+        ...(config.device !== undefined ? { device: config.device } : {}),
+        ...(config.custom_status?.text !== undefined ? { customStatusText: config.custom_status.text } : {}),
+        ...(config.custom_status?.emoji !== undefined ? { customStatusEmoji: config.custom_status.emoji } : {}),
+        ...(config.rich_presence?.enabled !== undefined ? { rpcEnabled: config.rich_presence.enabled } : {}),
+        ...(config.rich_presence?.client_id !== undefined ? { rpcClientId: config.rich_presence.client_id } : {}),
+        ...(config.rich_presence?.name !== undefined ? { rpcName: config.rich_presence.name } : {}),
+        ...(config.rich_presence?.state !== undefined ? { rpcState: config.rich_presence.state } : {}),
+        ...(config.rich_presence?.details !== undefined ? { rpcDetails: config.rich_presence.details } : {}),
+        ...(config.rich_presence?.large_image !== undefined ? { rpcLargeImage: config.rich_presence.large_image } : {}),
+        ...(config.rich_presence?.large_text !== undefined ? { rpcLargeText: config.rich_presence.large_text } : {}),
+        ...(config.rich_presence?.small_image !== undefined ? { rpcSmallImage: config.rich_presence.small_image } : {}),
+        ...(config.rich_presence?.small_text !== undefined ? { rpcSmallText: config.rich_presence.small_text } : {}),
         ...(config.termsAccepted !== undefined ? { termsAccepted: config.termsAccepted } : {}),
       });
     }

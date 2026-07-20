@@ -238,22 +238,7 @@ export default function Home() {
         body: JSON.stringify({
           action: "SAVE",
           config: {
-            token,
-            status,
-            device,
             termsAccepted: true,
-            custom_status: { text: customStatus, emoji: customStatusEmoji },
-            rich_presence: {
-              enabled: rpcEnabled,
-              client_id: rpcClientId,
-              name: rpcName,
-              state: rpcState,
-              details: rpcDetails,
-              large_image: rpcLargeImage,
-              large_text: rpcLargeText,
-              small_image: rpcSmallImage,
-              small_text: rpcSmallText,
-            },
           },
         }),
       });
@@ -416,7 +401,7 @@ export default function Home() {
           </p>
 
           {authError && (
-            <div className="w-full bg-rose-905/20 border-2 border-rose-900 text-rose-400 p-4 rounded-xl text-xs font-semibold mb-6">
+            <div className="w-full bg-rose-950/20 border-2 border-rose-900 text-rose-400 p-4 rounded-xl text-xs font-semibold mb-6">
               {authError}
             </div>
           )}
