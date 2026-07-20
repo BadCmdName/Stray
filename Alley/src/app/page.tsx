@@ -4,19 +4,19 @@ import { useState, useEffect } from "react";
 import * as emoji from "node-emoji";
 
 const CheckIcon = () => (
-  <svg className="h-4 w-4 text-emerald-450 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+  <svg className="h-4 w-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
   </svg>
 );
 
 const UserIcon = () => (
-  <svg className="h-10 w-10 text-zinc-650" fill="currentColor" viewBox="0 0 24 24">
+  <svg className="h-10 w-10 text-zinc-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
   </svg>
 );
 
 const GameIcon = () => (
-  <svg className="h-7 w-7 text-zinc-650" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  <svg className="h-7 w-7 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
   </svg>
 );
@@ -55,7 +55,9 @@ export default function Home() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [remainingTimeText, setRemainingTimeText] = useState("");
   const [isTokenValidOnOpen, setIsTokenValidOnOpen] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(true);
+  
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -124,7 +126,7 @@ export default function Home() {
           setToken(data.config.token || "");
           setStatus(data.config.status || "online");
           setDevice(data.config.device || "desktop");
-          setTermsAccepted(data.config.termsAccepted ?? false);
+          setTermsAccepted(data.config.termsAccepted || false);
           setCustomStatus(data.config.custom_status?.text || "");
           setCustomStatusEmoji(data.config.custom_status?.emoji || "");
           if (data.config.rich_presence) {
@@ -146,8 +148,11 @@ export default function Home() {
         if (data.logs) {
           setLogs(data.logs);
         }
+        setConfigLoaded(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        setConfigLoaded(true);
+      });
   };
 
   const triggerTokenCheck = async (tokenToCheck: string) => {
@@ -226,9 +231,8 @@ export default function Home() {
   };
 
   const handleAcceptTerms = async () => {
-    setTermsAccepted(true);
     try {
-      await fetch("/api/control", {
+      const res = await fetch("/api/control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -253,7 +257,14 @@ export default function Home() {
           },
         }),
       });
-    } catch {}
+      if (res.ok) {
+        setTermsAccepted(true);
+      } else {
+        setTermsAccepted(false);
+      }
+    } catch {
+      setTermsAccepted(false);
+    }
   };
 
   const handlePublish = async () => {
@@ -373,10 +384,10 @@ export default function Home() {
   };
 
   const statusColors: Record<string, string> = {
-    online: "bg-[#10b981]",
-    idle: "bg-[#f59e0b]",
-    dnd: "bg-[#ef4444]",
-    invisible: "bg-[#71717a]",
+    online: "bg-emerald-500",
+    idle: "bg-amber-500",
+    dnd: "bg-rose-500",
+    invisible: "bg-zinc-500",
   };
 
   const avatarUrl = verifiedProfile?.avatar
@@ -405,7 +416,7 @@ export default function Home() {
           </p>
 
           {authError && (
-            <div className="w-full bg-rose-955/20 border-2 border-rose-900 text-rose-350 p-4 rounded-xl text-xs font-semibold mb-6">
+            <div className="w-full bg-rose-905/20 border-2 border-rose-900 text-rose-400 p-4 rounded-xl text-xs font-semibold mb-6">
               {authError}
             </div>
           )}
@@ -467,7 +478,7 @@ export default function Home() {
           <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
             <h2 className="text-base font-black text-white uppercase tracking-wider">Stray Parameters</h2>
             <div className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-650"}`} />
+              <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                 {isRunning ? "Online" : "Stealth"}
               </span>
@@ -487,13 +498,13 @@ export default function Home() {
               <button
                 onClick={() => triggerTokenCheck(token)}
                 disabled={verifyingToken}
-                className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-355 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 {verifyingToken ? "Verifying..." : "Verify Token"}
               </button>
             </div>
             {tokenValidationMsg && (
-              <span className={`text-[10px] font-bold mt-1 ${tokenValidationMsg.isError ? "text-rose-455 animate-pulse" : "text-emerald-455"}`}>
+              <span className={`text-[10px] font-bold mt-1 ${tokenValidationMsg.isError ? "text-rose-400 animate-pulse" : "text-emerald-400"}`}>
                 {tokenValidationMsg.text}
               </span>
             )}
@@ -682,7 +693,7 @@ export default function Home() {
             <button
               onClick={handleSave}
               disabled={isSaving || isPublishing || isStopping}
-              className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-350 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
@@ -709,7 +720,7 @@ export default function Home() {
           <h2 className="text-base font-black text-white pb-1 uppercase tracking-wider">Live Preview</h2>
           
           <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-            <div className="h-20 bg-zinc-850 relative" />
+            <div className="h-20 bg-zinc-800 relative" />
             <div className="px-4 pb-6 relative">
               <div className="absolute -top-10 left-4 h-20 w-20 bg-[#16161a] rounded-full border-4 border-[#16161a] flex items-center justify-center relative">
                 {avatarUrl ? (
@@ -740,7 +751,7 @@ export default function Home() {
                 <div className="py-3 border-b border-zinc-800 flex items-center min-h-[48px]">
                   <div className="w-full">
                     <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
-                    <div className="flex items-center text-xs text-zinc-350 italic">
+                    <div className="flex items-center text-xs text-zinc-400 italic">
                       {renderEmoji(customStatusEmoji)}
                       {customStatus && <span>“{customStatus}”</span>}
                     </div>
@@ -750,9 +761,9 @@ export default function Home() {
 
               {rpcEnabled && (
                 <div className="py-4 flex flex-col gap-3">
-                  <span className="text-[10px] text-zinc-550 block font-bold uppercase tracking-wider">Playing a Game</span>
+                  <span className="text-[10px] text-zinc-500 block font-bold uppercase tracking-wider">Playing a Game</span>
                   <div className="flex gap-4 items-start">
-                    <div className="relative h-16 w-16 bg-[#0e0e11] rounded-xl flex items-center justify-center text-zinc-500 overflow-hidden border-2 border-zinc-800">
+                    <div className="relative h-16 w-16 bg-[#0e0e11] rounded-xl flex items-center justify-center text-zinc-600 overflow-hidden border-2 border-zinc-800">
                       {rpcLargeImgSrc ? (
                         <img src={rpcLargeImgSrc} alt="Large RPC asset" className="h-full w-full object-cover" />
                       ) : (
@@ -766,9 +777,9 @@ export default function Home() {
                     </div>
                     <div className="flex-1 flex flex-col min-w-0">
                       <h4 className="text-xs font-bold text-white truncate">{rpcName || "Stray"}</h4>
-                      {rpcDetails && <p className="text-[10px] text-zinc-350 truncate mt-0.5">{rpcDetails}</p>}
+                      {rpcDetails && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcDetails}</p>}
                       {rpcState && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcState}</p>}
-                      <p className="text-[9px] text-zinc-555 mt-1 uppercase font-semibold">1:37 elapsed</p>
+                      <p className="text-[9px] text-zinc-500 mt-1 uppercase font-semibold">1:37 elapsed</p>
                     </div>
                   </div>
                 </div>
@@ -792,7 +803,7 @@ export default function Home() {
               <span className="text-zinc-700 select-none">|</span>
               <button
                 onClick={() => setLogs([])}
-                className="text-[10px] font-bold text-zinc-555 hover:text-zinc-300 uppercase tracking-wide transition"
+                className="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 uppercase tracking-wide transition"
               >
                 Clear UI View
               </button>
@@ -800,7 +811,7 @@ export default function Home() {
           </div>
           <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
-              <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
+              <span className="text-zinc-600 italic">No connection logs available. Press Publish to establish a session.</span>
             ) : (
               [...logs].reverse().map((log, index) => (
                 <span key={index} className={`whitespace-pre-wrap break-all leading-relaxed font-semibold ${getLogColorClass(log)}`}>
@@ -831,7 +842,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-355 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Nevermind
               </button>
@@ -846,12 +857,12 @@ export default function Home() {
         </div>
       )}
 
-      {!termsAccepted && session && (
+      {!termsAccepted && session && configLoaded && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
           <div className="bg-[#16161a] border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
             <h3 className="text-xl font-black text-white uppercase tracking-wider">Liability Agreement & Waiver</h3>
             
-            <div className="text-left text-xs text-zinc-400 flex flex-col gap-3 font-medium leading-relaxed bg-[#0e0e11] p-4 sm:p-5 border border-zinc-850 rounded-xl overflow-y-auto max-h-60">
+            <div className="text-left text-xs text-zinc-400 flex flex-col gap-3 font-medium leading-relaxed bg-[#0e0e11] p-4 sm:p-5 border border-zinc-800 rounded-xl overflow-y-auto max-h-60">
               <p>
                 <strong>1. Violation of Service Policies:</strong> By accessing and entering the self-hosted Stray Alley daemon control interface, you verify that you understand using customized presence clients (selfbots) violates the Discord Developer Terms of Service and user rules.
               </p>

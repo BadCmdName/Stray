@@ -21,7 +21,6 @@ export async function POST(request: Request) {
         discordToken: encryptedToken,
         status: config.status,
         device: config.device,
-        termsAccepted: config.termsAccepted !== undefined ? config.termsAccepted : undefined,
         customStatusText: config.custom_status?.text || null,
         customStatusEmoji: config.custom_status?.emoji || null,
         rpcEnabled: config.rich_presence?.enabled || false,
@@ -33,6 +32,7 @@ export async function POST(request: Request) {
         rpcLargeText: config.rich_presence?.large_text || null,
         rpcSmallImage: config.rich_presence?.small_image || null,
         rpcSmallText: config.rich_presence?.small_text || null,
+        ...(config.termsAccepted !== undefined ? { termsAccepted: config.termsAccepted } : {}),
       });
     }
 
