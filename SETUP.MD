@@ -55,7 +55,7 @@ Once the server starts, open `http://localhost:3000` in your web browser. Click 
 
 > [!IMPORTANT]
 > **Deploy from your own Fork (Do NOT use the public repository directly):** 
-> If you deploy Render/Railway services pointing directly to our public repository (`https://github.com/BadCmdName/Stray`), any code updates we commit to our repository will trigger an automatic redeployment of your server. This will wipe your local `db.json` database configuration and take your presence offline.
+> If you deploy Render/Railway/Etc. services pointing directly to our public repository (`https://github.com/BadCmdName/Stray`), any code updates we commit to our repository will trigger an automatic redeployment of your server. This will wipe your local `db.json` database configuration and take your presence offline.
 > 
 > To prevent this, always **Fork the repository** to your own GitHub account first, configure your cloud service to deploy from your personal fork, and manually sync your fork when you want to retrieve the latest stable updates.
 
@@ -85,7 +85,7 @@ To keep your container active 24/7, use UptimeRobot to ping the built-in keep-al
 3. Configure the monitor details:
    * **Monitor Type:** HTTP(s)
    * **Friendly Name:** Stray Keep-Alive or Whatever you want it to be
-   * **URL (or IP):** `https://your-app-name.onrender.com/api/ping` (Replace with your actual deployed URL)
+   * **URL (or IP):** `https://your-app-name.yourhost.com/api/ping` (Replace with your actual deployed URL)
    * **Monitoring Interval:** Every 5 minutes (or 10 minutes)
 4. Save and confirm the monitor.
 
@@ -108,6 +108,11 @@ npm install
 npm run build
 npm start
 ```
+> [!IMPORTANT]
+> Re-deployment wipes all data. This environment uses temporary server storage for security reasons, making data loss irreversible.
 
 ### How do I update my instance to the latest version? (Cloud Hosted)
-Simply redeploy with the latest commit from the `main` branch.
+Simply Re-sync your Fork with the latest Main branch.
+Your server will re-deploy automatically (unless the setting is turned off and need a manual deploy) and the updates should be live.
+> [!IMPORTANT]
+> Re-deployment wipes all data. This environment uses temporary server storage for security reasons, making data loss irreversible.

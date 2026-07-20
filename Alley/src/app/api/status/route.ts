@@ -13,21 +13,21 @@ function getGitInfo() {
     if (remoteUrl && !remoteUrl.includes("BadCmdName/Stray")) {
       return { isFork: true };
     }
-  } catch {}
+  } catch { }
   return { isFork: false };
 }
 
-async function getLatestReleaseTag(): Promise<string | null> {
+async function getOfficialVersion(): Promise<string | null> {
   try {
-    const res = await fetch("https://api.github.com/repos/BadCmdName/Stray/releases/latest", {
+    const res = await fetch("https://raw.githubusercontent.com/BadCmdName/Stray/main/Alley/package.json", {
       headers: { "User-Agent": "Stray-Alley" },
       next: { revalidate: 3600 }
     });
     if (res.ok) {
       const data = await res.json();
-      return data.tag_name || null;
+      return data.version || null;
     }
-  } catch {}
+  } catch { }
   return null;
 }
 
@@ -43,49 +43,49 @@ export async function GET() {
   if (user?.discordToken) {
     try {
       token = decrypt(user.discordToken);
-    } catch {}
+    } catch { }
   }
 
-  const latestRelease = await getLatestReleaseTag();
+  const officialVersion = await getOfficialVersion();
   const packageJsonPath = path.resolve(process.cwd(), "package.json");
-  let currentVersion = "v2.0.0";
+  let currentVersion = "1.0.2";
   try {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-    currentVersion = `v${pkg.version}`;
-  } catch {}
+    currentVersion = pkg.version;
+  } catch { }
 
-  const hasUpdate = latestRelease && latestRelease !== currentVersion;
+  const hasUpdate = officialVersion && officialVersion !== currentVersion;
 
   return NextResponse.json({
     isRunning: getDaemonStatus(session.userId),
     logs: getLogs(session.userId),
     updateNotification: hasUpdate ? {
-      latestVersion: latestRelease,
+      latestVersion: `v${officialVersion}`,
       isFork: getGitInfo().isFork,
     } : null,
     config: user
       ? {
-          token,
-          status: user.status,
-          device: user.device,
-          termsAccepted: user.termsAccepted || false,
-          webhookUrl: user.webhookUrl || "",
-          custom_status: {
-            text: user.customStatusText || "",
-            emoji: user.customStatusEmoji || "",
-          },
-          rich_presence: {
-            enabled: user.rpcEnabled,
-            client_id: user.rpcClientId || "",
-            name: user.rpcName || "",
-            state: user.rpcState || "",
-            details: user.rpcDetails || "",
-            large_image: user.rpcLargeImage || "",
-            large_text: user.rpcLargeText || "",
-            small_image: user.rpcSmallImage || "",
-            small_text: user.rpcSmallText || "",
-          },
-        }
+        token,
+        status: user.status,
+        device: user.device,
+        termsAccepted: user.termsAccepted || false,
+        webhookUrl: user.webhookUrl || "",
+        custom_status: {
+          text: user.customStatusText || "",
+          emoji: user.customStatusEmoji || "",
+        },
+        rich_presence: {
+          enabled: user.rpcEnabled,
+          client_id: user.rpcClientId || "",
+          name: user.rpcName || "",
+          state: user.rpcState || "",
+          details: user.rpcDetails || "",
+          large_image: user.rpcLargeImage || "",
+          large_text: user.rpcLargeText || "",
+          small_image: user.rpcSmallImage || "",
+          small_text: user.rpcSmallText || "",
+        },
+      }
       : null,
   });
 }
