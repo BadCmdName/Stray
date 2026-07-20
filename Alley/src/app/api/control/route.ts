@@ -21,6 +21,7 @@ export async function POST(request: Request) {
         discordToken: encryptedToken,
         status: config.status,
         device: config.device,
+        termsAccepted: config.termsAccepted !== undefined ? config.termsAccepted : undefined,
         customStatusText: config.custom_status?.text || null,
         customStatusEmoji: config.custom_status?.emoji || null,
         rpcEnabled: config.rich_presence?.enabled || false,

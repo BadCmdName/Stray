@@ -55,6 +55,7 @@ export default function Home() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [remainingTimeText, setRemainingTimeText] = useState("");
   const [isTokenValidOnOpen, setIsTokenValidOnOpen] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -123,6 +124,7 @@ export default function Home() {
           setToken(data.config.token || "");
           setStatus(data.config.status || "online");
           setDevice(data.config.device || "desktop");
+          setTermsAccepted(data.config.termsAccepted ?? false);
           setCustomStatus(data.config.custom_status?.text || "");
           setCustomStatusEmoji(data.config.custom_status?.emoji || "");
           if (data.config.rich_presence) {
@@ -221,6 +223,37 @@ export default function Home() {
       });
     } catch {}
     setIsSaving(false);
+  };
+
+  const handleAcceptTerms = async () => {
+    setTermsAccepted(true);
+    try {
+      await fetch("/api/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SAVE",
+          config: {
+            token,
+            status,
+            device,
+            termsAccepted: true,
+            custom_status: { text: customStatus, emoji: customStatusEmoji },
+            rich_presence: {
+              enabled: rpcEnabled,
+              client_id: rpcClientId,
+              name: rpcName,
+              state: rpcState,
+              details: rpcDetails,
+              large_image: rpcLargeImage,
+              large_text: rpcLargeText,
+              small_image: rpcSmallImage,
+              small_text: rpcSmallText,
+            },
+          },
+        }),
+      });
+    } catch {}
   };
 
   const handlePublish = async () => {
@@ -323,6 +356,20 @@ export default function Home() {
     }
 
     return <span className="inline-block mr-1.5 align-middle select-all">{trimmed}</span>;
+  };
+
+  const getLogColorClass = (logText: string) => {
+    const text = logText.toLowerCase();
+    if (text.includes("error") || text.includes("fail") || text.includes("close") || text.includes("invalid") || text.includes("denied")) {
+      return "text-rose-400";
+    }
+    if (text.includes("ready") || text.includes("established") || text.includes("hello") || text.includes("success")) {
+      return "text-emerald-400";
+    }
+    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering")) {
+      return "text-amber-400";
+    }
+    return "text-zinc-400";
   };
 
   const statusColors: Record<string, string> = {
@@ -440,13 +487,13 @@ export default function Home() {
               <button
                 onClick={() => triggerTokenCheck(token)}
                 disabled={verifyingToken}
-                className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-350 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-355 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 {verifyingToken ? "Verifying..." : "Verify Token"}
               </button>
             </div>
             {tokenValidationMsg && (
-              <span className={`text-[10px] font-bold mt-1 ${tokenValidationMsg.isError ? "text-rose-450 animate-pulse" : "text-emerald-450"}`}>
+              <span className={`text-[10px] font-bold mt-1 ${tokenValidationMsg.isError ? "text-rose-455 animate-pulse" : "text-emerald-455"}`}>
                 {tokenValidationMsg.text}
               </span>
             )}
@@ -733,19 +780,30 @@ export default function Home() {
         <div className="col-span-12 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
           <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection Logs</h2>
-            <button
-              onClick={() => setLogs([])}
-              className="text-[10px] font-bold text-zinc-550 hover:text-zinc-300 uppercase tracking-wide transition"
-            >
-              Clear UI View
-            </button>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/BadCmdName/Stray/issues/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-bold text-amber-400 hover:text-amber-500 uppercase tracking-wide transition"
+              >
+                Report Issue
+              </a>
+              <span className="text-zinc-700 select-none">|</span>
+              <button
+                onClick={() => setLogs([])}
+                className="text-[10px] font-bold text-zinc-555 hover:text-zinc-300 uppercase tracking-wide transition"
+              >
+                Clear UI View
+              </button>
+            </div>
           </div>
           <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
               <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
             ) : (
               [...logs].reverse().map((log, index) => (
-                <span key={index} className="whitespace-pre-wrap break-all leading-relaxed font-semibold">
+                <span key={index} className={`whitespace-pre-wrap break-all leading-relaxed font-semibold ${getLogColorClass(log)}`}>
                   {log}
                 </span>
               ))
@@ -773,7 +831,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-350 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-355 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Nevermind
               </button>
@@ -782,6 +840,35 @@ export default function Home() {
                 className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!termsAccepted && session && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
+          <div className="bg-[#16161a] border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
+            <h3 className="text-xl font-black text-white uppercase tracking-wider">Liability Agreement & Waiver</h3>
+            
+            <div className="text-left text-xs text-zinc-400 flex flex-col gap-3 font-medium leading-relaxed bg-[#0e0e11] p-4 sm:p-5 border border-zinc-850 rounded-xl overflow-y-auto max-h-60">
+              <p>
+                <strong>1. Violation of Service Policies:</strong> By accessing and entering the self-hosted Stray Alley daemon control interface, you verify that you understand using customized presence clients (selfbots) violates the Discord Developer Terms of Service and user rules.
+              </p>
+              <p>
+                <strong>2. Zero Creator Liability:</strong> Under no circumstances shall Antigravity, BadCmdName, or the creators and maintainers of this project be held liable for any direct or indirect actions taken against your account by Discord Inc., including permanent restrictions, API access blocks, or total account termination.
+              </p>
+              <p>
+                <strong>3. Pure Personal Responsibility:</strong> You take 100% of all legal, operational, and system risks. You are solely responsible for keeping your tokens safe, managing configurations, and hosting server processes on your own personal infrastructure.
+              </p>
+            </div>
+
+            <div>
+              <button
+                onClick={handleAcceptTerms}
+                className="w-full py-4 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                I Accept All Risks & Responsibilities
               </button>
             </div>
           </div>

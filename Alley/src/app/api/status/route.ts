@@ -27,6 +27,7 @@ export async function GET() {
           token,
           status: user.status,
           device: user.device,
+          termsAccepted: user.termsAccepted || false,
           custom_status: {
             text: user.customStatusText || "",
             emoji: user.customStatusEmoji || "",
