@@ -35,11 +35,16 @@ bun run start
 Go to `http://localhost:3000` to start customizing.
 
 ### 4. Deploying to Cloud Services (Render, Railway, etc.)
-When deploying to remote hosting services:
-1. Set the Build Command to: `npm run build` or `bun run build`
-2. Set the Start Command to: `npm start` or `bun run start`
-3. Add the Environment Variable: `ALLOWED_USER_IDS` with your Discord user ID.
-4. Ensure the service mounts a persistent volume or has write access to persist the `db.json` file across deployments (otherwise config and session logs will reset when the server restarts).
+When deploying to remote hosting services directly from the public Git repository:
+1. **Root Directory:** Set to `Alley` (since the repository is a monorepo).
+2. **Build Command:** Set to `npm install && npm run build` (or `bun install && bun run build`) to ensure dependencies are installed.
+3. **Start Command:** Set to `npm start` (or `bun run start`).
+4. **Health Check Path:** Set to `/api/ping` (this monitors the service health and keeps the container active).
+5. **Environment Variable:** Add `ALLOWED_USER_IDS` with your Discord user ID.
+6. **Persistence:** Ensure the service mounts a persistent volume or has write access to persist the `db.json` file across deployments (otherwise config and session logs will reset when the server restarts).
+
+> [!WARNING]
+> **Beta Branch Deployments:** Do NOT deploy from the `beta` branch. The `beta` branch is strictly for internal testing and development. Absolutely no support will be provided for deployments running on the `beta` branch. Always deploy from the `main` branch or use the latest stable release package.
 
 ---
 
