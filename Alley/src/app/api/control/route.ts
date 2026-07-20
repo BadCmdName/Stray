@@ -33,6 +33,14 @@ export async function POST(request: Request) {
         ...(config.rich_presence?.small_text !== undefined ? { rpcSmallText: config.rich_presence.small_text } : {}),
         ...(config.termsAccepted !== undefined ? { termsAccepted: config.termsAccepted } : {}),
         ...(config.webhookUrl !== undefined ? { webhookUrl: config.webhookUrl } : {}),
+        ...(config.rotationEnabled !== undefined ? { rotationEnabled: config.rotationEnabled } : {}),
+        ...(config.rotationInterval !== undefined ? { rotationInterval: config.rotationInterval } : {}),
+        ...(config.rotationStatus1Text !== undefined ? { rotationStatus1Text: config.rotationStatus1Text } : {}),
+        ...(config.rotationStatus1Emoji !== undefined ? { rotationStatus1Emoji: config.rotationStatus1Emoji } : {}),
+        ...(config.rotationStatus2Text !== undefined ? { rotationStatus2Text: config.rotationStatus2Text } : {}),
+        ...(config.rotationStatus2Emoji !== undefined ? { rotationStatus2Emoji: config.rotationStatus2Emoji } : {}),
+        ...(config.rotationStatus3Text !== undefined ? { rotationStatus3Text: config.rotationStatus3Text } : {}),
+        ...(config.rotationStatus3Emoji !== undefined ? { rotationStatus3Emoji: config.rotationStatus3Emoji } : {}),
       });
     }
 

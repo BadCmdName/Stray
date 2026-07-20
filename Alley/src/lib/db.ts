@@ -23,6 +23,14 @@ export interface UserConfig {
   rpcSmallText: string | null;
   termsAccepted?: boolean;
   webhookUrl?: string | null;
+  rotationEnabled?: boolean;
+  rotationInterval?: number;
+  rotationStatus1Text?: string | null;
+  rotationStatus1Emoji?: string | null;
+  rotationStatus2Text?: string | null;
+  rotationStatus2Emoji?: string | null;
+  rotationStatus3Text?: string | null;
+  rotationStatus3Emoji?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +93,14 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     rpcSmallText: null,
     termsAccepted: false,
     webhookUrl: null,
+    rotationEnabled: false,
+    rotationInterval: 10,
+    rotationStatus1Text: null,
+    rotationStatus1Emoji: null,
+    rotationStatus2Text: null,
+    rotationStatus2Emoji: null,
+    rotationStatus3Text: null,
+    rotationStatus3Emoji: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

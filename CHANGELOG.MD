@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to the Stray Alley project will be documented in this file.
+> [!IMPORTANT]
+> **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
+
+---
+
+## v1.1.0 - 2026-07-20
+
+### Added
+- **Custom Status Rotation:** Rotate dynamically between up to 3 custom statuses (text + emoji) at a customizable interval (in seconds).
+- **Waiver & Webhook Repositioning:** Repositioned the Discord Webhook logs integration input into the logs terminal console card.
 
 ---
 

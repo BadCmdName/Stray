@@ -18,6 +18,14 @@ export interface StrayConfig {
     small_image: string;
     small_text: string;
   };
+  rotationEnabled?: boolean;
+  rotationInterval?: number;
+  rotationStatus1Text?: string | null;
+  rotationStatus1Emoji?: string | null;
+  rotationStatus2Text?: string | null;
+  rotationStatus2Emoji?: string | null;
+  rotationStatus3Text?: string | null;
+  rotationStatus3Emoji?: string | null;
 }
 
 declare global {
@@ -96,6 +104,8 @@ class StrayClient {
   private ws: WebSocket | null = null;
   private heartbeatInterval: any = null;
   private reconnectTimeout: any = null;
+  private rotationIntervalTimer: any = null;
+  private currentRotationIndex: number = 0;
   private sequence: number | null = null;
   private active: boolean = true;
 
@@ -181,7 +191,7 @@ class StrayClient {
 
     if (msg.t === "READY") {
       addLog(this.userId, `Gateway session is READY. User: ${msg.d.user.username}`);
-      this.updatePresence(largeImage, smallImage);
+      this.startRotationLoop(largeImage, smallImage);
     }
 
     switch (msg.op) {
@@ -220,12 +230,28 @@ class StrayClient {
 
     const activities: any[] = [];
 
-    if (this.config.custom_status?.text || this.config.custom_status?.emoji) {
+    let customStatusText = this.config.custom_status?.text || "";
+    let customStatusEmoji = this.config.custom_status?.emoji || "";
+
+    if (this.config.rotationEnabled) {
+      if (this.config.rotationStatus1Text || this.config.rotationStatus1Emoji) {
+        customStatusText = this.config.rotationStatus1Text || "";
+        customStatusEmoji = this.config.rotationStatus1Emoji || "";
+      } else if (this.config.rotationStatus2Text || this.config.rotationStatus2Emoji) {
+        customStatusText = this.config.rotationStatus2Text || "";
+        customStatusEmoji = this.config.rotationStatus2Emoji || "";
+      } else if (this.config.rotationStatus3Text || this.config.rotationStatus3Emoji) {
+        customStatusText = this.config.rotationStatus3Text || "";
+        customStatusEmoji = this.config.rotationStatus3Emoji || "";
+      }
+    }
+
+    if (customStatusText || customStatusEmoji) {
       activities.push({
         type: 4,
         name: "Custom Status",
-        state: this.config.custom_status?.text || "",
-        emoji: this.config.custom_status?.emoji ? parseEmoji(this.config.custom_status.emoji) : null,
+        state: customStatusText,
+        emoji: customStatusEmoji ? parseEmoji(customStatusEmoji) : null,
       });
     }
 
@@ -263,6 +289,98 @@ class StrayClient {
           activities,
           afk: false,
         },
+      },
+    };
+
+    this.ws.send(JSON.stringify(payload));
+  }
+
+  private startRotationLoop(largeImage: string, smallImage: string) {
+    if (this.rotationIntervalTimer) {
+      clearInterval(this.rotationIntervalTimer);
+      this.rotationIntervalTimer = null;
+    }
+
+    if (this.config.rotationEnabled) {
+      const statuses: { text: string; emoji: string }[] = [];
+      if (this.config.rotationStatus1Text || this.config.rotationStatus1Emoji) {
+        statuses.push({
+          text: this.config.rotationStatus1Text || "",
+          emoji: this.config.rotationStatus1Emoji || "",
+        });
+      }
+      if (this.config.rotationStatus2Text || this.config.rotationStatus2Emoji) {
+        statuses.push({
+          text: this.config.rotationStatus2Text || "",
+          emoji: this.config.rotationStatus2Emoji || "",
+        });
+      }
+      if (this.config.rotationStatus3Text || this.config.rotationStatus3Emoji) {
+        statuses.push({
+          text: this.config.rotationStatus3Text || "",
+          emoji: this.config.rotationStatus3Emoji || "",
+        });
+      }
+
+      if (statuses.length > 0) {
+        this.currentRotationIndex = 0;
+        this.updateRotationPresence(statuses[0], largeImage, smallImage);
+
+        const intervalMs = (this.config.rotationInterval || 10) * 1000;
+        addLog(this.userId, `Starting status rotation loop (Interval: ${this.config.rotationInterval || 10}s)`);
+
+        this.rotationIntervalTimer = setInterval(() => {
+          this.currentRotationIndex = (this.currentRotationIndex + 1) % statuses.length;
+          this.updateRotationPresence(statuses[this.currentRotationIndex], largeImage, smallImage);
+        }, intervalMs);
+        return;
+      }
+    }
+
+    this.updatePresence(largeImage, smallImage);
+  }
+
+  private updateRotationPresence(currentStatus: { text: string; emoji: string }, largeImage: string, smallImage: string) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    addLog(this.userId, `Broadcasting custom status rotation: “${currentStatus.text}”`);
+
+    const activities: any[] = [];
+
+    if (currentStatus.text || currentStatus.emoji) {
+      activities.push({
+        type: 4,
+        name: "Custom Status",
+        state: currentStatus.text,
+        emoji: currentStatus.emoji ? parseEmoji(currentStatus.emoji) : null,
+      });
+    }
+
+    if (this.config.rich_presence?.enabled) {
+      activities.push({
+        type: 0,
+        name: this.config.rich_presence.name,
+        application_id: this.config.rich_presence.client_id,
+        state: this.config.rich_presence.state,
+        details: this.config.rich_presence.details,
+        assets: {
+          large_image: largeImage || undefined,
+          large_text: this.config.rich_presence.large_text || undefined,
+          small_image: smallImage || undefined,
+          small_text: this.config.rich_presence.small_text || undefined,
+        },
+        timestamps: {
+          start: Date.now(),
+        },
+      });
+    }
+
+    const payload = {
+      op: 3,
+      d: {
+        since: 0,
+        activities,
+        status: this.config.status,
+        afk: false,
       },
     };
 
@@ -324,6 +442,10 @@ class StrayClient {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
+    }
+    if (this.rotationIntervalTimer) {
+      clearInterval(this.rotationIntervalTimer);
+      this.rotationIntervalTimer = null;
     }
   }
 

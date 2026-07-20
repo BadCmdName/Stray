@@ -33,6 +33,16 @@ export default function Home() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [customStatus, setCustomStatus] = useState("Straying around");
   const [customStatusEmoji, setCustomStatusEmoji] = useState("");
+
+  const [rotationEnabled, setRotationEnabled] = useState(false);
+  const [rotationInterval, setRotationInterval] = useState(10);
+  const [rotationStatus1Text, setRotationStatus1Text] = useState("");
+  const [rotationStatus1Emoji, setRotationStatus1Emoji] = useState("");
+  const [rotationStatus2Text, setRotationStatus2Text] = useState("");
+  const [rotationStatus2Emoji, setRotationStatus2Emoji] = useState("");
+  const [rotationStatus3Text, setRotationStatus3Text] = useState("");
+  const [rotationStatus3Emoji, setRotationStatus3Emoji] = useState("");
+
   const [rpcEnabled, setRpcEnabled] = useState(false);
   const [rpcClientId, setRpcClientId] = useState("1018195507560063039");
   const [rpcName, setRpcName] = useState("Stray");
@@ -135,6 +145,14 @@ export default function Home() {
           setDevice(data.config.device || "desktop");
           setTermsAccepted(data.config.termsAccepted || false);
           setWebhookUrl(data.config.webhookUrl || "");
+          setRotationEnabled(data.config.rotationEnabled || false);
+          setRotationInterval(data.config.rotationInterval || 10);
+          setRotationStatus1Text(data.config.rotationStatus1Text || "");
+          setRotationStatus1Emoji(data.config.rotationStatus1Emoji || "");
+          setRotationStatus2Text(data.config.rotationStatus2Text || "");
+          setRotationStatus2Emoji(data.config.rotationStatus2Emoji || "");
+          setRotationStatus3Text(data.config.rotationStatus3Text || "");
+          setRotationStatus3Emoji(data.config.rotationStatus3Emoji || "");
           setCustomStatus(data.config.custom_status?.text || "");
           setCustomStatusEmoji(data.config.custom_status?.emoji || "");
           if (data.config.rich_presence) {
@@ -225,6 +243,14 @@ export default function Home() {
             status,
             device,
             webhookUrl,
+            rotationEnabled,
+            rotationInterval: Number(rotationInterval),
+            rotationStatus1Text,
+            rotationStatus1Emoji,
+            rotationStatus2Text,
+            rotationStatus2Emoji,
+            rotationStatus3Text,
+            rotationStatus3Emoji,
             custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
@@ -279,6 +305,14 @@ export default function Home() {
             status,
             device,
             webhookUrl,
+            rotationEnabled,
+            rotationInterval: Number(rotationInterval),
+            rotationStatus1Text,
+            rotationStatus1Emoji,
+            rotationStatus2Text,
+            rotationStatus2Emoji,
+            rotationStatus3Text,
+            rotationStatus3Emoji,
             custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
@@ -583,35 +617,117 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Custom status details</label>
-            <div className="flex gap-4">
-              <input
-                type="text"
-                value={customStatusEmoji}
-                onChange={(e) => setCustomStatusEmoji(e.target.value)}
-                placeholder=":sob: or <a:name:id>"
-                className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition text-center"
-              />
-              <input
-                type="text"
-                value={customStatus}
-                onChange={(e) => setCustomStatus(e.target.value)}
-                placeholder="What is stray doing..."
-                className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
-              />
+          {!rotationEnabled && (
+            <div className="flex flex-col gap-2 animate-fadeIn">
+              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Custom status details</label>
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  value={customStatusEmoji}
+                  onChange={(e) => setCustomStatusEmoji(e.target.value)}
+                  placeholder=":sob: or <a:name:id>"
+                  className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition text-center"
+                />
+                <input
+                  type="text"
+                  value={customStatus}
+                  onChange={(e) => setCustomStatus(e.target.value)}
+                  placeholder="What is stray doing..."
+                  className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Discord Log Webhook URL</label>
-            <input
-              type="text"
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="Paste your Discord webhook URL to stream connection logs to your server..."
-              className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
-            />
+          <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Custom Status Rotation</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rotationEnabled}
+                  onChange={(e) => setRotationEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+              </label>
+            </div>
+
+            {rotationEnabled && (
+              <div className="flex flex-col gap-4 animate-fadeIn">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Rotation Interval (in seconds)</label>
+                  <input
+                    type="number"
+                    min="3"
+                    value={rotationInterval}
+                    onChange={(e) => setRotationInterval(Number(e.target.value))}
+                    placeholder="10"
+                    className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 1</label>
+                  <div className="flex gap-4">
+                    <input
+                      type="text"
+                      value={rotationStatus1Emoji}
+                      onChange={(e) => setRotationStatus1Emoji(e.target.value)}
+                      placeholder=":sob: or emoji"
+                      className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                    />
+                    <input
+                      type="text"
+                      value={rotationStatus1Text}
+                      onChange={(e) => setRotationStatus1Text(e.target.value)}
+                      placeholder="Status message 1..."
+                      className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 2</label>
+                  <div className="flex gap-4">
+                    <input
+                      type="text"
+                      value={rotationStatus2Emoji}
+                      onChange={(e) => setRotationStatus2Emoji(e.target.value)}
+                      placeholder=":smile: or emoji"
+                      className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                    />
+                    <input
+                      type="text"
+                      value={rotationStatus2Text}
+                      onChange={(e) => setRotationStatus2Text(e.target.value)}
+                      placeholder="Status message 2..."
+                      className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 3</label>
+                  <div className="flex gap-4">
+                    <input
+                      type="text"
+                      value={rotationStatus3Emoji}
+                      onChange={(e) => setRotationStatus3Emoji(e.target.value)}
+                      placeholder=":heart: or emoji"
+                      className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                    />
+                    <input
+                      type="text"
+                      value={rotationStatus3Text}
+                      onChange={(e) => setRotationStatus3Text(e.target.value)}
+                      placeholder="Status message 3..."
+                      className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
@@ -787,7 +903,36 @@ export default function Home() {
                 </p>
               </div>
 
-              {(customStatus || customStatusEmoji) && (
+              {rotationEnabled && (
+                <div className="py-3 border-b border-zinc-800 flex flex-col gap-1 min-h-[48px]">
+                  <span className="text-[10px] text-zinc-500 block font-bold uppercase">Rotating Statuses</span>
+                  <div className="flex flex-col gap-1">
+                    {(rotationStatus1Text || rotationStatus1Emoji) && (
+                      <div className="flex items-center text-[11px] text-zinc-400 italic">
+                        <span className="text-amber-400 font-bold mr-1">1:</span>
+                        {renderEmoji(rotationStatus1Emoji)}
+                        {rotationStatus1Text && <span>“{rotationStatus1Text}”</span>}
+                      </div>
+                    )}
+                    {(rotationStatus2Text || rotationStatus2Emoji) && (
+                      <div className="flex items-center text-[11px] text-zinc-400 italic">
+                        <span className="text-amber-400 font-bold mr-1">2:</span>
+                        {renderEmoji(rotationStatus2Emoji)}
+                        {rotationStatus2Text && <span>“{rotationStatus2Text}”</span>}
+                      </div>
+                    )}
+                    {(rotationStatus3Text || rotationStatus3Emoji) && (
+                      <div className="flex items-center text-[11px] text-zinc-400 italic">
+                        <span className="text-amber-400 font-bold mr-1">3:</span>
+                        {renderEmoji(rotationStatus3Emoji)}
+                        {rotationStatus3Text && <span>“{rotationStatus3Text}”</span>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!rotationEnabled && (customStatus || customStatusEmoji) && (
                 <div className="py-3 border-b border-zinc-800 flex items-center min-h-[48px]">
                   <div className="w-full">
                     <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
@@ -849,6 +994,18 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Discord Log Webhook URL</label>
+            <input
+              type="text"
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              placeholder="Paste your Discord webhook URL to stream connection logs to your server..."
+              className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+            />
+          </div>
+
           <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
               <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
