@@ -6,6 +6,7 @@ node_modules/
 .env.production.local
 stray.config.json
 *.log
+*.zip
 .DS_Store
 dist/
 build/
@@ -16,5 +17,4 @@ Alley/.env
 Alley/node_modules/
 Alley/.next/
 Website
-v1.0.0-Alley/
-*.zip
+DQACS

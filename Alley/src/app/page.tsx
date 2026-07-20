@@ -30,6 +30,7 @@ export default function Home() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("online");
   const [device, setDevice] = useState("desktop");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [customStatus, setCustomStatus] = useState("Straying around");
   const [customStatusEmoji, setCustomStatusEmoji] = useState("");
   const [rpcEnabled, setRpcEnabled] = useState(false);
@@ -51,6 +52,7 @@ export default function Home() {
   const [tokenValidationMsg, setTokenValidationMsg] = useState<{ text: string; isError: boolean } | null>(null);
   const [verifiedProfile, setVerifiedProfile] = useState<{ id: string; username: string; discriminator: string; avatar: string | null } | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [updateNotification, setUpdateNotification] = useState<{ latestVersion: string; isFork: boolean } | null>(null);
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [remainingTimeText, setRemainingTimeText] = useState("");
@@ -86,6 +88,11 @@ export default function Home() {
             setIsRunning(data.isRunning || false);
             if (data.logs) {
               setLogs(data.logs);
+            }
+            if (data.updateNotification) {
+              setUpdateNotification(data.updateNotification);
+            } else {
+              setUpdateNotification(null);
             }
           })
           .catch(() => {});
@@ -127,6 +134,7 @@ export default function Home() {
           setStatus(data.config.status || "online");
           setDevice(data.config.device || "desktop");
           setTermsAccepted(data.config.termsAccepted || false);
+          setWebhookUrl(data.config.webhookUrl || "");
           setCustomStatus(data.config.custom_status?.text || "");
           setCustomStatusEmoji(data.config.custom_status?.emoji || "");
           if (data.config.rich_presence) {
@@ -143,6 +151,11 @@ export default function Home() {
           if (data.config.token) {
             triggerTokenCheck(data.config.token);
           }
+        }
+        if (data.updateNotification) {
+          setUpdateNotification(data.updateNotification);
+        } else {
+          setUpdateNotification(null);
         }
         setIsRunning(data.isRunning || false);
         if (data.logs) {
@@ -211,6 +224,7 @@ export default function Home() {
             token,
             status,
             device,
+            webhookUrl,
             custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
@@ -264,6 +278,7 @@ export default function Home() {
             token,
             status,
             device,
+            webhookUrl,
             custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
@@ -458,6 +473,28 @@ export default function Home() {
         </div>
       </header>
 
+      {updateNotification && (
+        <div className="w-full bg-amber-400 text-black border-b-4 border-black px-8 py-3 flex items-center justify-between text-xs font-black uppercase tracking-wider animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>
+              Stray {updateNotification.latestVersion} is released!{" "}
+              {updateNotification.isFork ? "Resync your fork now!" : "Clone the latest build!"}
+            </span>
+          </div>
+          <a
+            href="https://github.com/BadCmdName/Stray"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-black text-amber-400 border-2 border-black px-4 py-1.5 rounded-lg text-[10px] font-black tracking-wide hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_rgba(251,191,36,1)] transition"
+          >
+            Get Update
+          </a>
+        </div>
+      )}
+
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
           <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
@@ -509,7 +546,7 @@ export default function Home() {
                   <option value="web">Web Browser (Chrome)</option>
                   <option value="embedded">Xbox Console Interface</option>
                 </select>
-                <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-500">
+                <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -530,7 +567,7 @@ export default function Home() {
                   <option value="dnd">Do Not Disturb</option>
                   <option value="invisible">Invisible / Stealth</option>
                 </select>
-                <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-500">
+                <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -557,6 +594,17 @@ export default function Home() {
                 className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Discord Log Webhook URL</label>
+            <input
+              type="text"
+              value={webhookUrl}
+              onChange={(e) => setWebhookUrl(e.target.value)}
+              placeholder="Paste your Discord webhook URL to stream connection logs to your server..."
+              className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+            />
           </div>
 
           <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
@@ -764,7 +812,7 @@ export default function Home() {
                       <h4 className="text-xs font-bold text-white truncate">{rpcName || "Stray"}</h4>
                       {rpcDetails && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcDetails}</p>}
                       {rpcState && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcState}</p>}
-                      <p className="text-[9px] text-zinc-500 mt-1 uppercase font-semibold">1:37 elapsed</p>
+                      <p className="text-[9px] text-zinc-555 mt-1 uppercase font-semibold">1:37 elapsed</p>
                     </div>
                   </div>
                 </div>
@@ -788,7 +836,7 @@ export default function Home() {
               <span className="text-zinc-700 select-none">|</span>
               <button
                 onClick={() => setLogs([])}
-                className="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 uppercase tracking-wide transition"
+                className="text-[10px] font-bold text-zinc-555 hover:text-zinc-300 uppercase tracking-wide transition"
               >
                 Clear UI View
               </button>
@@ -796,7 +844,7 @@ export default function Home() {
           </div>
           <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
-              <span className="text-zinc-600 italic">No connection logs available. Press Publish to establish a session.</span>
+              <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
             ) : (
               [...logs].reverse().map((log, index) => (
                 <span key={index} className={`whitespace-pre-wrap break-all leading-relaxed font-semibold ${getLogColorClass(log)}`}>
@@ -827,7 +875,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-355 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Nevermind
               </button>

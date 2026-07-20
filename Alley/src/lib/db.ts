@@ -22,6 +22,7 @@ export interface UserConfig {
   rpcSmallImage: string | null;
   rpcSmallText: string | null;
   termsAccepted?: boolean;
+  webhookUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,6 +84,7 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     rpcSmallImage: null,
     rpcSmallText: null,
     termsAccepted: false,
+    webhookUrl: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

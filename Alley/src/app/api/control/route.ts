@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         ...(config.rich_presence?.small_image !== undefined ? { rpcSmallImage: config.rich_presence.small_image } : {}),
         ...(config.rich_presence?.small_text !== undefined ? { rpcSmallText: config.rich_presence.small_text } : {}),
         ...(config.termsAccepted !== undefined ? { termsAccepted: config.termsAccepted } : {}),
+        ...(config.webhookUrl !== undefined ? { webhookUrl: config.webhookUrl } : {}),
       });
     }
 

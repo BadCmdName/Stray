@@ -3,6 +3,33 @@ import { getSession } from "@/lib/auth";
 import { getDaemonStatus, getLogs } from "@/lib/daemon";
 import { decrypt } from "@/lib/encryption";
 import { getUser } from "@/lib/db";
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+
+function getGitInfo() {
+  try {
+    const remoteUrl = execSync("git remote -v", { encoding: "utf-8" });
+    if (remoteUrl && !remoteUrl.includes("BadCmdName/Stray")) {
+      return { isFork: true };
+    }
+  } catch {}
+  return { isFork: false };
+}
+
+async function getOfficialVersion(): Promise<string | null> {
+  try {
+    const res = await fetch("https://raw.githubusercontent.com/BadCmdName/Stray/main/Alley/package.json", {
+      headers: { "User-Agent": "Stray-Alley" },
+      next: { revalidate: 3600 }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.version || null;
+    }
+  } catch {}
+  return null;
+}
 
 export async function GET() {
   const session = await getSession();
@@ -19,15 +46,30 @@ export async function GET() {
     } catch {}
   }
 
+  const officialVersion = await getOfficialVersion();
+  const packageJsonPath = path.resolve(process.cwd(), "package.json");
+  let currentVersion = "1.0.2";
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+    currentVersion = pkg.version;
+  } catch {}
+
+  const hasUpdate = officialVersion && officialVersion !== currentVersion;
+
   return NextResponse.json({
     isRunning: getDaemonStatus(session.userId),
     logs: getLogs(session.userId),
+    updateNotification: hasUpdate ? {
+      latestVersion: `v${officialVersion}`,
+      isFork: getGitInfo().isFork,
+    } : null,
     config: user
       ? {
           token,
           status: user.status,
           device: user.device,
           termsAccepted: user.termsAccepted || false,
+          webhookUrl: user.webhookUrl || "",
           custom_status: {
             text: user.customStatusText || "",
             emoji: user.customStatusEmoji || "",
