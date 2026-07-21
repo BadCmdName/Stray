@@ -10,9 +10,11 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ### Added
 - **Custom Status Rotation:** Rotate dynamically between up to 3 custom statuses (text + emoji) at a customizable interval (in seconds).
+
+### Fixed
 - **Waiver & Webhook Repositioning:** Repositioned the Discord Webhook logs integration input into the logs terminal console card.
 
----
+
 
 ## v1.0.3 - 2026-07-20
 
@@ -21,7 +23,7 @@ All notable changes to the Stray Alley project will be documented in this file.
 - Forced connection reconnecting within 1 second on gateway session conflicts or timeouts.
 - Dynamic version mismatch alert banners customized for local hosting (`Clone the latest build!`), git forks (`Resync your fork now!`), and direct cloud deployments (`Please manually deploy to the latest commit!`).
 
----
+
 
 ## v1.0.1 - 2026-07-20
 
@@ -38,7 +40,7 @@ All notable changes to the Stray Alley project will be documented in this file.
 - Prevented waiver agreement bypass on database/network API connection failures.
 - Fixed crashes and styling bugs caused by custom or non-existent Tailwind color stop classes.
 
----
+
 
 ## v1.0.0 - 2026-07-18
 
