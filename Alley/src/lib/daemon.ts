@@ -1,11 +1,14 @@
 import WebSocket from "ws";
 import * as emoji from "node-emoji";
-import { getUser } from "./db";
+import { getUser, getDb } from "./db";
+import { decrypt } from "./encryption";
+import { restoreUserFromCloud } from "./cloudDb";
 
 export interface StrayConfig {
   token: string;
   status: string;
   device: string;
+  webhookUrl?: string;
   custom_status?: { text: string; emoji?: string };
   rich_presence?: {
     enabled: boolean;
@@ -504,4 +507,60 @@ export function stopDaemon(userId: string) {
 export function getDaemonStatus(userId: string): boolean {
   return activeClients.has(userId);
 }
+
+export async function restoreAllDaemons() {
+  const db = getDb();
+  if (!db || !db.users) return;
+
+  for (const [userId, user] of Object.entries(db.users)) {
+    if (user.cloudSyncEnabled && (!user.discordToken || !getDaemonStatus(userId))) {
+      await restoreUserFromCloud(userId);
+    }
+
+    const updatedUser = getUser(userId) || user;
+    if (updatedUser.botEnabled && updatedUser.discordToken && !getDaemonStatus(userId)) {
+      try {
+        const token = decrypt(updatedUser.discordToken);
+        if (token) {
+          const config: StrayConfig = {
+            token,
+            status: updatedUser.status || "online",
+            device: updatedUser.device || "desktop",
+            webhookUrl: updatedUser.webhookUrl || "",
+            rotationEnabled: updatedUser.rotationEnabled || false,
+            rotationInterval: updatedUser.rotationInterval || 10,
+            rotationStatus1Text: updatedUser.rotationStatus1Text || "",
+            rotationStatus1Emoji: updatedUser.rotationStatus1Emoji || "",
+            rotationStatus2Text: updatedUser.rotationStatus2Text || "",
+            rotationStatus2Emoji: updatedUser.rotationStatus2Emoji || "",
+            rotationStatus3Text: updatedUser.rotationStatus3Text || "",
+            rotationStatus3Emoji: updatedUser.rotationStatus3Emoji || "",
+            custom_status: {
+              text: updatedUser.customStatusText || "",
+              emoji: updatedUser.customStatusEmoji || "",
+            },
+            rich_presence: {
+              enabled: updatedUser.rpcEnabled || false,
+              type: updatedUser.rpcType ?? 0,
+              url: updatedUser.rpcUrl || "",
+              client_id: updatedUser.rpcClientId || "",
+              name: updatedUser.rpcName || "",
+              state: updatedUser.rpcState || "",
+              details: updatedUser.rpcDetails || "",
+              large_image: updatedUser.rpcLargeImage || "",
+              large_text: updatedUser.rpcLargeText || "",
+              small_image: updatedUser.rpcSmallImage || "",
+              small_text: updatedUser.rpcSmallText || "",
+            },
+          };
+          addLog(userId, "Auto-restoring gateway session from cloud storage on server boot...");
+          startDaemon(userId, config);
+        }
+      } catch (err: any) {
+        addLog(userId, `Failed to auto-restore session: ${err.message}`);
+      }
+    }
+  }
+}
+
 export type { StrayClient };

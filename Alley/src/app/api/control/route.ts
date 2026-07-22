@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { startDaemon, stopDaemon } from "@/lib/daemon";
 import { encrypt } from "@/lib/encryption";
-import { saveUser } from "@/lib/db";
+import { saveUser, getUser } from "@/lib/db";
+import { syncUserToCloud } from "@/lib/cloudDb";
+
+const userCooldowns = new Map<string, number>();
+const COOLDOWN_MS = 30000;
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -13,6 +17,19 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { action, config } = body;
+
+    if (action === "SAVE" || action === "PUBLISH") {
+      const lastAction = userCooldowns.get(session.userId) || 0;
+      const now = Date.now();
+      if (now - lastAction < COOLDOWN_MS) {
+        const remaining = Math.ceil((COOLDOWN_MS - (now - lastAction)) / 1000);
+        return NextResponse.json(
+          { error: `Please wait ${remaining} seconds before saving or publishing again.` },
+          { status: 429 }
+        );
+      }
+      userCooldowns.set(session.userId, now);
+    }
 
     if (config) {
       saveUser(session.userId, {
@@ -43,12 +60,21 @@ export async function POST(request: Request) {
         ...(config.rotationStatus2Emoji !== undefined ? { rotationStatus2Emoji: config.rotationStatus2Emoji } : {}),
         ...(config.rotationStatus3Text !== undefined ? { rotationStatus3Text: config.rotationStatus3Text } : {}),
         ...(config.rotationStatus3Emoji !== undefined ? { rotationStatus3Emoji: config.rotationStatus3Emoji } : {}),
+        ...(config.cloudSyncEnabled !== undefined ? { cloudSyncEnabled: config.cloudSyncEnabled } : {}),
+        ...(config.cloudTermsAccepted !== undefined ? { cloudTermsAccepted: config.cloudTermsAccepted } : {}),
       });
+
+      const user = getUser(session.userId);
+      if (user?.cloudSyncEnabled) {
+        syncUserToCloud(session.userId).catch(() => {});
+      }
     }
 
     if (action === "PUBLISH" && config) {
+      saveUser(session.userId, { botEnabled: true });
       startDaemon(session.userId, config);
     } else if (action === "STOP") {
+      saveUser(session.userId, { botEnabled: false });
       stopDaemon(session.userId);
     }
 

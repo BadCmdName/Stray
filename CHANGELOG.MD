@@ -6,6 +6,17 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ---
 
+## v1.2.0 - 2026-07-22
+
+### Added
+- **Cloud DB Auto-Backup & Recovery:** End-to-end encrypted backup to private `Stray-DB` repository with zero PAT leakage in open-source Alley. Auto-restores user database and WebSocket client connection on free cloud container restarts.
+- **30-Second Save & Publish Cooldown:** Enforced a 30-second rate-limit cooldown on save/publish actions across API endpoints and UI dashboard buttons.
+
+### Fixed
+- **Container Memory Wipe Recovery:** Automatically pulls cloud backups from `Stray-DB` when container starts and UptimeRobot pings `/api/ping`.
+
+
+
 ## v1.1.1 - 2026-07-22
 
 ### Added

@@ -55,6 +55,14 @@ export default function Home() {
   const [rpcSmallImage, setRpcSmallImage] = useState("");
   const [rpcSmallText, setRpcSmallText] = useState("Purring");
 
+  const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false);
+  const [cloudTermsAccepted, setCloudTermsAccepted] = useState(false);
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<string | null>(null);
+  const [showCloudConsentModal, setShowCloudConsentModal] = useState(false);
+
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [cooldownErrorMsg, setCooldownErrorMsg] = useState<string | null>(null);
+
   const [isRunning, setIsRunning] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -69,7 +77,7 @@ export default function Home() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [remainingTimeText, setRemainingTimeText] = useState("");
   const [isTokenValidOnOpen, setIsTokenValidOnOpen] = useState(false);
-  
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -114,6 +122,18 @@ export default function Home() {
   }, [session]);
 
   useEffect(() => {
+    let timer: any;
+    if (cooldownRemaining > 0) {
+      timer = setInterval(() => {
+        setCooldownRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [cooldownRemaining]);
+
+  useEffect(() => {
     let interval: any;
     if (showLogoutModal && session?.keyExpires) {
       const updateTimer = () => {
@@ -146,6 +166,9 @@ export default function Home() {
           setStatus(data.config.status || "online");
           setDevice(data.config.device || "desktop");
           setTermsAccepted(data.config.termsAccepted || false);
+          setCloudSyncEnabled(data.config.cloudSyncEnabled || false);
+          setCloudTermsAccepted(data.config.cloudTermsAccepted || false);
+          setLastSyncTimestamp(data.config.lastSyncTimestamp || null);
           setWebhookUrl(data.config.webhookUrl || "");
           setRotationEnabled(data.config.rotationEnabled || false);
           setRotationInterval(data.config.rotationInterval || 10);
@@ -234,10 +257,29 @@ export default function Home() {
     }
   };
 
+  const handleCloudToggle = (enabled: boolean) => {
+    if (enabled && !cloudTermsAccepted) {
+      setShowCloudConsentModal(true);
+    } else {
+      setCloudSyncEnabled(enabled);
+    }
+  };
+
+  const handleAcceptCloudTerms = () => {
+    setCloudTermsAccepted(true);
+    setCloudSyncEnabled(true);
+    setShowCloudConsentModal(false);
+  };
+
   const handleSave = async () => {
+    if (cooldownRemaining > 0) {
+      setCooldownErrorMsg(`Please wait ${cooldownRemaining}s before saving again.`);
+      return;
+    }
     setIsSaving(true);
+    setCooldownErrorMsg(null);
     try {
-      await fetch("/api/control", {
+      const res = await fetch("/api/control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -247,6 +289,8 @@ export default function Home() {
             status,
             device,
             webhookUrl,
+            cloudSyncEnabled,
+            cloudTermsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
             rotationStatus1Text,
@@ -272,6 +316,13 @@ export default function Home() {
           },
         }),
       });
+      const data = await res.json();
+      if (res.status === 429) {
+        setCooldownErrorMsg(data.error);
+        setCooldownRemaining(30);
+      } else if (res.ok) {
+        setCooldownRemaining(30);
+      }
     } catch {}
     setIsSaving(false);
   };
@@ -299,7 +350,12 @@ export default function Home() {
   };
 
   const handlePublish = async () => {
+    if (cooldownRemaining > 0) {
+      setCooldownErrorMsg(`Please wait ${cooldownRemaining}s before publishing again.`);
+      return;
+    }
     setIsPublishing(true);
+    setCooldownErrorMsg(null);
     try {
       const response = await fetch("/api/control", {
         method: "POST",
@@ -311,6 +367,8 @@ export default function Home() {
             status,
             device,
             webhookUrl,
+            cloudSyncEnabled,
+            cloudTermsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
             rotationStatus1Text,
@@ -337,8 +395,12 @@ export default function Home() {
         }),
       });
       const data = await response.json();
-      if (data.success) {
+      if (response.status === 429) {
+        setCooldownErrorMsg(data.error);
+        setCooldownRemaining(30);
+      } else if (data.success) {
         setIsRunning(true);
+        setCooldownRemaining(30);
       }
     } catch {}
     setIsPublishing(false);
@@ -916,20 +978,51 @@ export default function Home() {
             )}
           </div>
 
+          <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-white uppercase tracking-wide block">Cloud DB Auto-Backup & Recovery</span>
+                <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
+                  Encrypts and backs up user configuration to private <code className="font-mono text-amber-400">Stray-DB</code> storage.
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cloudSyncEnabled}
+                  onChange={(e) => handleCloudToggle(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+              </label>
+            </div>
+            {lastSyncTimestamp && (
+              <span className="text-[10px] text-emerald-400 font-bold">
+                Last Cloud Backup: {new Date(lastSyncTimestamp).toLocaleString()}
+              </span>
+            )}
+          </div>
+
+          {cooldownErrorMsg && (
+            <div className="bg-rose-950/30 border-2 border-rose-800 text-rose-400 p-3.5 rounded-xl text-xs font-bold animate-pulse">
+              {cooldownErrorMsg}
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-4 border-t border-zinc-800 pt-6">
             <button
               onClick={handleSave}
-              disabled={isSaving || isPublishing || isStopping}
-              className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
+              className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving ? "Saving..." : cooldownRemaining > 0 ? `Save (${cooldownRemaining}s)` : "Save Changes"}
             </button>
             <button
               onClick={handlePublish}
-              disabled={isSaving || isPublishing || isStopping}
-              className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
+              className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPublishing ? "Publishing..." : isRunning ? "Re-Publish" : "Publish"}
+              {isPublishing ? "Publishing..." : cooldownRemaining > 0 ? `Publish (${cooldownRemaining}s)` : isRunning ? "Re-Publish" : "Publish"}
             </button>
             {isRunning && (
               <button
@@ -1124,6 +1217,41 @@ export default function Home() {
                 className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCloudConsentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
+          <div className="bg-[#16161a] border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
+            <h3 className="text-xl font-black text-white uppercase tracking-wider">Cloud Database Terms & Privacy</h3>
+            
+            <div className="text-left text-xs text-zinc-400 flex flex-col gap-3 font-medium leading-relaxed bg-[#0e0e11] p-4 sm:p-5 border border-zinc-800 rounded-xl overflow-y-auto max-h-60">
+              <p>
+                <strong>1. End-to-End Local Encryption:</strong> Your Discord tokens and status parameters are encrypted on your local server using AES-256-GCM before being sent to the remote backup repository.
+              </p>
+              <p>
+                <strong>2. Automated Container Recovery:</strong> Backups stored in <code className="font-mono text-amber-400">Stray-DB</code> allow free cloud hosting instances (Render, Railway, etc.) to automatically restore your saved profile and reconnect your gateway status if the container restarts.
+              </p>
+              <p>
+                <strong>3. Opt-Out Anytime:</strong> You may toggle off Cloud DB Auto-Backup at any time from your Stray Parameters dashboard.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowCloudConsentModal(false)}
+                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 rounded-xl font-black uppercase text-xs tracking-wider transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAcceptCloudTerms}
+                className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px]"
+              >
+                Enable Auto-Backup
               </button>
             </div>
           </div>

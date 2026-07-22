@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getDaemonStatus, getLogs } from "@/lib/daemon";
+import { getDaemonStatus, getLogs, restoreAllDaemons } from "@/lib/daemon";
 import { decrypt } from "@/lib/encryption";
 import { getUser } from "@/lib/db";
 import { execSync } from "child_process";
@@ -37,6 +37,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  restoreAllDaemons();
+
   const user = getUser(session.userId);
 
   let token = "";
@@ -48,7 +50,7 @@ export async function GET() {
 
   const officialVersion = await getOfficialVersion();
   const packageJsonPath = path.resolve(process.cwd(), "package.json");
-  let currentVersion = "1.1.0";
+  let currentVersion = "1.1.1";
   try {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
     currentVersion = pkg.version;
@@ -69,6 +71,9 @@ export async function GET() {
           status: user.status,
           device: user.device,
           termsAccepted: user.termsAccepted || false,
+          cloudSyncEnabled: user.cloudSyncEnabled || false,
+          cloudTermsAccepted: user.cloudTermsAccepted || false,
+          lastSyncTimestamp: user.lastSyncTimestamp || null,
           webhookUrl: user.webhookUrl || "",
           rotationEnabled: user.rotationEnabled || false,
           rotationInterval: user.rotationInterval || 10,

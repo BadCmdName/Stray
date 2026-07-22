@@ -17,4 +17,5 @@ Alley/.env
 Alley/node_modules/
 Alley/.next/
 Website
+Database
 DQACS

@@ -33,6 +33,10 @@ export interface UserConfig {
   rotationStatus2Emoji?: string | null;
   rotationStatus3Text?: string | null;
   rotationStatus3Emoji?: string | null;
+  botEnabled?: boolean;
+  cloudSyncEnabled?: boolean;
+  cloudTermsAccepted?: boolean;
+  lastSyncTimestamp?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -105,6 +109,10 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     rotationStatus2Emoji: null,
     rotationStatus3Text: null,
     rotationStatus3Emoji: null,
+    botEnabled: false,
+    cloudSyncEnabled: false,
+    cloudTermsAccepted: false,
+    lastSyncTimestamp: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
