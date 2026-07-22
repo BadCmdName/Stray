@@ -28,6 +28,7 @@ export default function Home() {
   const [keyInput, setKeyInput] = useState("");
 
   const [isSyncingData, setIsSyncingData] = useState(true);
+  const [restoringCloud, setRestoringCloud] = useState(false);
 
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("online");
@@ -308,6 +309,15 @@ export default function Home() {
         });
       } catch {}
     }
+  };
+
+  const handleManualCloudRestore = async () => {
+    setRestoringCloud(true);
+    try {
+      await fetch("/api/status");
+      loadConfig();
+    } catch {}
+    setRestoringCloud(false);
   };
 
   const handleAcceptCloudTerms = async () => {
@@ -1233,22 +1243,32 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {questsList.length === 0 ? (
               <div className="col-span-full bg-[#0e0e11] border border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 italic">
-                {token ? "No active Discord quests found for your account." : "Verify your Discord token above to display active quests."}
+                {token ? "No active Discord quests found for your account. Press Refresh to query Discord API." : "Verify your Discord token above to display active quests."}
               </div>
             ) : (
               questsList.map((quest) => {
-                const questName = quest.config?.messages?.quest_name || "Unknown Quest";
-                const appName = quest.config?.application?.name || "Discord Quest";
+                const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
+                const appName = quest.config?.application?.name || questName;
                 const isCompleted = Boolean(quest.user_status?.completed_at);
                 const isClaimed = Boolean(quest.user_status?.claimed_at);
                 const isProcessing = Boolean(processingQuestIds[quest.id]);
+
+                const tasks = quest.config?.task_config_v2?.tasks || {};
+                const taskName = Object.keys(tasks)[0] || "";
+                const targetVal = tasks[taskName]?.target || 0;
+                const progressVal = quest.user_status?.progress?.[taskName]?.value || 0;
+                const pct = targetVal > 0 ? Math.min(100, Math.floor((progressVal / targetVal) * 100)) : (isCompleted ? 100 : 0);
+
+                const taskLabel = taskName.includes("VIDEO")
+                  ? `Watch Video (${targetVal}s)`
+                  : `Play Game (${Math.ceil(targetVal / 60)}m)`;
 
                 return (
                   <div key={quest.id} className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h4 className="text-sm font-bold text-white">{questName}</h4>
-                        <span className="text-xs text-zinc-400 block mt-0.5">{appName}</span>
+                        <span className="text-xs text-zinc-400 block mt-0.5">{appName} • <strong className="text-amber-400">{taskLabel}</strong></span>
                       </div>
                       <span
                         className={`text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-wider shrink-0 ${
@@ -1263,8 +1283,12 @@ export default function Home() {
                           ? "Claimed"
                           : isCompleted
                           ? "Completed"
-                          : "In Progress"}
+                          : `${pct}%`}
                       </span>
+                    </div>
+
+                    <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                      <div className="bg-amber-400 h-full transition-all duration-500" style={{ width: `${pct}%` }} />
                     </div>
 
                     <div className="pt-2 border-t border-zinc-900 flex justify-between items-center">
@@ -1312,11 +1336,19 @@ export default function Home() {
                   <div className="w-11 h-6 bg-[#16161a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
                 </label>
               </div>
-              {lastSyncTimestamp && (
+
+              <div className="flex items-center justify-between pt-2 border-t border-zinc-900">
                 <span className="text-[10px] text-emerald-400 font-bold">
-                  Last Cloud Backup: {new Date(lastSyncTimestamp).toLocaleString()}
+                  {lastSyncTimestamp ? `Backup: ${new Date(lastSyncTimestamp).toLocaleString()}` : "No backup committed yet"}
                 </span>
-              )}
+                <button
+                  onClick={handleManualCloudRestore}
+                  disabled={restoringCloud}
+                  className="px-3 py-1 bg-[#16161a] border border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-[10px] font-bold uppercase transition"
+                >
+                  {restoringCloud ? "Restoring..." : "Restore From Cloud"}
+                </button>
+              </div>
             </div>
 
             <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">

@@ -57,7 +57,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Quest not found" }, { status: 404 });
       }
       manager.processQuest(targetQuest).catch(() => {});
-      return NextResponse.json({ success: true, message: `Started processing quest ${targetQuest.config.messages.quest_name}` });
+      const questName = targetQuest.config?.messages?.quest_name || targetQuest.config?.messages?.game_title || "Discord Quest";
+      return NextResponse.json({ success: true, message: `Started processing quest ${questName}` });
     } else {
       manager.runAllQuests().catch(() => {});
       return NextResponse.json({ success: true, message: "Started processing all active quests" });

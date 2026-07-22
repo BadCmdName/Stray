@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getDaemonStatus, getLogs, restoreAllDaemons } from "@/lib/daemon";
 import { decrypt } from "@/lib/encryption";
 import { getUser } from "@/lib/db";
+import { restoreUserFromCloud } from "@/lib/cloudDb";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
@@ -37,9 +38,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  restoreAllDaemons();
+  await restoreAllDaemons();
 
-  const user = getUser(session.userId);
+  let user = getUser(session.userId);
+  if (!user || !user.discordToken) {
+    await restoreUserFromCloud(session.userId);
+    user = getUser(session.userId);
+  }
 
   let token = "";
   if (user?.discordToken) {
