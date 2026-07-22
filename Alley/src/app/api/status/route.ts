@@ -50,7 +50,7 @@ export async function GET() {
 
   const officialVersion = await getOfficialVersion();
   const packageJsonPath = path.resolve(process.cwd(), "package.json");
-  let currentVersion = "1.1.1";
+  let currentVersion = "2.0.0";
   try {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
     currentVersion = pkg.version;
@@ -74,6 +74,8 @@ export async function GET() {
           cloudSyncEnabled: user.cloudSyncEnabled || false,
           cloudTermsAccepted: user.cloudTermsAccepted || false,
           lastSyncTimestamp: user.lastSyncTimestamp || null,
+          autoQuestsEnabled: user.autoQuestsEnabled || false,
+          officialClientRewardOnly: user.officialClientRewardOnly ?? true,
           webhookUrl: user.webhookUrl || "",
           rotationEnabled: user.rotationEnabled || false,
           rotationInterval: user.rotationInterval || 10,

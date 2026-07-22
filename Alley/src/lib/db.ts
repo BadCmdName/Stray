@@ -37,6 +37,9 @@ export interface UserConfig {
   cloudSyncEnabled?: boolean;
   cloudTermsAccepted?: boolean;
   lastSyncTimestamp?: string | null;
+  autoQuestsEnabled?: boolean;
+  officialClientRewardOnly?: boolean;
+  lastQuestSyncTimestamp?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -113,6 +116,9 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     cloudSyncEnabled: false,
     cloudTermsAccepted: false,
     lastSyncTimestamp: null,
+    autoQuestsEnabled: false,
+    officialClientRewardOnly: true,
+    lastQuestSyncTimestamp: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

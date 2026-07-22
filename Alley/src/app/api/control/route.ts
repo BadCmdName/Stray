@@ -62,6 +62,8 @@ export async function POST(request: Request) {
         ...(config.rotationStatus3Emoji !== undefined ? { rotationStatus3Emoji: config.rotationStatus3Emoji } : {}),
         ...(config.cloudSyncEnabled !== undefined ? { cloudSyncEnabled: config.cloudSyncEnabled } : {}),
         ...(config.cloudTermsAccepted !== undefined ? { cloudTermsAccepted: config.cloudTermsAccepted } : {}),
+        ...(config.autoQuestsEnabled !== undefined ? { autoQuestsEnabled: config.autoQuestsEnabled } : {}),
+        ...(config.officialClientRewardOnly !== undefined ? { officialClientRewardOnly: config.officialClientRewardOnly } : {}),
       });
 
       const user = getUser(session.userId);

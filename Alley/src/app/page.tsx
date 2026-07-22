@@ -3,12 +3,6 @@
 import { useState, useEffect } from "react";
 import * as emoji from "node-emoji";
 
-const CheckIcon = () => (
-  <svg className="h-4 w-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-  </svg>
-);
-
 const UserIcon = () => (
   <svg className="h-10 w-10 text-zinc-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
@@ -18,6 +12,12 @@ const UserIcon = () => (
 const GameIcon = () => (
   <svg className="h-7 w-7 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+  </svg>
+);
+
+const QuestIcon = () => (
+  <svg className="h-5 w-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
   </svg>
 );
 
@@ -59,6 +59,12 @@ export default function Home() {
   const [cloudTermsAccepted, setCloudTermsAccepted] = useState(false);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<string | null>(null);
   const [showCloudConsentModal, setShowCloudConsentModal] = useState(false);
+
+  const [autoQuestsEnabled, setAutoQuestsEnabled] = useState(false);
+  const [officialClientRewardOnly, setOfficialClientRewardOnly] = useState(true);
+  const [questsList, setQuestsList] = useState<any[]>([]);
+  const [loadingQuests, setLoadingQuests] = useState(false);
+  const [processingQuests, setProcessingQuests] = useState(false);
 
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [cooldownErrorMsg, setCooldownErrorMsg] = useState<string | null>(null);
@@ -157,6 +163,19 @@ export default function Home() {
     };
   }, [showLogoutModal, session]);
 
+  const fetchUserQuests = () => {
+    setLoadingQuests(true);
+    fetch("/api/quests")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.quests) {
+          setQuestsList(data.quests);
+        }
+        setLoadingQuests(false);
+      })
+      .catch(() => setLoadingQuests(false));
+  };
+
   const loadConfig = () => {
     fetch("/api/status")
       .then((res) => res.json())
@@ -169,6 +188,8 @@ export default function Home() {
           setCloudSyncEnabled(data.config.cloudSyncEnabled || false);
           setCloudTermsAccepted(data.config.cloudTermsAccepted || false);
           setLastSyncTimestamp(data.config.lastSyncTimestamp || null);
+          setAutoQuestsEnabled(data.config.autoQuestsEnabled || false);
+          setOfficialClientRewardOnly(data.config.officialClientRewardOnly ?? true);
           setWebhookUrl(data.config.webhookUrl || "");
           setRotationEnabled(data.config.rotationEnabled || false);
           setRotationInterval(data.config.rotationInterval || 10);
@@ -195,6 +216,7 @@ export default function Home() {
           }
           if (data.config.token) {
             triggerTokenCheck(data.config.token);
+            fetchUserQuests();
           }
         }
         if (data.updateNotification) {
@@ -227,6 +249,7 @@ export default function Home() {
       if (data.valid) {
         setVerifiedProfile(data.user);
         setTokenValidationMsg({ text: "Discord token is valid", isError: false });
+        fetchUserQuests();
       } else {
         setVerifiedProfile(null);
         setTokenValidationMsg({ text: data.error || "Invalid Discord Token", isError: true });
@@ -299,6 +322,23 @@ export default function Home() {
     } catch {}
   };
 
+  const handleRunQuests = async () => {
+    setProcessingQuests(true);
+    try {
+      await fetch("/api/quests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      setTimeout(() => {
+        fetchUserQuests();
+        setProcessingQuests(false);
+      }, 3000);
+    } catch {
+      setProcessingQuests(false);
+    }
+  };
+
   const handleSave = async () => {
     if (cooldownRemaining > 0) {
       setCooldownErrorMsg(`Please wait ${cooldownRemaining}s before saving again.`);
@@ -319,6 +359,8 @@ export default function Home() {
             webhookUrl,
             cloudSyncEnabled,
             cloudTermsAccepted,
+            autoQuestsEnabled,
+            officialClientRewardOnly,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -398,6 +440,8 @@ export default function Home() {
             webhookUrl,
             cloudSyncEnabled,
             cloudTermsAccepted,
+            autoQuestsEnabled,
+            officialClientRewardOnly,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -508,10 +552,10 @@ export default function Home() {
     if (text.includes("error") || text.includes("fail") || text.includes("close") || text.includes("invalid") || text.includes("denied")) {
       return "text-rose-400";
     }
-    if (text.includes("ready") || text.includes("established") || text.includes("hello") || text.includes("success") || text.includes("connected successfully")) {
+    if (text.includes("ready") || text.includes("established") || text.includes("hello") || text.includes("success") || text.includes("connected successfully") || text.includes("completed!")) {
       return "text-emerald-400";
     }
-    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering") || text.includes("testing connection")) {
+    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering") || text.includes("dqacs") || text.includes("spoofing")) {
       return "text-amber-400";
     }
     return "text-zinc-400";
@@ -732,280 +776,52 @@ export default function Home() {
             </div>
           </div>
 
-          {!rotationEnabled && (
-            <div className="flex flex-col gap-2 animate-fadeIn">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Custom status details</label>
-              <div className="flex gap-4">
-                <input
-                  type="text"
-                  value={customStatusEmoji}
-                  onChange={(e) => setCustomStatusEmoji(e.target.value)}
-                  placeholder=":sob: or <a:name:id>"
-                  className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition text-center"
-                />
-                <input
-                  type="text"
-                  value={customStatus}
-                  onChange={(e) => setCustomStatus(e.target.value)}
-                  placeholder="What is stray doing..."
-                  className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
-                />
-              </div>
-            </div>
-          )}
-
           <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Custom Status Rotation</span>
+              <div>
+                <span className="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-1.5">
+                  <QuestIcon /> Discord Quests Auto-Completer (DQACS v2.0.0)
+                </span>
+                <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
+                  Auto-enrolls and completes active Discord video & game quests.
+                </span>
+              </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={rotationEnabled}
-                  onChange={(e) => setRotationEnabled(e.target.checked)}
+                  checked={autoQuestsEnabled}
+                  onChange={(e) => setAutoQuestsEnabled(e.target.checked)}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
               </label>
             </div>
 
-            {rotationEnabled && (
-              <div className="flex flex-col gap-4 animate-fadeIn">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Rotation Interval (in seconds)</label>
-                  <input
-                    type="number"
-                    min="3"
-                    value={rotationInterval}
-                    onChange={(e) => setRotationInterval(Number(e.target.value))}
-                    placeholder="10"
-                    className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 1</label>
-                  <div className="flex gap-4">
-                    <input
-                      type="text"
-                      value={rotationStatus1Emoji}
-                      onChange={(e) => setRotationStatus1Emoji(e.target.value)}
-                      placeholder=":sob: or emoji"
-                      className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
-                    />
-                    <input
-                      type="text"
-                      value={rotationStatus1Text}
-                      onChange={(e) => setRotationStatus1Text(e.target.value)}
-                      placeholder="Status message 1..."
-                      className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 2</label>
-                  <div className="flex gap-4">
-                    <input
-                      type="text"
-                      value={rotationStatus2Emoji}
-                      onChange={(e) => setRotationStatus2Emoji(e.target.value)}
-                      placeholder=":smile: or emoji"
-                      className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
-                    />
-                    <input
-                      type="text"
-                      value={rotationStatus2Text}
-                      onChange={(e) => setRotationStatus2Text(e.target.value)}
-                      placeholder="Status message 2..."
-                      className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 3</label>
-                  <div className="flex gap-4">
-                    <input
-                      type="text"
-                      value={rotationStatus3Emoji}
-                      onChange={(e) => setRotationStatus3Emoji(e.target.value)}
-                      placeholder=":heart: or emoji"
-                      className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
-                    />
-                    <input
-                      type="text"
-                      value={rotationStatus3Text}
-                      onChange={(e) => setRotationStatus3Text(e.target.value)}
-                      placeholder="Status message 3..."
-                      className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
+            <div className="flex items-center justify-between bg-[#0e0e11] p-3 rounded-xl border border-zinc-800">
+              <div>
+                <span className="text-[11px] font-bold text-zinc-200 uppercase block">Claim Rewards via Official Client Only</span>
+                <span className="text-[9.5px] text-zinc-400 block mt-0.5">
+                  Safety Switch: Completes 100% of quest tasks, but leaves final code claim to official Discord.
+                </span>
               </div>
-            )}
-          </div>
-
-          <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Rich Activity (RPC)</span>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
                 <input
                   type="checkbox"
-                  checked={rpcEnabled}
-                  onChange={(e) => setRpcEnabled(e.target.checked)}
+                  checked={officialClientRewardOnly}
+                  onChange={(e) => setOfficialClientRewardOnly(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+                <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-400 border border-zinc-700"></div>
               </label>
             </div>
 
-            {rpcEnabled && (
-              <div className="flex flex-col gap-4 animate-fadeIn">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Activity Type</label>
-                    <div className="relative">
-                      <select
-                        value={rpcType}
-                        onChange={(e) => setRpcType(Number(e.target.value))}
-                        className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
-                      >
-                        <option value={0}>Playing a Game</option>
-                        <option value={1}>Streaming Live</option>
-                        <option value={2}>Listening to</option>
-                        <option value={3}>Watching</option>
-                        <option value={5}>Competing in</option>
-                      </select>
-                      <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {rpcType === 1 ? (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Stream URL (Twitch / YouTube)</label>
-                      <input
-                        type="text"
-                        value={rpcUrl}
-                        onChange={(e) => setRpcUrl(e.target.value)}
-                        placeholder="https://twitch.tv/username"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-bold text-zinc-400 uppercase">Application ID</label>
-                      <input
-                        type="text"
-                        value={rpcClientId}
-                        onChange={(e) => setRpcClientId(e.target.value)}
-                        placeholder="1018195507560063039"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {rpcType === 1 && (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Application ID</label>
-                    <input
-                      type="text"
-                      value={rpcClientId}
-                      onChange={(e) => setRpcClientId(e.target.value)}
-                      placeholder="1018195507560063039"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Application Name</label>
-                    <input
-                      type="text"
-                      value={rpcName}
-                      onChange={(e) => setRpcName(e.target.value)}
-                      placeholder="Stray"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Activity Details</label>
-                    <input
-                      type="text"
-                      value={rpcDetails}
-                      onChange={(e) => setRpcDetails(e.target.value)}
-                      placeholder="Meowing at 3 AM"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Activity State</label>
-                    <input
-                      type="text"
-                      value={rpcState}
-                      onChange={(e) => setRpcState(e.target.value)}
-                      placeholder="Chasing dots"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Large Image URL / Asset Key</label>
-                    <input
-                      type="text"
-                      value={rpcLargeImage}
-                      onChange={(e) => setRpcLargeImage(e.target.value)}
-                      placeholder="https://... or asset key"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Large Image Text</label>
-                    <input
-                      type="text"
-                      value={rpcLargeText}
-                      onChange={(e) => setRpcLargeText(e.target.value)}
-                      placeholder="Straying"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Small Image URL / Asset Key</label>
-                    <input
-                      type="text"
-                      value={rpcSmallImage}
-                      onChange={(e) => setRpcSmallImage(e.target.value)}
-                      placeholder="https://... or asset key"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase">Small Image Text</label>
-                  <input
-                    type="text"
-                    value={rpcSmallText}
-                    onChange={(e) => setRpcSmallText(e.target.value)}
-                    placeholder="Purring"
-                    className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-            )}
+            <button
+              onClick={handleRunQuests}
+              disabled={processingQuests || !token}
+              className="w-full py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
+            >
+              {processingQuests ? "Processing Quests..." : "Complete Active Quests Now"}
+            </button>
           </div>
 
           <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
@@ -1067,114 +883,64 @@ export default function Home() {
         </div>
 
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <h2 className="text-base font-black text-white pb-1 uppercase tracking-wider">Live Preview</h2>
-          
-          <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-            <div className="h-20 bg-zinc-800 relative" />
-            <div className="px-4 pb-6 relative">
-              <div className="absolute -top-10 left-4 h-20 w-20 bg-[#16161a] rounded-full border-4 border-[#16161a] flex items-center justify-center relative">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Discord Profile Avatar" className="h-full w-full rounded-full object-cover" />
-                ) : (
-                  <div className="h-full w-full bg-[#0e0e11] rounded-full flex items-center justify-center select-none">
-                    <UserIcon />
-                  </div>
-                )}
-                <div className={`absolute bottom-0 right-0 h-5 w-5 rounded-full border-4 border-[#16161a] ${statusColors[status] || "bg-zinc-500"}`} />
-              </div>
+          <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
+            <h2 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <QuestIcon /> Active Discord Quests
+            </h2>
+            <button
+              onClick={fetchUserQuests}
+              disabled={loadingQuests || !token}
+              className="text-[10px] font-bold text-amber-400 hover:text-amber-500 uppercase tracking-wide transition"
+            >
+              {loadingQuests ? "Refreshing..." : "Refresh List"}
+            </button>
+          </div>
 
-              <div className="pt-12">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-white truncate max-w-[200px]">
-                    {verifiedProfile?.username || "Stray"}
-                  </h3>
-                  {verifiedProfile?.discriminator && verifiedProfile.discriminator !== "0" && (
-                    <span className="text-zinc-500 text-xs font-semibold">#{verifiedProfile.discriminator}</span>
-                  )}
-                </div>
-                <p className="text-xs text-zinc-500 mt-0.5 border-b border-zinc-800 pb-3 font-mono">
-                  {verifiedProfile?.id || "000000000000000000"}
-                </p>
-              </div>
+          <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] max-h-[380px] overflow-y-auto scrollbar-thin">
+            {questsList.length === 0 ? (
+              <span className="text-xs text-zinc-500 italic p-3 text-center">
+                {token ? "No active Discord quests found for your account." : "Verify your Discord token above to view active quests."}
+              </span>
+            ) : (
+              questsList.map((quest) => {
+                const questName = quest.config?.messages?.quest_name || "Unknown Quest";
+                const appName = quest.config?.application?.name || "Discord Quest";
+                const isCompleted = Boolean(quest.user_status?.completed_at);
+                const isClaimed = Boolean(quest.user_status?.claimed_at);
 
-              {rotationEnabled && (
-                <div className="py-3 border-b border-zinc-800 flex flex-col gap-1 min-h-[48px]">
-                  <span className="text-[10px] text-zinc-500 block font-bold uppercase">Rotating Statuses</span>
-                  <div className="flex flex-col gap-1">
-                    {(rotationStatus1Text || rotationStatus1Emoji) && (
-                      <div className="flex items-center text-[11px] text-zinc-400 italic">
-                        <span className="text-amber-400 font-bold mr-1">1:</span>
-                        {renderEmoji(rotationStatus1Emoji)}
-                        {rotationStatus1Text && <span>“{rotationStatus1Text}”</span>}
+                return (
+                  <div key={quest.id} className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold text-white truncate max-w-[180px]">{questName}</h4>
+                        <span className="text-[10px] text-zinc-400 block">{appName}</span>
                       </div>
-                    )}
-                    {(rotationStatus2Text || rotationStatus2Emoji) && (
-                      <div className="flex items-center text-[11px] text-zinc-400 italic">
-                        <span className="text-amber-400 font-bold mr-1">2:</span>
-                        {renderEmoji(rotationStatus2Emoji)}
-                        {rotationStatus2Text && <span>“{rotationStatus2Text}”</span>}
-                      </div>
-                    )}
-                    {(rotationStatus3Text || rotationStatus3Emoji) && (
-                      <div className="flex items-center text-[11px] text-zinc-400 italic">
-                        <span className="text-amber-400 font-bold mr-1">3:</span>
-                        {renderEmoji(rotationStatus3Emoji)}
-                        {rotationStatus3Text && <span>“{rotationStatus3Text}”</span>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {!rotationEnabled && (customStatus || customStatusEmoji) && (
-                <div className="py-3 border-b border-zinc-800 flex items-center min-h-[48px]">
-                  <div className="w-full">
-                    <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
-                    <div className="flex items-center text-xs text-zinc-400 italic">
-                      {renderEmoji(customStatusEmoji)}
-                      {customStatus && <span>“{customStatus}”</span>}
+                      <span
+                        className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                          isClaimed
+                            ? "bg-zinc-800 text-zinc-400"
+                            : isCompleted
+                            ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                            : "bg-amber-950 text-amber-400 border border-amber-800"
+                        }`}
+                      >
+                        {isClaimed
+                          ? "Claimed"
+                          : isCompleted
+                          ? "Completed (Claim in Discord)"
+                          : "In Progress"}
+                      </span>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {rpcEnabled && (
-                <div className="py-4 flex flex-col gap-3">
-                  <span className="text-[10px] text-purple-400 block font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    {rpcType === 1 && (
-                      <span className="h-2 w-2 rounded-full bg-purple-500 animate-ping inline-block" />
-                    )}
-                    {getRpcTypeLabel(rpcType)}
-                  </span>
-                  <div className="flex gap-4 items-start">
-                    <div className="relative h-16 w-16 bg-[#0e0e11] rounded-xl flex items-center justify-center text-zinc-600 overflow-hidden border-2 border-zinc-800">
-                      {rpcLargeImgSrc ? (
-                        <img src={rpcLargeImgSrc} alt="Large RPC asset" className="h-full w-full object-cover" />
-                      ) : (
-                        <GameIcon />
-                      )}
-                      {rpcSmallImgSrc && (
-                        <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-[#16161a] rounded-full flex items-center justify-center border border-zinc-900">
-                          <img src={rpcSmallImgSrc} alt="Small RPC asset" className="h-6 w-6 rounded-full object-cover" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 flex flex-col min-w-0">
-                      <h4 className="text-xs font-bold text-white truncate">{rpcName || "Stray"}</h4>
-                      {rpcDetails && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcDetails}</p>}
-                      {rpcState && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcState}</p>}
-                      <p className="text-[9px] text-zinc-555 mt-1 uppercase font-semibold">1:37 elapsed</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+                );
+              })
+            )}
           </div>
         </div>
 
         <div className="col-span-12 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
           <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
-            <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection Logs</h2>
+            <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection & Quest Logs</h2>
             <div className="flex items-center gap-4">
               <a
                 href="https://github.com/BadCmdName/Stray/issues/new"
@@ -1244,7 +1010,7 @@ export default function Home() {
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Logout
               </button>

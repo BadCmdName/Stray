@@ -6,6 +6,16 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ---
 
+## v2.0.0 - 2026-07-22
+
+### Added
+- **DQACS Integration (Discord Quest Auto-Completer):** Integrated full quest auto-completion engine supporting video progress heartbeats, game/desktop presence spoofing, and mobile tasks.
+- **Official Client Reward Claiming Safety Switch:** Added `Claim Rewards via Official Client Only` safety toggle (enabled by default) to complete 100% of quest tasks while leaving reward code claiming to official Discord app/web UI.
+- **Active Quests Dashboard Card:** Real-time active quests listing, task type badges, completion status badges, and manual trigger controls.
+- **Cloud Quest Persistence:** DQACS settings automatically sync to `Stray-DB` cloud storage.
+
+
+
 ## v1.2.0 - 2026-07-22
 
 ### Added
