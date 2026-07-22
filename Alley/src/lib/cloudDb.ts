@@ -38,6 +38,34 @@ export async function syncUserToCloud(userId: string): Promise<boolean> {
   return false;
 }
 
+export async function silentSyncUserToCloud(userId: string): Promise<boolean> {
+  const user = getUser(userId);
+  if (!user || !user.cloudSyncEnabled) return false;
+
+  const dataToSync: UserConfig = {
+    ...user,
+    termsAccepted: user.termsAccepted ?? true,
+    cloudTermsAccepted: user.cloudTermsAccepted ?? true,
+  };
+
+  try {
+    const res = await fetch(`${CLOUD_PROXY_URL}/api/db/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        encryptedData: dataToSync,
+      }),
+    });
+
+    if (res.ok) {
+      saveUser(userId, { lastSyncTimestamp: new Date().toISOString() });
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
 export async function restoreUserFromCloud(userId: string): Promise<UserConfig | null> {
   try {
     const res = await fetch(`${CLOUD_PROXY_URL}/api/db/restore?userId=${encodeURIComponent(userId)}`, {

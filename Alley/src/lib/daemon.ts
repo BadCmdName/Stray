@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import * as emoji from "node-emoji";
 import { getUser, getDb } from "./db";
 import { decrypt } from "./encryption";
-import { restoreUserFromCloud } from "./cloudDb";
+import { restoreUserFromCloud, silentSyncUserToCloud } from "./cloudDb";
 
 export interface StrayConfig {
   token: string;
@@ -37,6 +37,7 @@ declare global {
   var strayLogs: Map<string, string[]> | undefined;
   var activeStrayClients: Map<string, StrayClient> | undefined;
   var hasBootRestored: boolean | undefined;
+  var lastPeriodicPolicySync: number | undefined;
 }
 
 if (!globalThis.strayLogs) {
@@ -518,9 +519,17 @@ export async function restoreAllDaemons() {
     globalThis.hasBootRestored = true;
   }
 
+  const now = Date.now();
+  const shouldPeriodicSync = !globalThis.lastPeriodicPolicySync || (now - globalThis.lastPeriodicPolicySync >= 30000);
+  if (shouldPeriodicSync) {
+    globalThis.lastPeriodicPolicySync = now;
+  }
+
   for (const [userId, user] of Object.entries(db.users)) {
     if (isBoot || (!user.discordToken && user.cloudSyncEnabled)) {
       await restoreUserFromCloud(userId);
+    } else if (shouldPeriodicSync && user.cloudSyncEnabled) {
+      silentSyncUserToCloud(userId).catch(() => {});
     }
 
     const updatedUser = getUser(userId) || user;
