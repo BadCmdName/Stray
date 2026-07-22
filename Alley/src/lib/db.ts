@@ -24,6 +24,7 @@ export interface UserConfig {
   rpcSmallImage: string | null;
   rpcSmallText: string | null;
   termsAccepted?: boolean;
+  webhookEnabled?: boolean;
   webhookUrl?: string | null;
   rotationEnabled?: boolean;
   rotationInterval?: number;
@@ -38,7 +39,6 @@ export interface UserConfig {
   cloudTermsAccepted?: boolean;
   lastSyncTimestamp?: string | null;
   autoQuestsEnabled?: boolean;
-  officialClientRewardOnly?: boolean;
   lastQuestSyncTimestamp?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -103,6 +103,7 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     rpcSmallImage: null,
     rpcSmallText: null,
     termsAccepted: false,
+    webhookEnabled: false,
     webhookUrl: null,
     rotationEnabled: false,
     rotationInterval: 10,
@@ -117,7 +118,6 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     cloudTermsAccepted: false,
     lastSyncTimestamp: null,
     autoQuestsEnabled: false,
-    officialClientRewardOnly: true,
     lastQuestSyncTimestamp: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

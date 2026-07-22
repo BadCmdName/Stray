@@ -13,9 +13,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ valid: false, error: "Token is required" }, { status: 400 });
     }
 
+    const cleanToken = token.replace(/^["']|["']$/g, "").trim();
+
     const res = await fetch("https://discord.com/api/v9/users/@me", {
       headers: {
-        Authorization: token.trim(),
+        Authorization: cleanToken,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US",
       },
     });
 

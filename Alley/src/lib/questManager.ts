@@ -37,7 +37,7 @@ export class QuestManager {
 
   constructor(userId: string, token: string) {
     this.userId = userId;
-    this.token = token.trim();
+    this.token = token.replace(/^["']|["']$/g, "").trim();
   }
 
   private getHeaders(isAndroid = false): Record<string, string> {
@@ -82,7 +82,6 @@ export class QuestManager {
 
   async completeVideoQuest(quest: QuestConfig, secondsNeeded: number, secondsDone: number): Promise<boolean> {
     const questName = quest.config.messages.quest_name;
-    const enrolledAt = new Date(quest.user_status?.enrolled_at || Date.now()).getTime();
     let currentDone = secondsDone;
 
     addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s needed)...`);
@@ -104,7 +103,7 @@ export class QuestManager {
           const data = await res.json();
           currentDone = timestamp;
           if (data.completed_at) {
-            addLog(this.userId, `[DQACS] Quest “${questName}” completed!`);
+            addLog(this.userId, `[DQACS] Quest “${questName}” completed! Rewards can only be claimed via the official Discord client.`);
             return true;
           }
         }
@@ -169,18 +168,16 @@ export class QuestManager {
       });
     } catch {}
 
-    addLog(this.userId, `[DQACS] Quest “${questName}” play task completed!`);
+    addLog(this.userId, `[DQACS] Quest “${questName}” play task completed! Rewards can only be claimed via the official Discord client.`);
     return true;
   }
 
   async processQuest(quest: QuestConfig): Promise<boolean> {
-    const user = getUser(this.userId);
-    const officialOnly = user?.officialClientRewardOnly ?? true;
     const questName = quest.config.messages.quest_name;
 
     if (quest.user_status?.completed_at) {
       if (!quest.user_status.claimed_at) {
-        addLog(this.userId, `[DQACS] Quest “${questName}” is completed. Claim your reward safely in official Discord.`);
+        addLog(this.userId, `[DQACS] Quest “${questName}” is 100% completed. Rewards can only be claimed via the official Discord client.`);
       }
       return true;
     }
@@ -211,11 +208,7 @@ export class QuestManager {
     }
 
     if (success) {
-      if (officialOnly) {
-        addLog(this.userId, `[DQACS] Quest “${questName}” 100% complete! Claim your reward safely in the official Discord client.`);
-      } else {
-        addLog(this.userId, `[DQACS] Quest “${questName}” complete! Open official Discord client to redeem code.`);
-      }
+      addLog(this.userId, `[DQACS] Quest “${questName}” 100% complete! Rewards can only be claimed via the official Discord client.`);
     }
 
     return success;

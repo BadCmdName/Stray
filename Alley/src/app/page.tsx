@@ -27,9 +27,12 @@ export default function Home() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [keyInput, setKeyInput] = useState("");
 
+  const [isSyncingData, setIsSyncingData] = useState(true);
+
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("online");
   const [device, setDevice] = useState("desktop");
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [customStatus, setCustomStatus] = useState("Straying around");
   const [customStatusEmoji, setCustomStatusEmoji] = useState("");
@@ -61,10 +64,9 @@ export default function Home() {
   const [showCloudConsentModal, setShowCloudConsentModal] = useState(false);
 
   const [autoQuestsEnabled, setAutoQuestsEnabled] = useState(false);
-  const [officialClientRewardOnly, setOfficialClientRewardOnly] = useState(true);
   const [questsList, setQuestsList] = useState<any[]>([]);
   const [loadingQuests, setLoadingQuests] = useState(false);
-  const [processingQuests, setProcessingQuests] = useState(false);
+  const [processingQuestIds, setProcessingQuestIds] = useState<Record<string, boolean>>({});
 
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [cooldownErrorMsg, setCooldownErrorMsg] = useState<string | null>(null);
@@ -97,11 +99,14 @@ export default function Home() {
         if (data.authenticated) {
           setSession(data.user);
           loadConfig();
+        } else {
+          setIsSyncingData(false);
         }
         setAuthChecked(true);
       })
       .catch(() => {
         setAuthChecked(true);
+        setIsSyncingData(false);
       });
   }, []);
 
@@ -177,6 +182,7 @@ export default function Home() {
   };
 
   const loadConfig = () => {
+    setIsSyncingData(true);
     fetch("/api/status")
       .then((res) => res.json())
       .then((data) => {
@@ -189,7 +195,7 @@ export default function Home() {
           setCloudTermsAccepted(data.config.cloudTermsAccepted || false);
           setLastSyncTimestamp(data.config.lastSyncTimestamp || null);
           setAutoQuestsEnabled(data.config.autoQuestsEnabled || false);
-          setOfficialClientRewardOnly(data.config.officialClientRewardOnly ?? true);
+          setWebhookEnabled(data.config.webhookEnabled || false);
           setWebhookUrl(data.config.webhookUrl || "");
           setRotationEnabled(data.config.rotationEnabled || false);
           setRotationInterval(data.config.rotationInterval || 10);
@@ -229,9 +235,11 @@ export default function Home() {
           setLogs(data.logs);
         }
         setConfigLoaded(true);
+        setIsSyncingData(false);
       })
       .catch(() => {
         setConfigLoaded(true);
+        setIsSyncingData(false);
       });
   };
 
@@ -322,20 +330,21 @@ export default function Home() {
     } catch {}
   };
 
-  const handleRunQuests = async () => {
-    setProcessingQuests(true);
+  const handleProcessQuest = async (questId?: string) => {
+    const key = questId || "all";
+    setProcessingQuestIds((prev) => ({ ...prev, [key]: true }));
     try {
       await fetch("/api/quests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ questId }),
       });
       setTimeout(() => {
         fetchUserQuests();
-        setProcessingQuests(false);
+        setProcessingQuestIds((prev) => ({ ...prev, [key]: false }));
       }, 3000);
     } catch {
-      setProcessingQuests(false);
+      setProcessingQuestIds((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -356,11 +365,11 @@ export default function Home() {
             token,
             status,
             device,
+            webhookEnabled,
             webhookUrl,
             cloudSyncEnabled,
             cloudTermsAccepted,
             autoQuestsEnabled,
-            officialClientRewardOnly,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -437,11 +446,11 @@ export default function Home() {
             token,
             status,
             device,
+            webhookEnabled,
             webhookUrl,
             cloudSyncEnabled,
             cloudTermsAccepted,
             autoQuestsEnabled,
-            officialClientRewardOnly,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -695,228 +704,554 @@ export default function Home() {
         </div>
       )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-          <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
-            <h2 className="text-base font-black text-white uppercase tracking-wider">Stray Parameters</h2>
-            <div className="flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                {isRunning ? "Online" : "Stealth"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Discord Account Token</label>
-            <div className="flex gap-4">
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Paste your Discord authorization token..."
-                className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
-              />
-              <button
-                onClick={() => triggerTokenCheck(token)}
-                disabled={verifyingToken}
-                className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-              >
-                {verifyingToken ? "Verifying..." : "Verify Token"}
-              </button>
-            </div>
-            {tokenValidationMsg && (
-              <span className={`text-[10px] font-bold mt-1 ${tokenValidationMsg.isError ? "text-rose-400 animate-pulse" : "text-emerald-400"}`}>
-                {tokenValidationMsg.text}
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Gateway Device Type</label>
-              <div className="relative">
-                <select
-                  value={device}
-                  onChange={(e) => setDevice(e.target.value)}
-                  className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
-                >
-                  <option value="desktop">Desktop Client</option>
-                  <option value="mobile">Mobile Application</option>
-                  <option value="web">Web Browser (Chrome)</option>
-                  <option value="embedded">Xbox Console Interface</option>
-                </select>
-                <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+      <main className="flex-1 max-w-7xl w-full mx-auto p-8 flex flex-col gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-7 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+              <h2 className="text-base font-black text-white uppercase tracking-wider">Stray Parameters</h2>
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  {isRunning ? "Online" : "Stealth"}
+                </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Profile Status Icon</label>
-              <div className="relative">
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Discord Account Token</label>
+              <div className="flex gap-4">
+                <input
+                  type="password"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Paste your Discord authorization token..."
+                  className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                />
+                <button
+                  onClick={() => triggerTokenCheck(token)}
+                  disabled={verifyingToken}
+                  className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                 >
-                  <option value="online">Online</option>
-                  <option value="idle">Idle / Away</option>
-                  <option value="dnd">Do Not Disturb</option>
-                  <option value="invisible">Invisible / Stealth</option>
-                </select>
-                <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  {verifyingToken ? "Verifying..." : "Verify Token"}
+                </button>
+              </div>
+              {tokenValidationMsg && (
+                <span className={`text-[10px] font-bold mt-1 ${tokenValidationMsg.isError ? "text-rose-400 animate-pulse" : "text-emerald-400"}`}>
+                  {tokenValidationMsg.text}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Gateway Device Type</label>
+                <div className="relative">
+                  <select
+                    value={device}
+                    onChange={(e) => setDevice(e.target.value)}
+                    className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                  >
+                    <option value="desktop">Desktop Client</option>
+                    <option value="mobile">Mobile Application</option>
+                    <option value="web">Web Browser (Chrome)</option>
+                    <option value="embedded">Xbox Console Interface</option>
+                  </select>
+                  <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Profile Status Icon</label>
+                <div className="relative">
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                  >
+                    <option value="online">Online</option>
+                    <option value="idle">Idle / Away</option>
+                    <option value="dnd">Do Not Disturb</option>
+                    <option value="invisible">Invisible / Stealth</option>
+                  </select>
+                  <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-1.5">
-                  <QuestIcon /> Discord Quests Auto-Completer (DQACS v2.0.0)
-                </span>
-                <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
-                  Auto-enrolls and completes active Discord video & game quests.
-                </span>
+            {!rotationEnabled && (
+              <div className="flex flex-col gap-2 animate-fadeIn">
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Custom status details</label>
+                <div className="flex gap-4">
+                  <input
+                    type="text"
+                    value={customStatusEmoji}
+                    onChange={(e) => setCustomStatusEmoji(e.target.value)}
+                    placeholder=":sob: or <a:name:id>"
+                    className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition text-center"
+                  />
+                  <input
+                    type="text"
+                    value={customStatus}
+                    onChange={(e) => setCustomStatus(e.target.value)}
+                    placeholder="What is stray doing..."
+                    className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                  />
+                </div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={autoQuestsEnabled}
-                  onChange={(e) => setAutoQuestsEnabled(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
-              </label>
-            </div>
-
-            <div className="flex items-center justify-between bg-[#0e0e11] p-3 rounded-xl border border-zinc-800">
-              <div>
-                <span className="text-[11px] font-bold text-zinc-200 uppercase block">Claim Rewards via Official Client Only</span>
-                <span className="text-[9.5px] text-zinc-400 block mt-0.5">
-                  Safety Switch: Completes 100% of quest tasks, but leaves final code claim to official Discord.
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-                <input
-                  type="checkbox"
-                  checked={officialClientRewardOnly}
-                  onChange={(e) => setOfficialClientRewardOnly(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-400 border border-zinc-700"></div>
-              </label>
-            </div>
-
-            <button
-              onClick={handleRunQuests}
-              disabled={processingQuests || !token}
-              className="w-full py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
-            >
-              {processingQuests ? "Processing Quests..." : "Complete Active Quests Now"}
-            </button>
-          </div>
-
-          <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-white uppercase tracking-wide block">Cloud DB Auto-Backup & Recovery</span>
-                <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
-                  Encrypts and backs up user configuration to private <code className="font-mono text-amber-400">Stray-DB</code> storage.
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={cloudSyncEnabled}
-                  onChange={(e) => handleCloudToggle(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
-              </label>
-            </div>
-            {lastSyncTimestamp && (
-              <span className="text-[10px] text-emerald-400 font-bold">
-                Last Cloud Backup: {new Date(lastSyncTimestamp).toLocaleString()}
-              </span>
             )}
-          </div>
 
-          {cooldownErrorMsg && (
-            <div className="bg-rose-950/30 border-2 border-rose-800 text-rose-400 p-3.5 rounded-xl text-xs font-bold animate-pulse">
-              {cooldownErrorMsg}
+            <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Custom Status Rotation</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rotationEnabled}
+                    onChange={(e) => setRotationEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+                </label>
+              </div>
+
+              {rotationEnabled && (
+                <div className="flex flex-col gap-4 animate-fadeIn">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Rotation Interval (in seconds)</label>
+                    <input
+                      type="number"
+                      min="3"
+                      value={rotationInterval}
+                      onChange={(e) => setRotationInterval(Number(e.target.value))}
+                      placeholder="10"
+                      className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 1</label>
+                    <div className="flex gap-4">
+                      <input
+                        type="text"
+                        value={rotationStatus1Emoji}
+                        onChange={(e) => setRotationStatus1Emoji(e.target.value)}
+                        placeholder=":sob: or emoji"
+                        className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                      />
+                      <input
+                        type="text"
+                        value={rotationStatus1Text}
+                        onChange={(e) => setRotationStatus1Text(e.target.value)}
+                        placeholder="Status message 1..."
+                        className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 2</label>
+                    <div className="flex gap-4">
+                      <input
+                        type="text"
+                        value={rotationStatus2Emoji}
+                        onChange={(e) => setRotationStatus2Emoji(e.target.value)}
+                        placeholder=":smile: or emoji"
+                        className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                      />
+                      <input
+                        type="text"
+                        value={rotationStatus2Text}
+                        onChange={(e) => setRotationStatus2Text(e.target.value)}
+                        placeholder="Status message 2..."
+                        className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Status Slot 3</label>
+                    <div className="flex gap-4">
+                      <input
+                        type="text"
+                        value={rotationStatus3Emoji}
+                        onChange={(e) => setRotationStatus3Emoji(e.target.value)}
+                        placeholder=":heart: or emoji"
+                        className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                      />
+                      <input
+                        type="text"
+                        value={rotationStatus3Text}
+                        onChange={(e) => setRotationStatus3Text(e.target.value)}
+                        placeholder="Status message 3..."
+                        className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
 
-          <div className="flex flex-col sm:flex-row gap-4 border-t border-zinc-800 pt-6">
-            <button
-              onClick={handleSave}
-              disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
-              className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? "Saving..." : cooldownRemaining > 0 ? `Save (${cooldownRemaining}s)` : "Save Changes"}
-            </button>
-            <button
-              onClick={handlePublish}
-              disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
-              className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isPublishing ? "Publishing..." : cooldownRemaining > 0 ? `Publish (${cooldownRemaining}s)` : isRunning ? "Re-Publish" : "Publish"}
-            </button>
-            {isRunning && (
+            <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Rich Activity (RPC)</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rpcEnabled}
+                    onChange={(e) => setRpcEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+                </label>
+              </div>
+
+              {rpcEnabled && (
+                <div className="flex flex-col gap-4 animate-fadeIn">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Activity Type</label>
+                      <div className="relative">
+                        <select
+                          value={rpcType}
+                          onChange={(e) => setRpcType(Number(e.target.value))}
+                          className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                        >
+                          <option value={0}>Playing a Game</option>
+                          <option value={1}>Streaming Live</option>
+                          <option value={2}>Listening to</option>
+                          <option value={3}>Watching</option>
+                          <option value={5}>Competing in</option>
+                        </select>
+                        <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {rpcType === 1 ? (
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Stream URL (Twitch / YouTube)</label>
+                        <input
+                          type="text"
+                          value={rpcUrl}
+                          onChange={(e) => setRpcUrl(e.target.value)}
+                          placeholder="https://twitch.tv/username"
+                          className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-zinc-400 uppercase">Application ID</label>
+                        <input
+                          type="text"
+                          value={rpcClientId}
+                          onChange={(e) => setRpcClientId(e.target.value)}
+                          placeholder="1018195507560063039"
+                          className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {rpcType === 1 && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Application ID</label>
+                      <input
+                        type="text"
+                        value={rpcClientId}
+                        onChange={(e) => setRpcClientId(e.target.value)}
+                        placeholder="1018195507560063039"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Application Name</label>
+                      <input
+                        type="text"
+                        value={rpcName}
+                        onChange={(e) => setRpcName(e.target.value)}
+                        placeholder="Stray"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Activity Details</label>
+                      <input
+                        type="text"
+                        value={rpcDetails}
+                        onChange={(e) => setRpcDetails(e.target.value)}
+                        placeholder="Meowing at 3 AM"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Activity State</label>
+                      <input
+                        type="text"
+                        value={rpcState}
+                        onChange={(e) => setRpcState(e.target.value)}
+                        placeholder="Chasing dots"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Large Image URL / Asset Key</label>
+                      <input
+                        type="text"
+                        value={rpcLargeImage}
+                        onChange={(e) => setRpcLargeImage(e.target.value)}
+                        placeholder="https://... or asset key"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Large Image Text</label>
+                      <input
+                        type="text"
+                        value={rpcLargeText}
+                        onChange={(e) => setRpcLargeText(e.target.value)}
+                        placeholder="Straying"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Small Image URL / Asset Key</label>
+                      <input
+                        type="text"
+                        value={rpcSmallImage}
+                        onChange={(e) => setRpcSmallImage(e.target.value)}
+                        placeholder="https://... or asset key"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase">Small Image Text</label>
+                    <input
+                      type="text"
+                      value={rpcSmallText}
+                      onChange={(e) => setRpcSmallText(e.target.value)}
+                      placeholder="Purring"
+                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {cooldownErrorMsg && (
+              <div className="bg-rose-950/30 border-2 border-rose-800 text-rose-400 p-3.5 rounded-xl text-xs font-bold animate-pulse">
+                {cooldownErrorMsg}
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-4 border-t border-zinc-800 pt-6">
               <button
-                onClick={handleStop}
-                disabled={isSaving || isPublishing || isStopping}
-                className="flex-1 py-3.5 bg-rose-600 border-2 border-black text-white font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                onClick={handleSave}
+                disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
+                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isStopping ? "Stopping..." : "Stop Client"}
+                {isSaving ? "Saving..." : cooldownRemaining > 0 ? `Save (${cooldownRemaining}s)` : "Save Changes"}
               </button>
-            )}
+              <button
+                onClick={handlePublish}
+                disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
+                className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPublishing ? "Publishing..." : cooldownRemaining > 0 ? `Publish (${cooldownRemaining}s)` : isRunning ? "Re-Publish" : "Publish"}
+              </button>
+              {isRunning && (
+                <button
+                  onClick={handleStop}
+                  disabled={isSaving || isPublishing || isStopping}
+                  className="flex-1 py-3.5 bg-rose-600 border-2 border-black text-white font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                >
+                  {isStopping ? "Stopping..." : "Stop Client"}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <h2 className="text-base font-black text-white pb-1 uppercase tracking-wider">Live Preview</h2>
+            
+            <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+              <div className="h-20 bg-zinc-800 relative" />
+              <div className="px-4 pb-6 relative">
+                <div className="absolute -top-10 left-4 h-20 w-20 bg-[#16161a] rounded-full border-4 border-[#16161a] flex items-center justify-center relative">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Discord Profile Avatar" className="h-full w-full rounded-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full bg-[#0e0e11] rounded-full flex items-center justify-center select-none">
+                      <UserIcon />
+                    </div>
+                  )}
+                  <div className={`absolute bottom-0 right-0 h-5 w-5 rounded-full border-4 border-[#16161a] ${statusColors[status] || "bg-zinc-500"}`} />
+                </div>
+
+                <div className="pt-12">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-white truncate max-w-[200px]">
+                      {verifiedProfile?.username || "Stray"}
+                    </h3>
+                    {verifiedProfile?.discriminator && verifiedProfile.discriminator !== "0" && (
+                      <span className="text-zinc-500 text-xs font-semibold">#{verifiedProfile.discriminator}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-0.5 border-b border-zinc-800 pb-3 font-mono">
+                    {verifiedProfile?.id || "000000000000000000"}
+                  </p>
+                </div>
+
+                {rotationEnabled && (
+                  <div className="py-3 border-b border-zinc-800 flex flex-col gap-1 min-h-[48px]">
+                    <span className="text-[10px] text-zinc-500 block font-bold uppercase">Rotating Statuses</span>
+                    <div className="flex flex-col gap-1">
+                      {(rotationStatus1Text || rotationStatus1Emoji) && (
+                        <div className="flex items-center text-[11px] text-zinc-400 italic">
+                          <span className="text-amber-400 font-bold mr-1">1:</span>
+                          {renderEmoji(rotationStatus1Emoji)}
+                          {rotationStatus1Text && <span>“{rotationStatus1Text}”</span>}
+                        </div>
+                      )}
+                      {(rotationStatus2Text || rotationStatus2Emoji) && (
+                        <div className="flex items-center text-[11px] text-zinc-400 italic">
+                          <span className="text-amber-400 font-bold mr-1">2:</span>
+                          {renderEmoji(rotationStatus2Emoji)}
+                          {rotationStatus2Text && <span>“{rotationStatus2Text}”</span>}
+                        </div>
+                      )}
+                      {(rotationStatus3Text || rotationStatus3Emoji) && (
+                        <div className="flex items-center text-[11px] text-zinc-400 italic">
+                          <span className="text-amber-400 font-bold mr-1">3:</span>
+                          {renderEmoji(rotationStatus3Emoji)}
+                          {rotationStatus3Text && <span>“{rotationStatus3Text}”</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!rotationEnabled && (customStatus || customStatusEmoji) && (
+                  <div className="py-3 border-b border-zinc-800 flex items-center min-h-[48px]">
+                    <div className="w-full">
+                      <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
+                      <div className="flex items-center text-xs text-zinc-400 italic">
+                        {renderEmoji(customStatusEmoji)}
+                        {customStatus && <span>“{customStatus}”</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {rpcEnabled && (
+                  <div className="py-4 flex flex-col gap-3">
+                    <span className="text-[10px] text-purple-400 block font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      {rpcType === 1 && (
+                        <span className="h-2 w-2 rounded-full bg-purple-500 animate-ping inline-block" />
+                      )}
+                      {getRpcTypeLabel(rpcType)}
+                    </span>
+                    <div className="flex gap-4 items-start">
+                      <div className="relative h-16 w-16 bg-[#0e0e11] rounded-xl flex items-center justify-center text-zinc-600 overflow-hidden border-2 border-zinc-800">
+                        {rpcLargeImgSrc ? (
+                          <img src={rpcLargeImgSrc} alt="Large RPC asset" className="h-full w-full object-cover" />
+                        ) : (
+                          <GameIcon />
+                        )}
+                        {rpcSmallImgSrc && (
+                          <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-[#16161a] rounded-full flex items-center justify-center border border-zinc-900">
+                            <img src={rpcSmallImgSrc} alt="Small RPC asset" className="h-6 w-6 rounded-full object-cover" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col min-w-0">
+                        <h4 className="text-xs font-bold text-white truncate">{rpcName || "Stray"}</h4>
+                        {rpcDetails && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcDetails}</p>}
+                        {rpcState && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcState}</p>}
+                        <p className="text-[9px] text-zinc-555 mt-1 uppercase font-semibold">1:37 elapsed</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-            <h2 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
-              <QuestIcon /> Active Discord Quests
-            </h2>
-            <button
-              onClick={fetchUserQuests}
-              disabled={loadingQuests || !token}
-              className="text-[10px] font-bold text-amber-400 hover:text-amber-500 uppercase tracking-wide transition"
-            >
-              {loadingQuests ? "Refreshing..." : "Refresh List"}
-            </button>
+        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+            <div>
+              <h2 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <QuestIcon /> Active Discord Quests
+              </h2>
+              <p className="text-[11px] text-amber-400/90 font-medium mt-1">
+                Notice: Rewards are only claimed via the official Discord client or web app.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchUserQuests}
+                disabled={loadingQuests || !token}
+                className="px-4 py-2 bg-[#0e0e11] border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition"
+              >
+                {loadingQuests ? "Refreshing..." : "Refresh"}
+              </button>
+              <button
+                onClick={() => handleProcessQuest()}
+                disabled={Boolean(processingQuestIds["all"]) || !token}
+                className="px-5 py-2 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
+              >
+                {processingQuestIds["all"] ? "Processing All..." : "COMPLETE ALL AVAILABLE"}
+              </button>
+            </div>
           </div>
 
-          <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] max-h-[380px] overflow-y-auto scrollbar-thin">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {questsList.length === 0 ? (
-              <span className="text-xs text-zinc-500 italic p-3 text-center">
-                {token ? "No active Discord quests found for your account." : "Verify your Discord token above to view active quests."}
-              </span>
+              <div className="col-span-full bg-[#0e0e11] border border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 italic">
+                {token ? "No active Discord quests found for your account." : "Verify your Discord token above to display active quests."}
+              </div>
             ) : (
               questsList.map((quest) => {
                 const questName = quest.config?.messages?.quest_name || "Unknown Quest";
                 const appName = quest.config?.application?.name || "Discord Quest";
                 const isCompleted = Boolean(quest.user_status?.completed_at);
                 const isClaimed = Boolean(quest.user_status?.claimed_at);
+                const isProcessing = Boolean(processingQuestIds[quest.id]);
 
                 return (
-                  <div key={quest.id} className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
+                  <div key={quest.id} className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h4 className="text-xs font-bold text-white truncate max-w-[180px]">{questName}</h4>
-                        <span className="text-[10px] text-zinc-400 block">{appName}</span>
+                        <h4 className="text-sm font-bold text-white">{questName}</h4>
+                        <span className="text-xs text-zinc-400 block mt-0.5">{appName}</span>
                       </div>
                       <span
-                        className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                        className={`text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-wider shrink-0 ${
                           isClaimed
                             ? "bg-zinc-800 text-zinc-400"
                             : isCompleted
@@ -927,9 +1262,24 @@ export default function Home() {
                         {isClaimed
                           ? "Claimed"
                           : isCompleted
-                          ? "Completed (Claim in Discord)"
+                          ? "Completed"
                           : "In Progress"}
                       </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-zinc-900 flex justify-between items-center">
+                      <span className="text-[10px] text-zinc-500 font-semibold uppercase">
+                        {isCompleted ? "Claim reward in official Discord" : "Ready to auto-complete"}
+                      </span>
+                      {!isCompleted && (
+                        <button
+                          onClick={() => handleProcessQuest(quest.id)}
+                          disabled={isProcessing}
+                          className="px-4 py-1.5 bg-amber-400 border border-black text-black font-black uppercase text-[10px] tracking-wider rounded-lg transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50"
+                        >
+                          {isProcessing ? "Processing..." : "Complete Quest"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -938,7 +1288,73 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="col-span-12 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
+        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+          <h2 className="text-base font-black text-white uppercase tracking-wider border-b border-zinc-800 pb-3">
+            Settings Menu
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-white uppercase tracking-wide block">Cloud DB Auto-Backup</span>
+                  <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
+                    Encrypts and backs up user configuration to private <code className="font-mono text-amber-400">Stray-DB</code> storage.
+                  </span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                  <input
+                    type="checkbox"
+                    checked={cloudSyncEnabled}
+                    onChange={(e) => handleCloudToggle(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-[#16161a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+                </label>
+              </div>
+              {lastSyncTimestamp && (
+                <span className="text-[10px] text-emerald-400 font-bold">
+                  Last Cloud Backup: {new Date(lastSyncTimestamp).toLocaleString()}
+                </span>
+              )}
+            </div>
+
+            <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-white uppercase tracking-wide block">Discord Webhook Log Stream</span>
+                  <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
+                    Broadcast gateway connection logs to your custom Discord webhook.
+                  </span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                  <input
+                    type="checkbox"
+                    checked={webhookEnabled}
+                    onChange={(e) => setWebhookEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-[#16161a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+                </label>
+              </div>
+
+              {webhookEnabled && (
+                <div className="flex flex-col gap-1.5 animate-fadeIn pt-2 border-t border-zinc-900">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Webhook Endpoint URL</label>
+                  <input
+                    type="text"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    placeholder="https://discord.com/api/webhooks/..."
+                    className="w-full bg-[#16161a] border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 font-mono"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
           <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection & Quest Logs</h2>
             <div className="flex items-center gap-4">
@@ -960,18 +1376,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Discord Log Webhook URL</label>
-            <input
-              type="text"
-              value={webhookUrl}
-              onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="Paste your Discord webhook URL to stream connection logs to your server..."
-              className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
-            />
-          </div>
-
-          <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
+          <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-52 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
               <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
             ) : (
@@ -984,6 +1389,18 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {isSyncingData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn select-none">
+          <div className="bg-[#16161a] border-2 border-amber-400 max-w-sm w-full rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col items-center text-center gap-4">
+            <div className="h-10 w-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-2" />
+            <h3 className="text-lg font-black text-white uppercase tracking-wider">Syncing Your Data...</h3>
+            <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+              Fetching encrypted profile backups from <code className="font-mono text-amber-400">Stray-DB</code> and restoring parameters...
+            </p>
+          </div>
+        </div>
+      )}
 
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
@@ -1054,7 +1471,7 @@ export default function Home() {
         </div>
       )}
 
-      {!termsAccepted && session && configLoaded && (
+      {!termsAccepted && session && configLoaded && !isSyncingData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
           <div className="bg-[#16161a] border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
             <h3 className="text-xl font-black text-white uppercase tracking-wider">Liability Agreement & Waiver</h3>

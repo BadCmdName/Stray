@@ -51,6 +51,7 @@ export async function POST(request: Request) {
         ...(config.rich_presence?.small_image !== undefined ? { rpcSmallImage: config.rich_presence.small_image } : {}),
         ...(config.rich_presence?.small_text !== undefined ? { rpcSmallText: config.rich_presence.small_text } : {}),
         ...(config.termsAccepted !== undefined ? { termsAccepted: config.termsAccepted } : {}),
+        ...(config.webhookEnabled !== undefined ? { webhookEnabled: config.webhookEnabled } : {}),
         ...(config.webhookUrl !== undefined ? { webhookUrl: config.webhookUrl } : {}),
         ...(config.rotationEnabled !== undefined ? { rotationEnabled: config.rotationEnabled } : {}),
         ...(config.rotationInterval !== undefined ? { rotationInterval: config.rotationInterval } : {}),
@@ -63,7 +64,6 @@ export async function POST(request: Request) {
         ...(config.cloudSyncEnabled !== undefined ? { cloudSyncEnabled: config.cloudSyncEnabled } : {}),
         ...(config.cloudTermsAccepted !== undefined ? { cloudTermsAccepted: config.cloudTermsAccepted } : {}),
         ...(config.autoQuestsEnabled !== undefined ? { autoQuestsEnabled: config.autoQuestsEnabled } : {}),
-        ...(config.officialClientRewardOnly !== undefined ? { officialClientRewardOnly: config.officialClientRewardOnly } : {}),
       });
 
       const user = getUser(session.userId);

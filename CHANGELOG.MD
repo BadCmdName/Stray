@@ -6,11 +6,26 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ---
 
+## v2.1.0 - 2026-07-22
+
+### Added
+- **Restructured Dashboard Hierarchy:**
+  - **Top:** Stray Parameters & Live Profile Preview side-by-side cards.
+  - **Middle 1:** Active Discord Quests with individual **"Complete Quest"** buttons and a **"COMPLETE ALL AVAILABLE"** action button.
+  - **Middle 2:** Settings Menu containing Cloud DB Auto-Backup toggle and Webhook Log Stream toggle (with conditional Webhook URL input).
+  - **Bottom:** Gateway Connection & Quest Logs Terminal Console.
+- **Initial Data Synchronization Modal:** Displays a **"Syncing Your Data..."** loading popup upon entering your Stray Key while checking `Stray-DB` for encrypted configuration backups.
+- **Official Client Rewards Notice:** Displayed notice explaining that reward claiming can only be performed in official Discord app/web UI.
+
+### Fixed
+- **Discord Token Validation:** Sanitized token strings and appended browser User-Agent headers to prevent valid tokens from returning false negative error responses.
+
+
+
 ## v2.0.0 - 2026-07-22
 
 ### Added
 - **DQACS Integration (Discord Quest Auto-Completer):** Integrated full quest auto-completion engine supporting video progress heartbeats, game/desktop presence spoofing, and mobile tasks.
-- **Official Client Reward Claiming Safety Switch:** Added `Claim Rewards via Official Client Only` safety toggle (enabled by default) to complete 100% of quest tasks while leaving reward code claiming to official Discord app/web UI.
 - **Active Quests Dashboard Card:** Real-time active quests listing, task type badges, completion status badges, and manual trigger controls.
 - **Cloud Quest Persistence:** DQACS settings automatically sync to `Stray-DB` cloud storage.
 
