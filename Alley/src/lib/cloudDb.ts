@@ -5,7 +5,7 @@ const CLOUD_PROXY_URL = process.env.CLOUD_PROXY_URL || "https://stray.bcnstudio.
 
 export async function syncUserToCloud(userId: string): Promise<boolean> {
   const user = getUser(userId);
-  if (!user || !user.cloudSyncEnabled) return false;
+  if (!user || !user.cloudSyncEnabled || !user.discordToken) return false;
 
   const dataToSync: UserConfig = {
     ...user,
@@ -40,7 +40,7 @@ export async function syncUserToCloud(userId: string): Promise<boolean> {
 
 export async function silentSyncUserToCloud(userId: string): Promise<boolean> {
   const user = getUser(userId);
-  if (!user || !user.cloudSyncEnabled) return false;
+  if (!user || !user.cloudSyncEnabled || !user.discordToken) return false;
 
   const dataToSync: UserConfig = {
     ...user,

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { signSession, isUserAllowed } from "@/lib/auth";
-import { saveUser } from "@/lib/db";
+import { saveUser, getUser } from "@/lib/db";
+import { restoreUserFromCloud } from "@/lib/cloudDb";
 
 export async function POST(req: Request) {
   try {
@@ -54,12 +55,17 @@ export async function POST(req: Request) {
       expires: new Date(expires),
     });
 
+    let existingUser = getUser(payload.id);
+    if (!existingUser || !existingUser.discordToken) {
+      await restoreUserFromCloud(payload.id);
+    }
+
     saveUser(payload.id, {
       username: payload.username,
     });
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
   }
 }
