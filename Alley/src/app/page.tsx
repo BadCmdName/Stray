@@ -169,6 +169,47 @@ export default function Home() {
     };
   }, [showLogoutModal, session]);
 
+  const applyConfigToState = (cfg: any) => {
+    if (!cfg) return;
+    setToken(cfg.token || "");
+    setStatus(cfg.status || "online");
+    setDevice(cfg.device || "desktop");
+    setTermsAccepted(cfg.termsAccepted || false);
+    setCloudSyncEnabled(cfg.cloudSyncEnabled || false);
+    setCloudTermsAccepted(cfg.cloudTermsAccepted || false);
+    setLastSyncTimestamp(cfg.lastSyncTimestamp || null);
+    setAutoQuestsEnabled(cfg.autoQuestsEnabled || false);
+    setWebhookEnabled(cfg.webhookEnabled || false);
+    setWebhookUrl(cfg.webhookUrl || "");
+    setRotationEnabled(cfg.rotationEnabled || false);
+    setRotationInterval(cfg.rotationInterval || 10);
+    setRotationStatus1Text(cfg.rotationStatus1Text || "");
+    setRotationStatus1Emoji(cfg.rotationStatus1Emoji || "");
+    setRotationStatus2Text(cfg.rotationStatus2Text || "");
+    setRotationStatus2Emoji(cfg.rotationStatus2Emoji || "");
+    setRotationStatus3Text(cfg.rotationStatus3Text || "");
+    setRotationStatus3Emoji(cfg.rotationStatus3Emoji || "");
+    setCustomStatus(cfg.custom_status?.text || "");
+    setCustomStatusEmoji(cfg.custom_status?.emoji || "");
+    if (cfg.rich_presence) {
+      setRpcEnabled(cfg.rich_presence.enabled || false);
+      setRpcType(cfg.rich_presence.type ?? 0);
+      setRpcUrl(cfg.rich_presence.url || "");
+      setRpcClientId(cfg.rich_presence.client_id || "1018195507560063039");
+      setRpcName(cfg.rich_presence.name || "");
+      setRpcState(cfg.rich_presence.state || "");
+      setRpcDetails(cfg.rich_presence.details || "");
+      setRpcLargeImage(cfg.rich_presence.large_image || "");
+      setRpcLargeText(cfg.rich_presence.large_text || "");
+      setRpcSmallImage(cfg.rich_presence.small_image || "");
+      setRpcSmallText(cfg.rich_presence.small_text || "");
+    }
+    if (cfg.token) {
+      triggerTokenCheck(cfg.token);
+      fetchUserQuests();
+    }
+  };
+
   const fetchUserQuests = () => {
     setLoadingQuests(true);
     fetch("/api/quests")
@@ -188,43 +229,7 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         if (data.config) {
-          setToken(data.config.token || "");
-          setStatus(data.config.status || "online");
-          setDevice(data.config.device || "desktop");
-          setTermsAccepted(data.config.termsAccepted || false);
-          setCloudSyncEnabled(data.config.cloudSyncEnabled || false);
-          setCloudTermsAccepted(data.config.cloudTermsAccepted || false);
-          setLastSyncTimestamp(data.config.lastSyncTimestamp || null);
-          setAutoQuestsEnabled(data.config.autoQuestsEnabled || false);
-          setWebhookEnabled(data.config.webhookEnabled || false);
-          setWebhookUrl(data.config.webhookUrl || "");
-          setRotationEnabled(data.config.rotationEnabled || false);
-          setRotationInterval(data.config.rotationInterval || 10);
-          setRotationStatus1Text(data.config.rotationStatus1Text || "");
-          setRotationStatus1Emoji(data.config.rotationStatus1Emoji || "");
-          setRotationStatus2Text(data.config.rotationStatus2Text || "");
-          setRotationStatus2Emoji(data.config.rotationStatus2Emoji || "");
-          setRotationStatus3Text(data.config.rotationStatus3Text || "");
-          setRotationStatus3Emoji(data.config.rotationStatus3Emoji || "");
-          setCustomStatus(data.config.custom_status?.text || "");
-          setCustomStatusEmoji(data.config.custom_status?.emoji || "");
-          if (data.config.rich_presence) {
-            setRpcEnabled(data.config.rich_presence.enabled || false);
-            setRpcType(data.config.rich_presence.type ?? 0);
-            setRpcUrl(data.config.rich_presence.url || "");
-            setRpcClientId(data.config.rich_presence.client_id || "");
-            setRpcName(data.config.rich_presence.name || "");
-            setRpcState(data.config.rich_presence.state || "");
-            setRpcDetails(data.config.rich_presence.details || "");
-            setRpcLargeImage(data.config.rich_presence.large_image || "");
-            setRpcLargeText(data.config.rich_presence.large_text || "");
-            setRpcSmallImage(data.config.rich_presence.small_image || "");
-            setRpcSmallText(data.config.rich_presence.small_text || "");
-          }
-          if (data.config.token) {
-            triggerTokenCheck(data.config.token);
-            fetchUserQuests();
-          }
+          applyConfigToState(data.config);
         }
         if (data.updateNotification) {
           setUpdateNotification(data.updateNotification);
@@ -314,8 +319,15 @@ export default function Home() {
   const handleManualCloudRestore = async () => {
     setRestoringCloud(true);
     try {
-      await fetch("/api/status");
-      loadConfig();
+      const res = await fetch("/api/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "RESTORE" }),
+      });
+      const data = await res.json();
+      if (data.success && data.config) {
+        applyConfigToState(data.config);
+      }
     } catch {}
     setRestoringCloud(false);
   };
@@ -1240,10 +1252,22 @@ export default function Home() {
             </div>
           </div>
 
+          {Object.values(processingQuestIds).some(Boolean) && (
+            <div className="w-full bg-amber-950/40 border-2 border-amber-800 text-amber-300 p-4 rounded-xl text-xs font-bold flex items-center gap-3 animate-pulse">
+              <div className="h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
+              <span>Processing Discord Quests... Progress heartbeats and video progress are streaming in the logs below.</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {questsList.length === 0 ? (
-              <div className="col-span-full bg-[#0e0e11] border border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 italic">
-                {token ? "No active Discord quests found for your account. Press Refresh to query Discord API." : "Verify your Discord token above to display active quests."}
+              <div className="col-span-full bg-[#0e0e11] border border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 italic flex flex-col items-center gap-2">
+                <span>{token ? "No active Discord quests found for your account. Press Refresh to query Discord API." : "Verify your Discord token above to display active quests."}</span>
+                {token && (
+                  <span className="text-[10px] text-zinc-450 font-normal">
+                    (If quests exist in your official Discord app, press "COMPLETE ALL AVAILABLE" to trigger DQACS quest runner directly.)
+                  </span>
+                )}
               </div>
             ) : (
               questsList.map((quest) => {

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { startDaemon, stopDaemon } from "@/lib/daemon";
-import { encrypt } from "@/lib/encryption";
+import { encrypt, decrypt } from "@/lib/encryption";
 import { saveUser, getUser } from "@/lib/db";
-import { syncUserToCloud } from "@/lib/cloudDb";
+import { syncUserToCloud, restoreUserFromCloud } from "@/lib/cloudDb";
 
 const userCooldowns = new Map<string, number>();
 const COOLDOWN_MS = 30000;
@@ -17,6 +17,61 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { action, config } = body;
+
+    if (action === "RESTORE") {
+      await restoreUserFromCloud(session.userId);
+      const restoredUser = getUser(session.userId);
+
+      let token = "";
+      if (restoredUser?.discordToken) {
+        try {
+          token = decrypt(restoredUser.discordToken);
+        } catch {}
+      }
+
+      return NextResponse.json({
+        success: true,
+        config: restoredUser
+          ? {
+              token,
+              status: restoredUser.status || "online",
+              device: restoredUser.device || "desktop",
+              termsAccepted: restoredUser.termsAccepted || false,
+              cloudSyncEnabled: restoredUser.cloudSyncEnabled || false,
+              cloudTermsAccepted: restoredUser.cloudTermsAccepted || false,
+              lastSyncTimestamp: restoredUser.lastSyncTimestamp || null,
+              autoQuestsEnabled: restoredUser.autoQuestsEnabled || false,
+              webhookEnabled: restoredUser.webhookEnabled || false,
+              webhookUrl: restoredUser.webhookUrl || "",
+              rotationEnabled: restoredUser.rotationEnabled || false,
+              rotationInterval: restoredUser.rotationInterval || 10,
+              rotationStatus1Text: restoredUser.rotationStatus1Text || "",
+              rotationStatus1Emoji: restoredUser.rotationStatus1Emoji || "",
+              rotationStatus2Text: restoredUser.rotationStatus2Text || "",
+              rotationStatus2Emoji: restoredUser.rotationStatus2Emoji || "",
+              rotationStatus3Text: restoredUser.rotationStatus3Text || "",
+              rotationStatus3Emoji: restoredUser.rotationStatus3Emoji || "",
+              custom_status: {
+                text: restoredUser.customStatusText || "",
+                emoji: restoredUser.customStatusEmoji || "",
+              },
+              rich_presence: {
+                enabled: restoredUser.rpcEnabled || false,
+                type: restoredUser.rpcType ?? 0,
+                url: restoredUser.rpcUrl || "",
+                client_id: restoredUser.rpcClientId || "1018195507560063039",
+                name: restoredUser.rpcName || "",
+                state: restoredUser.rpcState || "",
+                details: restoredUser.rpcDetails || "",
+                large_image: restoredUser.rpcLargeImage || "",
+                large_text: restoredUser.rpcLargeText || "",
+                small_image: restoredUser.rpcSmallImage || "",
+                small_text: restoredUser.rpcSmallText || "",
+              },
+            }
+          : null,
+      });
+    }
 
     if (action === "SAVE" || action === "PUBLISH") {
       const lastAction = userCooldowns.get(session.userId) || 0;

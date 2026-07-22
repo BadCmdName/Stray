@@ -87,8 +87,8 @@ export class QuestManager {
     }
 
     try {
-      addLog(this.userId, "[DQACS] Querying Discord API for active quests...");
-      const res = await fetch("https://discord.com/api/v9/users/@me/quests", {
+      addLog(this.userId, "[DQACS] Querying Discord API endpoint https://discord.com/api/v9/quests/@me...");
+      const res = await fetch("https://discord.com/api/v9/quests/@me", {
         headers: this.getHeaders(),
         cache: "no-store",
       });
@@ -103,7 +103,7 @@ export class QuestManager {
 
       if (Array.isArray(data)) {
         questsList = data;
-      } else if (Array.isArray(data.quests)) {
+      } else if (data && Array.isArray(data.quests)) {
         questsList = data.quests;
         if (Array.isArray(data.excluded_quests)) {
           questsList = [...questsList, ...data.excluded_quests];
@@ -111,6 +111,11 @@ export class QuestManager {
       }
 
       addLog(this.userId, `[DQACS] Successfully fetched ${questsList.length} active Discord quest(s).`);
+      questsList.forEach((q) => {
+        const title = q.config?.messages?.quest_name || q.config?.messages?.game_title || "Discord Quest";
+        addLog(this.userId, `[DQACS] Quest Available: “${title}” (ID: ${q.id})`);
+      });
+
       return questsList;
     } catch (err: any) {
       addLog(this.userId, `[DQACS] Error fetching quests: ${err.message || "Network request failed"}`);
@@ -157,8 +162,10 @@ export class QuestManager {
         if (res.ok) {
           const data = await res.json();
           currentDone = timestamp;
+          const pct = Math.floor((currentDone / secondsNeeded) * 100);
+          addLog(this.userId, `[DQACS] Video progress for “${questName}”: ${pct}% (${Math.floor(currentDone)}s / ${secondsNeeded}s)`);
           if (data.completed_at) {
-            addLog(this.userId, `[DQACS] Quest “${questName}” completed! Claim your reward in the official Discord client.`);
+            addLog(this.userId, `[DQACS] Quest “${questName}” 100% completed! Claim your reward in the official Discord client.`);
             return true;
           }
         }
@@ -204,8 +211,9 @@ export class QuestManager {
             break;
           }
           const done = data.progress?.[taskName]?.value || 0;
+          const pct = secondsNeeded > 0 ? Math.floor((done / secondsNeeded) * 100) : 0;
           const remainingMins = Math.max(1, Math.ceil((secondsNeeded - done) / 60));
-          addLog(this.userId, `[DQACS] Spoofing ${appName}. ${remainingMins} min(s) remaining...`);
+          addLog(this.userId, `[DQACS] Spoofing ${appName}. Progress: ${pct}% (${remainingMins} min(s) remaining)...`);
         }
       } catch {}
 
@@ -247,6 +255,7 @@ export class QuestManager {
         addLog(this.userId, `[DQACS] Failed to enroll in quest “${questName}”.`);
         return false;
       }
+      addLog(this.userId, `[DQACS] Enrolled in quest “${questName}”!`);
     }
 
     const taskName = Object.keys(tasks)[0];
