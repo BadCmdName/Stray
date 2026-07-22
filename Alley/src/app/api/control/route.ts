@@ -23,6 +23,8 @@ export async function POST(request: Request) {
         ...(config.custom_status?.text !== undefined ? { customStatusText: config.custom_status.text } : {}),
         ...(config.custom_status?.emoji !== undefined ? { customStatusEmoji: config.custom_status.emoji } : {}),
         ...(config.rich_presence?.enabled !== undefined ? { rpcEnabled: config.rich_presence.enabled } : {}),
+        ...(config.rich_presence?.type !== undefined ? { rpcType: Number(config.rich_presence.type) } : {}),
+        ...(config.rich_presence?.url !== undefined ? { rpcUrl: config.rich_presence.url } : {}),
         ...(config.rich_presence?.client_id !== undefined ? { rpcClientId: config.rich_presence.client_id } : {}),
         ...(config.rich_presence?.name !== undefined ? { rpcName: config.rich_presence.name } : {}),
         ...(config.rich_presence?.state !== undefined ? { rpcState: config.rich_presence.state } : {}),

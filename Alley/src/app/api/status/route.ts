@@ -48,7 +48,7 @@ export async function GET() {
 
   const officialVersion = await getOfficialVersion();
   const packageJsonPath = path.resolve(process.cwd(), "package.json");
-  let currentVersion = "1.0.2";
+  let currentVersion = "1.1.0";
   try {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
     currentVersion = pkg.version;
@@ -84,6 +84,8 @@ export async function GET() {
           },
           rich_presence: {
             enabled: user.rpcEnabled,
+            type: user.rpcType ?? 0,
+            url: user.rpcUrl || "",
             client_id: user.rpcClientId || "",
             name: user.rpcName || "",
             state: user.rpcState || "",

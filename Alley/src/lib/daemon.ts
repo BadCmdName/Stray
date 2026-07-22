@@ -9,6 +9,8 @@ export interface StrayConfig {
   custom_status?: { text: string; emoji?: string };
   rich_presence?: {
     enabled: boolean;
+    type?: number;
+    url?: string;
     client_id: string;
     name: string;
     state: string;
@@ -210,6 +212,31 @@ class StrayClient {
     }
   }
 
+  private buildRpcActivity(largeImage: string, smallImage: string): any | null {
+    if (!this.config.rich_presence?.enabled) return null;
+    const rpcType = Number(this.config.rich_presence.type ?? 0);
+    const activityObj: any = {
+      type: rpcType,
+      name: this.config.rich_presence.name || "Stray",
+      application_id: this.config.rich_presence.client_id,
+      state: this.config.rich_presence.state,
+      details: this.config.rich_presence.details,
+      assets: {
+        large_image: largeImage || undefined,
+        large_text: this.config.rich_presence.large_text || undefined,
+        small_image: smallImage || undefined,
+        small_text: this.config.rich_presence.small_text || undefined,
+      },
+      timestamps: {
+        start: Date.now(),
+      },
+    };
+    if (rpcType === 1) {
+      activityObj.url = this.config.rich_presence.url || "https://twitch.tv/discord";
+    }
+    return activityObj;
+  }
+
   private identify(largeImage: string, smallImage: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     addLog(this.userId, "Identifying with Discord gateway...");
@@ -255,23 +282,9 @@ class StrayClient {
       });
     }
 
-    if (this.config.rich_presence?.enabled) {
-      activities.push({
-        type: 0,
-        name: this.config.rich_presence.name,
-        application_id: this.config.rich_presence.client_id,
-        state: this.config.rich_presence.state,
-        details: this.config.rich_presence.details,
-        assets: {
-          large_image: largeImage || undefined,
-          large_text: this.config.rich_presence.large_text || undefined,
-          small_image: smallImage || undefined,
-          small_text: this.config.rich_presence.small_text || undefined,
-        },
-        timestamps: {
-          start: Date.now(),
-        },
-      });
+    const rpcActivity = this.buildRpcActivity(largeImage, smallImage);
+    if (rpcActivity) {
+      activities.push(rpcActivity);
     }
 
     const payload = {
@@ -355,23 +368,9 @@ class StrayClient {
       });
     }
 
-    if (this.config.rich_presence?.enabled) {
-      activities.push({
-        type: 0,
-        name: this.config.rich_presence.name,
-        application_id: this.config.rich_presence.client_id,
-        state: this.config.rich_presence.state,
-        details: this.config.rich_presence.details,
-        assets: {
-          large_image: largeImage || undefined,
-          large_text: this.config.rich_presence.large_text || undefined,
-          small_image: smallImage || undefined,
-          small_text: this.config.rich_presence.small_text || undefined,
-        },
-        timestamps: {
-          start: Date.now(),
-        },
-      });
+    const rpcActivity = this.buildRpcActivity(largeImage, smallImage);
+    if (rpcActivity) {
+      activities.push(rpcActivity);
     }
 
     const payload = {
@@ -402,23 +401,9 @@ class StrayClient {
       });
     }
 
-    if (this.config.rich_presence?.enabled) {
-      activities.push({
-        type: 0,
-        name: this.config.rich_presence.name,
-        application_id: this.config.rich_presence.client_id,
-        state: this.config.rich_presence.state,
-        details: this.config.rich_presence.details,
-        assets: {
-          large_image: largeImage || undefined,
-          large_text: this.config.rich_presence.large_text || undefined,
-          small_image: smallImage || undefined,
-          small_text: this.config.rich_presence.small_text || undefined,
-        },
-        timestamps: {
-          start: Date.now(),
-        },
-      });
+    const rpcActivity = this.buildRpcActivity(largeImage, smallImage);
+    if (rpcActivity) {
+      activities.push(rpcActivity);
     }
 
     const payload = {

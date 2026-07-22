@@ -6,6 +6,16 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ---
 
+## v1.1.1 - 2026-07-22
+
+### Added
+- **Full RPC Activity Types:** Added support for selection of Discord activity types (Playing, Streaming, Listening, Watching, Competing) and custom Stream URLs.
+
+### Fixed
+- **RPC Gateway Payload Fix:** Fixed Rich Presence activity type being hardcoded to Playing (`type: 0`) in gateway identify and presence update payloads.
+
+
+
 ## v1.1.0 - 2026-07-20
 
 ### Added

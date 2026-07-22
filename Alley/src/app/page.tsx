@@ -44,6 +44,8 @@ export default function Home() {
   const [rotationStatus3Emoji, setRotationStatus3Emoji] = useState("");
 
   const [rpcEnabled, setRpcEnabled] = useState(false);
+  const [rpcType, setRpcType] = useState<number>(0);
+  const [rpcUrl, setRpcUrl] = useState("");
   const [rpcClientId, setRpcClientId] = useState("1018195507560063039");
   const [rpcName, setRpcName] = useState("Stray");
   const [rpcState, setRpcState] = useState("Chasing dots");
@@ -157,6 +159,8 @@ export default function Home() {
           setCustomStatusEmoji(data.config.custom_status?.emoji || "");
           if (data.config.rich_presence) {
             setRpcEnabled(data.config.rich_presence.enabled || false);
+            setRpcType(data.config.rich_presence.type ?? 0);
+            setRpcUrl(data.config.rich_presence.url || "");
             setRpcClientId(data.config.rich_presence.client_id || "");
             setRpcName(data.config.rich_presence.name || "");
             setRpcState(data.config.rich_presence.state || "");
@@ -254,6 +258,8 @@ export default function Home() {
             custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
+              type: Number(rpcType),
+              url: rpcUrl,
               client_id: rpcClientId,
               name: rpcName,
               state: rpcState,
@@ -316,6 +322,8 @@ export default function Home() {
             custom_status: { text: customStatus, emoji: customStatusEmoji },
             rich_presence: {
               enabled: rpcEnabled,
+              type: Number(rpcType),
+              url: rpcUrl,
               client_id: rpcClientId,
               name: rpcName,
               state: rpcState,
@@ -415,6 +423,21 @@ export default function Home() {
       return "text-amber-400";
     }
     return "text-zinc-400";
+  };
+
+  const getRpcTypeLabel = (type: number) => {
+    switch (Number(type)) {
+      case 1:
+        return "Streaming Live";
+      case 2:
+        return "Listening to";
+      case 3:
+        return "Watching";
+      case 5:
+        return "Competing in";
+      default:
+        return "Playing a Game";
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -748,6 +771,54 @@ export default function Home() {
               <div className="flex flex-col gap-4 animate-fadeIn">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Activity Type</label>
+                    <div className="relative">
+                      <select
+                        value={rpcType}
+                        onChange={(e) => setRpcType(Number(e.target.value))}
+                        className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                      >
+                        <option value={0}>Playing a Game</option>
+                        <option value={1}>Streaming Live</option>
+                        <option value={2}>Listening to</option>
+                        <option value={3}>Watching</option>
+                        <option value={5}>Competing in</option>
+                      </select>
+                      <div className="pointer-events-none absolute right-4 top-3.5 flex items-center text-zinc-550">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {rpcType === 1 ? (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Stream URL (Twitch / YouTube)</label>
+                      <input
+                        type="text"
+                        value={rpcUrl}
+                        onChange={(e) => setRpcUrl(e.target.value)}
+                        placeholder="https://twitch.tv/username"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase">Application ID</label>
+                      <input
+                        type="text"
+                        value={rpcClientId}
+                        onChange={(e) => setRpcClientId(e.target.value)}
+                        placeholder="1018195507560063039"
+                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {rpcType === 1 && (
+                  <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Application ID</label>
                     <input
                       type="text"
@@ -757,7 +828,9 @@ export default function Home() {
                       className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
+                )}
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Application Name</label>
                     <input
@@ -765,19 +838,6 @@ export default function Home() {
                       value={rpcName}
                       onChange={(e) => setRpcName(e.target.value)}
                       placeholder="Stray"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Activity State</label>
-                    <input
-                      type="text"
-                      value={rpcState}
-                      onChange={(e) => setRpcState(e.target.value)}
-                      placeholder="Chasing dots"
                       className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
@@ -796,6 +856,17 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-zinc-400 uppercase">Activity State</label>
+                    <input
+                      type="text"
+                      value={rpcState}
+                      onChange={(e) => setRpcState(e.target.value)}
+                      placeholder="Chasing dots"
+                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Large Image URL / Asset Key</label>
                     <input
                       type="text"
@@ -805,7 +876,9 @@ export default function Home() {
                       className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Large Image Text</label>
                     <input
@@ -816,9 +889,7 @@ export default function Home() {
                       className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-zinc-400 uppercase">Small Image URL / Asset Key</label>
                     <input
@@ -829,17 +900,17 @@ export default function Home() {
                       className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                     />
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-zinc-400 uppercase">Small Image Text</label>
-                    <input
-                      type="text"
-                      value={rpcSmallText}
-                      onChange={(e) => setRpcSmallText(e.target.value)}
-                      placeholder="Purring"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-zinc-400 uppercase">Small Image Text</label>
+                  <input
+                    type="text"
+                    value={rpcSmallText}
+                    onChange={(e) => setRpcSmallText(e.target.value)}
+                    placeholder="Purring"
+                    className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                  />
                 </div>
               </div>
             )}
@@ -946,7 +1017,12 @@ export default function Home() {
 
               {rpcEnabled && (
                 <div className="py-4 flex flex-col gap-3">
-                  <span className="text-[10px] text-zinc-500 block font-bold uppercase tracking-wider">Playing a Game</span>
+                  <span className="text-[10px] text-purple-400 block font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    {rpcType === 1 && (
+                      <span className="h-2 w-2 rounded-full bg-purple-500 animate-ping inline-block" />
+                    )}
+                    {getRpcTypeLabel(rpcType)}
+                  </span>
                   <div className="flex gap-4 items-start">
                     <div className="relative h-16 w-16 bg-[#0e0e11] rounded-xl flex items-center justify-center text-zinc-600 overflow-hidden border-2 border-zinc-800">
                       {rpcLargeImgSrc ? (

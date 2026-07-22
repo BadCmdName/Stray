@@ -13,6 +13,8 @@ export interface UserConfig {
   customStatusText: string | null;
   customStatusEmoji: string | null;
   rpcEnabled: boolean;
+  rpcType?: number;
+  rpcUrl?: string | null;
   rpcClientId: string | null;
   rpcName: string | null;
   rpcState: string | null;
@@ -83,6 +85,8 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     customStatusText: null,
     customStatusEmoji: null,
     rpcEnabled: false,
+    rpcType: 0,
+    rpcUrl: null,
     rpcClientId: null,
     rpcName: null,
     rpcState: null,
