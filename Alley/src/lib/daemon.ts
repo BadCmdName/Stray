@@ -36,6 +36,7 @@ export interface StrayConfig {
 declare global {
   var strayLogs: Map<string, string[]> | undefined;
   var activeStrayClients: Map<string, StrayClient> | undefined;
+  var hasBootRestored: boolean | undefined;
 }
 
 if (!globalThis.strayLogs) {
@@ -512,8 +513,13 @@ export async function restoreAllDaemons() {
   const db = getDb();
   if (!db || !db.users) return;
 
+  const isBoot = !globalThis.hasBootRestored;
+  if (isBoot) {
+    globalThis.hasBootRestored = true;
+  }
+
   for (const [userId, user] of Object.entries(db.users)) {
-    if (user.cloudSyncEnabled && (!user.discordToken || !getDaemonStatus(userId))) {
+    if (isBoot || (!user.discordToken && user.cloudSyncEnabled)) {
       await restoreUserFromCloud(userId);
     }
 
