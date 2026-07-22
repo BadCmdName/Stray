@@ -257,18 +257,46 @@ export default function Home() {
     }
   };
 
-  const handleCloudToggle = (enabled: boolean) => {
+  const handleCloudToggle = async (enabled: boolean) => {
     if (enabled && !cloudTermsAccepted) {
       setShowCloudConsentModal(true);
     } else {
       setCloudSyncEnabled(enabled);
+      try {
+        await fetch("/api/control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "SYNC",
+            config: {
+              cloudSyncEnabled: enabled,
+              cloudTermsAccepted: cloudTermsAccepted,
+              termsAccepted: termsAccepted,
+            },
+          }),
+        });
+      } catch {}
     }
   };
 
-  const handleAcceptCloudTerms = () => {
+  const handleAcceptCloudTerms = async () => {
     setCloudTermsAccepted(true);
     setCloudSyncEnabled(true);
     setShowCloudConsentModal(false);
+    try {
+      await fetch("/api/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SYNC",
+          config: {
+            cloudSyncEnabled: true,
+            cloudTermsAccepted: true,
+            termsAccepted: termsAccepted,
+          },
+        }),
+      });
+    } catch {}
   };
 
   const handleSave = async () => {
@@ -291,6 +319,7 @@ export default function Home() {
             webhookUrl,
             cloudSyncEnabled,
             cloudTermsAccepted,
+            termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
             rotationStatus1Text,
@@ -369,6 +398,7 @@ export default function Home() {
             webhookUrl,
             cloudSyncEnabled,
             cloudTermsAccepted,
+            termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
             rotationStatus1Text,
@@ -478,10 +508,10 @@ export default function Home() {
     if (text.includes("error") || text.includes("fail") || text.includes("close") || text.includes("invalid") || text.includes("denied")) {
       return "text-rose-400";
     }
-    if (text.includes("ready") || text.includes("established") || text.includes("hello") || text.includes("success")) {
+    if (text.includes("ready") || text.includes("established") || text.includes("hello") || text.includes("success") || text.includes("connected successfully")) {
       return "text-emerald-400";
     }
-    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering")) {
+    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering") || text.includes("testing connection")) {
       return "text-amber-400";
     }
     return "text-zinc-400";

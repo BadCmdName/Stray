@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       });
 
       const user = getUser(session.userId);
-      if (user?.cloudSyncEnabled) {
+      if (user?.cloudSyncEnabled || action === "SYNC") {
         syncUserToCloud(session.userId).catch(() => {});
       }
     }
