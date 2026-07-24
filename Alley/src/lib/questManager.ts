@@ -111,7 +111,7 @@ export class QuestManager {
           const now = Date.now();
           const activeQuests = questsList.filter((q) => {
             if (!q || !q.id) return false;
-            if (q.user_status?.claimed_at) return false;
+            if (q.user_status?.claimed_at || q.user_status?.completed_at) return false;
             if (q.config?.expires_at) {
               const expires = new Date(q.config.expires_at).getTime();
               if (!isNaN(expires) && expires < now) return false;
@@ -119,13 +119,13 @@ export class QuestManager {
             return true;
           });
 
-          addLog(this.userId, `[DQACS] TOTAL QUESTS: ${activeQuests.length}`);
+          addLog(this.userId, `[DQACS] TOTAL UNCOMPLETED QUESTS: ${activeQuests.length}`);
           return activeQuests;
         }
       } catch {}
     }
 
-    addLog(this.userId, "[DQACS] TOTAL QUESTS: 0");
+    addLog(this.userId, "[DQACS] TOTAL UNCOMPLETED QUESTS: 0");
     return [];
   }
 
@@ -245,7 +245,7 @@ export class QuestManager {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     const appId = quest.config?.application?.id || "1018195507560063039";
 
-    if (quest.user_status?.completed_at) {
+    if (quest.user_status?.completed_at || quest.user_status?.claimed_at) {
       return true;
     }
 
@@ -281,7 +281,7 @@ export class QuestManager {
   async runAllQuests(): Promise<void> {
     const quests = await this.fetchQuests();
     const total = quests.length;
-    addLog(this.userId, `[DQACS] TOTAL QUESTS: ${total}`);
+    addLog(this.userId, `[DQACS] TOTAL UNCOMPLETED QUESTS: ${total}`);
 
     let completedCount = 0;
     for (let i = 0; i < quests.length; i++) {
@@ -296,6 +296,6 @@ export class QuestManager {
     }
 
     setQuestProcessingStatus(this.userId, false);
-    addLog(this.userId, `[DQACS] Completed ${completedCount}/${total} quests!`);
+    addLog(this.userId, `[DQACS] Finished processing! Completed ${completedCount}/${total} quests!`);
   }
 }

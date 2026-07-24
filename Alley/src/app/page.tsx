@@ -121,7 +121,12 @@ export default function Home() {
           .then((data) => {
             setIsRunning(data.isRunning || false);
             if (data.isProcessingQuests !== undefined) {
-              setProcessingQuests(Boolean(data.isProcessingQuests));
+              const wasProcessing = processingQuests;
+              const isProc = Boolean(data.isProcessingQuests);
+              setProcessingQuests(isProc);
+              if (wasProcessing && !isProc) {
+                fetchUserQuests();
+              }
             }
             if (data.activeQuestRpc) {
               setActiveQuestRpc(data.activeQuestRpc);
@@ -141,7 +146,7 @@ export default function Home() {
       }, 1500);
       return () => clearInterval(interval);
     }
-  }, [session]);
+  }, [session, processingQuests]);
 
   useEffect(() => {
     let timer: any;

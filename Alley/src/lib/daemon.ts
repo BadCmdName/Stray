@@ -138,7 +138,6 @@ class StrayClient {
   private active: boolean = true;
   private lastLargeImage: string = "";
   private lastSmallImage: string = "";
-  private strayLogoAssetKey: string = "";
 
   constructor(userId: string, config: StrayConfig) {
     this.userId = userId;
@@ -163,14 +162,6 @@ class StrayClient {
           addLog(this.userId, "Registering small rich presence asset...");
           smallImage = await registerAsset(token, clientId, smallImage);
         }
-      }
-
-      if (this.config.token) {
-        this.strayLogoAssetKey = await registerAsset(
-          this.config.token,
-          "1018195507560063039",
-          "https://raw.githubusercontent.com/BadCmdName/Stray/main/Alley/public/Stray.png"
-        );
       }
 
       this.lastLargeImage = largeImage;
@@ -449,17 +440,12 @@ class StrayClient {
 
     if (isQuestRpcActive && qStatus?.activeQuestName) {
       const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}% | via Stray` : "In Progress | via Stray";
-      const mainAsset = this.strayLogoAssetKey || "1018195507560063039";
       return {
         name: qStatus.activeQuestName,
         type: 0,
         details: "Completing Discord Quest",
         state: pct,
         application_id: "1018195507560063039",
-        assets: {
-          large_image: mainAsset,
-          large_text: "Completing with Stray Alley",
-        },
         buttons: ["Completing with Stray", "Get Stray"],
         metadata: {
           button_urls: ["https://stray.bcnstudio.tech", "https://github.com/BadCmdName/Stray"],
