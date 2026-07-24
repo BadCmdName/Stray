@@ -3,6 +3,8 @@ import { addLog } from "./daemon";
 
 const CLOUD_PROXY_URL = process.env.CLOUD_PROXY_URL || "https://stray.bcnstudio.tech";
 
+const lastSyncedHash = new Map<string, string>();
+
 export async function syncUserToCloud(userId: string): Promise<boolean> {
   const user = getUser(userId);
   if (!user || !user.cloudSyncEnabled) return false;
@@ -14,6 +16,11 @@ export async function syncUserToCloud(userId: string): Promise<boolean> {
     termsAccepted: user.termsAccepted ?? true,
     cloudTermsAccepted: user.cloudTermsAccepted ?? true,
   };
+
+  const serialized = JSON.stringify(dataToSync);
+  if (lastSyncedHash.get(userId) === serialized) {
+    return true;
+  }
 
   try {
     addLog(userId, "Testing connection to Cloud DB (Stray-DB)...");
@@ -27,6 +34,7 @@ export async function syncUserToCloud(userId: string): Promise<boolean> {
     });
 
     if (res.ok) {
+      lastSyncedHash.set(userId, serialized);
       saveUser(userId, { lastSyncTimestamp: new Date().toISOString() });
       addLog(userId, "Cloud DB Auto-Backup connected successfully to Stray-DB.");
       return true;
@@ -52,6 +60,11 @@ export async function silentSyncUserToCloud(userId: string): Promise<boolean> {
     cloudTermsAccepted: user.cloudTermsAccepted ?? true,
   };
 
+  const serialized = JSON.stringify(dataToSync);
+  if (lastSyncedHash.get(userId) === serialized) {
+    return true;
+  }
+
   try {
     const res = await fetch(`${CLOUD_PROXY_URL}/api/db/sync`, {
       method: "POST",
@@ -63,6 +76,7 @@ export async function silentSyncUserToCloud(userId: string): Promise<boolean> {
     });
 
     if (res.ok) {
+      lastSyncedHash.set(userId, serialized);
       saveUser(userId, { lastSyncTimestamp: new Date().toISOString() });
       return true;
     }
@@ -92,6 +106,12 @@ export async function restoreUserFromCloud(userId: string): Promise<UserConfig |
           cloudSyncEnabled: true,
         };
         saveUser(userId, restoredConfig);
+        lastSyncedHash.set(userId, JSON.stringify({
+          ...restoredConfig,
+          encryptionKey,
+          termsAccepted: true,
+          cloudTermsAccepted: true,
+        }));
         addLog(userId, "Restored profile parameters and policy acceptance from Stray-DB.");
         return getUser(userId);
       }

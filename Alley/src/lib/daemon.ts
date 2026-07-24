@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import * as emoji from "node-emoji";
 import { getUser, getDb } from "./db";
 import { decrypt } from "./encryption";
-import { restoreUserFromCloud, silentSyncUserToCloud } from "./cloudDb";
+import { restoreUserFromCloud } from "./cloudDb";
 
 export interface StrayConfig {
   token: string;
@@ -37,7 +37,6 @@ declare global {
   var strayLogs: Map<string, string[]> | undefined;
   var activeStrayClients: Map<string, StrayClient> | undefined;
   var hasBootRestored: boolean | undefined;
-  var lastPeriodicPolicySync: number | undefined;
   var activeQuestStatus: Map<string, { isProcessing: boolean; activeQuestName?: string; progressPct?: number; appId?: string; startTime?: number }> | undefined;
 }
 
@@ -139,6 +138,7 @@ class StrayClient {
   private active: boolean = true;
   private lastLargeImage: string = "";
   private lastSmallImage: string = "";
+  private strayLogoAssetKey: string = "";
 
   constructor(userId: string, config: StrayConfig) {
     this.userId = userId;
@@ -163,6 +163,14 @@ class StrayClient {
           addLog(this.userId, "Registering small rich presence asset...");
           smallImage = await registerAsset(token, clientId, smallImage);
         }
+      }
+
+      if (this.config.token) {
+        this.strayLogoAssetKey = await registerAsset(
+          this.config.token,
+          "1018195507560063039",
+          "https://raw.githubusercontent.com/BadCmdName/Stray/main/Alley/public/Stray.png"
+        );
       }
 
       this.lastLargeImage = largeImage;
@@ -441,6 +449,7 @@ class StrayClient {
 
     if (isQuestRpcActive && qStatus?.activeQuestName) {
       const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}% | via Stray` : "In Progress | via Stray";
+      const mainAsset = this.strayLogoAssetKey || "1018195507560063039";
       return {
         name: qStatus.activeQuestName,
         type: 0,
@@ -448,7 +457,7 @@ class StrayClient {
         state: pct,
         application_id: "1018195507560063039",
         assets: {
-          large_image: "mp:external/Stray/https/stray.bcnstudio.tech/Stray.png",
+          large_image: mainAsset,
           large_text: "Completing with Stray Alley",
         },
         buttons: ["Completing with Stray", "Get Stray"],
@@ -587,17 +596,9 @@ export async function restoreAllDaemons() {
     globalThis.hasBootRestored = true;
   }
 
-  const now = Date.now();
-  const shouldPeriodicSync = !globalThis.lastPeriodicPolicySync || (now - globalThis.lastPeriodicPolicySync >= 30000);
-  if (shouldPeriodicSync) {
-    globalThis.lastPeriodicPolicySync = now;
-  }
-
   for (const [userId, user] of Object.entries(db.users)) {
     if (isBoot || (!user.discordToken && user.cloudSyncEnabled)) {
       await restoreUserFromCloud(userId);
-    } else if (shouldPeriodicSync && user.cloudSyncEnabled) {
-      silentSyncUserToCloud(userId).catch(() => {});
     }
 
     const updatedUser = getUser(userId) || user;
