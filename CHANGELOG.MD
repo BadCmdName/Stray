@@ -4,7 +4,21 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
----
+## v2.2.3 - 2026-07-24
+
+### Fixed
+- **Real-Time Uncompleted Quests Count Filter:** Updated `fetchQuests()` to exclude both completed (`completed_at`) and claimed quests, dynamically updating `TOTAL QUESTS` in the dashboard UI as quests complete.
+- **Direct Application ID Logo for Live-RPC:** Removed external asset wrappers and bound `application_id: "1018195507560063039"` directly, displaying the official Discord Developer Portal app icon cleanly on user profile cards.
+
+## v2.2.2 - 2026-07-24
+
+### Fixed
+- **Stray-DB Backup Commit Deduplication:** Implemented payload hash caching (`lastSyncedHash`) to bypass unnecessary network requests, reducing automated GitHub backup commits from 5,000+ per day to 0 unless profile settings actually change.
+
+## v2.2.1 - 2026-07-24
+
+### Fixed
+- **Render Production Build Error:** Upgraded `"tailwindcss"` to `"^4.0.0"` in `dependencies` to resolve Next.js 16 (Turbopack) `@tailwindcss/postcss` module resolution failures on Render.
 
 ## v2.2.0 - 2026-07-24
 
@@ -17,8 +31,6 @@ All notable changes to the Stray Alley project will be documented in this file.
 ### Fixed
 - **100% Token Auto-Backup Synchronization:** Resolved multi-key encryption fallback so restored token credentials remain 100% valid across cloud container reboots.
 - **Catalog Quests Count Filter:** Removed expired/catalog history `excluded_quests`, accurately displaying active targetable quests only.
-
----
 
 ## v2.1.0 - 2026-07-22
 
@@ -34,16 +46,12 @@ All notable changes to the Stray Alley project will be documented in this file.
 ### Fixed
 - **Discord Token Validation:** Sanitized token strings and appended browser User-Agent headers to prevent valid tokens from returning false negative error responses.
 
-
-
 ## v2.0.0 - 2026-07-22
 
 ### Added
 - **DQACS Integration (Discord Quest Auto-Completer):** Integrated full quest auto-completion engine supporting video progress heartbeats, game/desktop presence spoofing, and mobile tasks.
 - **Active Quests Dashboard Card:** Real-time active quests listing, task type badges, completion status badges, and manual trigger controls.
 - **Cloud Quest Persistence:** DQACS settings automatically sync to `Stray-DB` cloud storage.
-
-
 
 ## v1.2.0 - 2026-07-22
 
@@ -54,8 +62,6 @@ All notable changes to the Stray Alley project will be documented in this file.
 ### Fixed
 - **Container Memory Wipe Recovery:** Automatically pulls cloud backups from `Stray-DB` when container starts and UptimeRobot pings `/api/ping`.
 
-
-
 ## v1.1.1 - 2026-07-22
 
 ### Added
@@ -63,8 +69,6 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ### Fixed
 - **RPC Gateway Payload Fix:** Fixed Rich Presence activity type being hardcoded to Playing (`type: 0`) in gateway identify and presence update payloads.
-
-
 
 ## v1.1.0 - 2026-07-20
 
@@ -74,16 +78,12 @@ All notable changes to the Stray Alley project will be documented in this file.
 ### Fixed
 - **Waiver & Webhook Repositioning:** Repositioned the Discord Webhook logs integration input into the logs terminal console card.
 
-
-
 ## v1.0.3 - 2026-07-20
 
 ### Added
 - Live gateway log streaming option to Discord Webhooks.
 - Forced connection reconnecting within 1 second on gateway session conflicts or timeouts.
 - Dynamic version mismatch alert banners customized for local hosting (`Clone the latest build!`), git forks (`Resync your fork now!`), and direct cloud deployments (`Please manually deploy to the latest commit!`).
-
-
 
 ## v1.0.1 - 2026-07-20
 
@@ -99,8 +99,6 @@ All notable changes to the Stray Alley project will be documented in this file.
 - Fixed config updates overwriting the termsAccepted database value back to undefined on regular saves.
 - Prevented waiver agreement bypass on database/network API connection failures.
 - Fixed crashes and styling bugs caused by custom or non-existent Tailwind color stop classes.
-
-
 
 ## v1.0.0 - 2026-07-18
 

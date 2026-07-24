@@ -50,7 +50,7 @@ export default function Home() {
   const [rpcEnabled, setRpcEnabled] = useState(false);
   const [rpcType, setRpcType] = useState<number>(0);
   const [rpcUrl, setRpcUrl] = useState("");
-  const [rpcClientId, setRpcClientId] = useState("1018195507560063039");
+  const [rpcClientId, setRpcClientId] = useState("1527635163591348254");
   const [rpcName, setRpcName] = useState("Stray");
   const [rpcState, setRpcState] = useState("Chasing dots");
   const [rpcDetails, setRpcDetails] = useState("Meowing at 3 AM");
@@ -212,7 +212,7 @@ export default function Home() {
       setRpcEnabled(isCustomRpc);
       setRpcType(cfg.rich_presence.type ?? 0);
       setRpcUrl(cfg.rich_presence.url || "");
-      setRpcClientId(cfg.rich_presence.client_id || "1018195507560063039");
+      setRpcClientId(cfg.rich_presence.client_id || "1527635163591348254");
       setRpcName(cfg.rich_presence.name || "");
       setRpcState(cfg.rich_presence.state || "");
       setRpcDetails(cfg.rich_presence.details || "");
@@ -1041,7 +1041,7 @@ export default function Home() {
                           type="text"
                           value={rpcClientId}
                           onChange={(e) => setRpcClientId(e.target.value)}
-                          placeholder="1018195507560063039"
+                          placeholder="1527635163591348254"
                           className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                         />
                       </div>
@@ -1055,7 +1055,7 @@ export default function Home() {
                         type="text"
                         value={rpcClientId}
                         onChange={(e) => setRpcClientId(e.target.value)}
-                        placeholder="1018195507560063039"
+                        placeholder="1527635163591348254"
                         className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
                       />
                     </div>

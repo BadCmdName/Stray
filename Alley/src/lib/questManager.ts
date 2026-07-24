@@ -148,7 +148,7 @@ export class QuestManager {
 
   async completeVideoQuest(quest: QuestConfig, secondsNeeded: number, secondsDone: number): Promise<boolean> {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
-    const appId = quest.config?.application?.id || "1018195507560063039";
+    const appId = quest.config?.application?.id || "1527635163591348254";
     let currentDone = secondsDone;
 
     addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s)...`);
@@ -195,7 +195,7 @@ export class QuestManager {
   async completePlayQuest(quest: QuestConfig, secondsNeeded: number, taskName: string): Promise<boolean> {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     const appName = quest.config?.application?.name || questName;
-    const appId = quest.config?.application?.id || "1018195507560063039";
+    const appId = quest.config?.application?.id || "1527635163591348254";
     let completed = false;
 
     addLog(this.userId, `[DQACS] Heartbeat / Presence starting for “${questName}” (${appName})...`);
@@ -243,7 +243,7 @@ export class QuestManager {
 
   async processQuest(quest: QuestConfig): Promise<boolean> {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
-    const appId = quest.config?.application?.id || "1018195507560063039";
+    const appId = quest.config?.application?.id || "1527635163591348254";
 
     if (quest.user_status?.completed_at || quest.user_status?.claimed_at) {
       return true;

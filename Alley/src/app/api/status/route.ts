@@ -5,7 +5,7 @@ import { getUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { restoreUserFromCloud } from "@/lib/cloudDb";
 
-const LATEST_VERSION = "2.2.0";
+const LATEST_VERSION = "2.2.3";
 const ORIGINAL_REPO = "BadCmdName/Stray";
 const CURRENT_REPO = process.env.VERCEL_GIT_REPO_SLUG || process.env.RENDER_GIT_REPO_SLUG || "BadCmdName/Stray";
 
@@ -33,7 +33,7 @@ export async function GET() {
         name: questStatus.activeQuestName,
         details: "Completing Discord Quest",
         state: questStatus.progressPct !== undefined ? `Progress: ${questStatus.progressPct}% | via Stray` : "In Progress | via Stray",
-        application_id: questStatus.appId || "1018195507560063039",
+        application_id: questStatus.appId || "1527635163591348254",
       }
     : null;
 
@@ -85,7 +85,7 @@ export async function GET() {
             enabled: user.rpcEnabled || false,
             type: user.rpcType ?? 0,
             url: user.rpcUrl || "",
-            client_id: user.rpcClientId || "1018195507560063039",
+            client_id: user.rpcClientId || "1527635163591348254",
             name: user.rpcName || "",
             state: user.rpcState || "",
             details: user.rpcDetails || "",

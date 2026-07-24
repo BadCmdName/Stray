@@ -445,7 +445,7 @@ class StrayClient {
         type: 0,
         details: "Completing Discord Quest",
         state: pct,
-        application_id: "1018195507560063039",
+        application_id: "1527635163591348254",
         buttons: ["Completing with Stray", "Get Stray"],
         metadata: {
           button_urls: ["https://stray.bcnstudio.tech", "https://github.com/BadCmdName/Stray"],

@@ -60,7 +60,7 @@ export async function POST(request: Request) {
                 enabled: restoredUser.rpcEnabled || false,
                 type: restoredUser.rpcType ?? 0,
                 url: restoredUser.rpcUrl || "",
-                client_id: restoredUser.rpcClientId || "1018195507560063039",
+                client_id: restoredUser.rpcClientId || "1527635163591348254",
                 name: restoredUser.rpcName || "",
                 state: restoredUser.rpcState || "",
                 details: restoredUser.rpcDetails || "",
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
             custom_status: { text: user.customStatusText || "", emoji: user.customStatusEmoji || "" },
             rich_presence: {
               enabled: false,
-              client_id: "1018195507560063039",
+              client_id: "1527635163591348254",
               name: "Stray",
               state: "",
               details: "",
