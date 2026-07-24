@@ -4,15 +4,16 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
-## v2.3.3 - 2026-07-24
+## v2.4.0 - 2026-07-24
 
 ### Added
-- **Automatic Custom RPC Reversion:** Configured `questManager` and `daemon` to automatically disable `LIVE-RPC` and restore the user's Custom RPC / status presence as soon as all active quests finish processing.
+- **Dynamic README Version Resolver:** Integrated a zero-hardcoding version engine (`lib/version.ts`) that dynamically extracts runtime local and remote release versions from `README.MD`.
+- **Automatic Custom RPC Reversion:** Configured `questManager` and `daemon` to automatically disable `LIVE-RPC` and seamlessly restore the user's Custom RPC / status presence as soon as active quests complete.
 - **Dynamic Live Preview Elapsed Timer:** Replaced static `1:37 elapsed` mockup string in the dashboard Live Preview card with a real-time live counting timer (`0:01 elapsed`, `0:02 elapsed`...).
 - **Default App ID Asset Resolution:** Resolved fallback asset key resolution for official application ID `1527635163591348254` across both Live Preview cards and Gateway payloads.
 
 ### Fixed
-- **Dynamic Remote Update Notification Banner:** Replaced static version string checks in `/api/status` with dynamic GitHub remote `package.json` version fetching (`isVersionNewer`), ensuring deployed instances trigger amber update notifications whenever a newer release is published on `main`.
+- **Dynamic Remote Update Notification Banner:** Replaced static version checks in `/api/status` with dynamic GitHub remote version fetching (`isVersionNewer`), ensuring deployed instances trigger amber update notifications whenever a newer release is published on `main`.
 
 ## v2.3.2 - 2026-07-24
 
