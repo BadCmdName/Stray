@@ -4,6 +4,11 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.3.1 - 2026-07-24
+
+### Fixed
+- **Discord API Rate Limit Error Formatting:** Differentiated HTTP 429 rate limit responses from HTTP 401 unauthorized errors in `/api/check-token`, displaying explicit temporary rate limit notices instead of false negative invalid token errors.
+
 ## v2.3.0 - 2026-07-24
 
 ### Changed

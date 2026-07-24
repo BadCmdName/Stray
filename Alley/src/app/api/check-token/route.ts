@@ -47,7 +47,13 @@ export async function POST(request: Request) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ valid: false, error: `Invalid Discord Token (HTTP ${res.status})` });
+      if (res.status === 429) {
+        return NextResponse.json({ valid: false, error: "Discord API Rate Limited (HTTP 429) - Wait a few seconds" });
+      }
+      if (res.status === 401) {
+        return NextResponse.json({ valid: false, error: "Invalid Discord Token (HTTP 401 Unauthorized)" });
+      }
+      return NextResponse.json({ valid: false, error: `Discord API Error (HTTP ${res.status})` });
     }
 
     const user = await res.json();
