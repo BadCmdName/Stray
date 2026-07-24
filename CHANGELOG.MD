@@ -4,6 +4,12 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.3.0 - 2026-07-24
+
+### Changed
+- **Website UI/UX Redesign:** Fully revamped the informational website's design system utilizing a modern 2026 glassmorphic aesthetic.
+- **Enhanced Animations:** Added fluid micro-interactions, gradient borders, and animated backgrounds across the website landing pages.
+
 ## v2.2.3 - 2026-07-24
 
 ### Fixed
