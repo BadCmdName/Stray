@@ -7,6 +7,7 @@ export interface QuestTask {
 export interface QuestConfig {
   id: string;
   config: {
+    expires_at?: string;
     messages?: {
       quest_name?: string;
       game_title?: string;
@@ -105,13 +106,21 @@ export class QuestManager {
             questsList = data;
           } else if (data && Array.isArray(data.quests)) {
             questsList = data.quests;
-            if (Array.isArray(data.excluded_quests)) {
-              questsList = [...questsList, ...data.excluded_quests];
-            }
           }
 
-          addLog(this.userId, `[DQACS] TOTAL QUESTS: ${questsList.length}`);
-          return questsList;
+          const now = Date.now();
+          const activeQuests = questsList.filter((q) => {
+            if (!q || !q.id) return false;
+            if (q.user_status?.claimed_at) return false;
+            if (q.config?.expires_at) {
+              const expires = new Date(q.config.expires_at).getTime();
+              if (!isNaN(expires) && expires < now) return false;
+            }
+            return true;
+          });
+
+          addLog(this.userId, `[DQACS] TOTAL QUESTS: ${activeQuests.length}`);
+          return activeQuests;
         }
       } catch {}
     }
