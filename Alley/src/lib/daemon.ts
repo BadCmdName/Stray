@@ -38,6 +38,7 @@ declare global {
   var activeStrayClients: Map<string, StrayClient> | undefined;
   var hasBootRestored: boolean | undefined;
   var lastPeriodicPolicySync: number | undefined;
+  var activeQuestStatus: Map<string, { isProcessing: boolean; activeQuestName?: string; progressPct?: number; appId?: string }> | undefined;
 }
 
 if (!globalThis.strayLogs) {
@@ -46,6 +47,22 @@ if (!globalThis.strayLogs) {
 
 if (!globalThis.activeStrayClients) {
   globalThis.activeStrayClients = new Map();
+}
+
+if (!globalThis.activeQuestStatus) {
+  globalThis.activeQuestStatus = new Map();
+}
+
+export function setQuestProcessingStatus(userId: string, isProcessing: boolean, activeQuestName?: string, progressPct?: number, appId?: string) {
+  if (isProcessing) {
+    globalThis.activeQuestStatus?.set(userId, { isProcessing: true, activeQuestName, progressPct, appId });
+  } else {
+    globalThis.activeQuestStatus?.delete(userId);
+  }
+}
+
+export function getQuestProcessingStatus(userId: string) {
+  return globalThis.activeQuestStatus?.get(userId) || null;
 }
 
 export function addLog(userId: string, message: string) {
@@ -67,10 +84,6 @@ export function addLog(userId: string, message: string) {
       }),
     }).catch(() => {});
   }
-}
-
-export function getLogs(userId: string): string[] {
-  return globalThis.strayLogs?.get(userId) || [];
 }
 
 function parseEmoji(emojiStr: string) {
@@ -181,71 +194,52 @@ class StrayClient {
       });
 
       this.ws.on("error", (err: any) => {
-        addLog(this.userId, `Socket connection error: ${err.message}`);
+        addLog(this.userId, `Gateway WebSocket error: ${err.message}`);
       });
     } catch (err: any) {
-      addLog(this.userId, `Failed to connect: ${err.message}`);
-      if (this.active) {
-        this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
-      }
+      addLog(this.userId, `Connection setup error: ${err.message}`);
     }
   }
 
   private handleMessage(msg: any, largeImage: string, smallImage: string) {
-    if (msg.s !== undefined && msg.s !== null) {
+    if (msg.s !== null && msg.s !== undefined) {
       this.sequence = msg.s;
-    }
-
-    if (msg.t === "READY") {
-      addLog(this.userId, `Gateway session is READY. User: ${msg.d.user.username}`);
-      this.startRotationLoop(largeImage, smallImage);
     }
 
     switch (msg.op) {
       case 10:
-        const interval = msg.d.heartbeat_interval;
-        addLog(this.userId, `Hello received. Starting heartbeat every ${interval}ms`);
-        this.heartbeatInterval = setInterval(() => {
-          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ op: 1, d: this.sequence }));
-          }
-        }, interval);
-        this.identify(largeImage, smallImage);
+        const heartbeatIntervalMs = msg.d.heartbeat_interval;
+        addLog(this.userId, `Received hello (Heartbeat interval: ${heartbeatIntervalMs}ms)`);
+        this.startHeartbeat(heartbeatIntervalMs);
+        this.sendIdentify(largeImage, smallImage);
         break;
+
       case 11:
         break;
+
+      case 0:
+        if (msg.t === "READY") {
+          const tag = `${msg.d.user.username}#${msg.d.user.discriminator || "0"}`;
+          addLog(this.userId, `Gateway session READY! Authenticated as ${tag} (ID: ${msg.d.user.id})`);
+          this.startRotationLoop(largeImage, smallImage);
+        }
+        break;
+
+      default:
+        break;
     }
   }
 
-  private buildRpcActivity(largeImage: string, smallImage: string): any | null {
-    if (!this.config.rich_presence?.enabled) return null;
-    const rpcType = Number(this.config.rich_presence.type ?? 0);
-    const activityObj: any = {
-      type: rpcType,
-      name: this.config.rich_presence.name || "Stray",
-      application_id: this.config.rich_presence.client_id,
-      state: this.config.rich_presence.state,
-      details: this.config.rich_presence.details,
-      assets: {
-        large_image: largeImage || undefined,
-        large_text: this.config.rich_presence.large_text || undefined,
-        small_image: smallImage || undefined,
-        small_text: this.config.rich_presence.small_text || undefined,
-      },
-      timestamps: {
-        start: Date.now(),
-      },
-    };
-    if (rpcType === 1) {
-      activityObj.url = this.config.rich_presence.url || "https://twitch.tv/discord";
-    }
-    return activityObj;
+  private startHeartbeat(intervalMs: number) {
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ op: 1, d: this.sequence }));
+      }
+    }, intervalMs);
   }
 
-  private identify(largeImage: string, smallImage: string) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    addLog(this.userId, "Identifying with Discord gateway...");
-
+  private sendIdentify(largeImage: string, smallImage: string) {
     let os = "Windows";
     let browser = "Chrome";
     let device = "";
@@ -310,7 +304,7 @@ class StrayClient {
       },
     };
 
-    this.ws.send(JSON.stringify(payload));
+    this.ws?.send(JSON.stringify(payload));
   }
 
   private startRotationLoop(largeImage: string, smallImage: string) {
@@ -422,6 +416,50 @@ class StrayClient {
     };
 
     this.ws.send(JSON.stringify(payload));
+  }
+
+  private buildRpcActivity(largeImage: string, smallImage: string) {
+    const qStatus = getQuestProcessingStatus(this.userId);
+    const user = getUser(this.userId);
+    const isQuestRpcActive = user?.liveRpcQuests || qStatus?.isProcessing;
+
+    if (isQuestRpcActive && qStatus?.activeQuestName) {
+      const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}%` : "In Progress";
+      return {
+        name: qStatus.activeQuestName,
+        type: 0,
+        details: "Completing Discord Quest",
+        state: pct,
+        application_id: qStatus.appId || "1018195507560063039",
+        timestamps: { start: Date.now() },
+      };
+    }
+
+    if (!this.config.rich_presence?.enabled) return null;
+
+    const rpc = this.config.rich_presence;
+    const rpcType = Number(rpc.type) || 0;
+
+    const activity: any = {
+      name: rpc.name || "Stray",
+      type: rpcType,
+      timestamps: { start: Date.now() },
+    };
+
+    if (rpc.details) activity.details = rpc.details;
+    if (rpc.state) activity.state = rpc.state;
+    if (rpc.client_id) activity.application_id = rpc.client_id;
+    if (rpcType === 1 && rpc.url) activity.url = rpc.url;
+
+    if (largeImage || smallImage || rpc.large_text || rpc.small_text) {
+      activity.assets = {};
+      if (largeImage) activity.assets.large_image = largeImage;
+      if (rpc.large_text) activity.assets.large_text = rpc.large_text;
+      if (smallImage) activity.assets.small_image = smallImage;
+      if (rpc.small_text) activity.assets.small_text = rpc.small_text;
+    }
+
+    return activity;
   }
 
   private cleanupTimers() {

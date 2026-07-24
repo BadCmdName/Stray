@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getUser } from "@/lib/db";
+import { getUser, saveUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { QuestManager } from "@/lib/questManager";
+import { startDaemon, getDaemonStatus } from "@/lib/daemon";
 
 export async function GET() {
   const session = await getSession();
@@ -43,6 +44,29 @@ export async function POST(request: Request) {
     const token = decrypt(user.discordToken);
     if (!token) {
       return NextResponse.json({ error: "Invalid Discord token" }, { status: 400 });
+    }
+
+    if (!getDaemonStatus(session.userId)) {
+      saveUser(session.userId, { botEnabled: true });
+      startDaemon(session.userId, {
+        token,
+        status: user.status || "online",
+        device: user.device || "desktop",
+        webhookUrl: user.webhookUrl || "",
+        rotationEnabled: user.rotationEnabled || false,
+        custom_status: { text: user.customStatusText || "", emoji: user.customStatusEmoji || "" },
+        rich_presence: {
+          enabled: false,
+          client_id: "1018195507560063039",
+          name: "Stray",
+          state: "",
+          details: "",
+          large_image: "",
+          large_text: "",
+          small_image: "",
+          small_text: "",
+        },
+      });
     }
 
     const body = await request.json().catch(() => ({}));

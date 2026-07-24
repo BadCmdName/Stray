@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { startDaemon, stopDaemon } from "@/lib/daemon";
+import { startDaemon, stopDaemon, getDaemonStatus } from "@/lib/daemon";
 import { encrypt, decrypt } from "@/lib/encryption";
 import { saveUser, getUser } from "@/lib/db";
 import { syncUserToCloud, restoreUserFromCloud } from "@/lib/cloudDb";
@@ -88,6 +88,15 @@ export async function POST(request: Request) {
     }
 
     if (config) {
+      let rpcEnabled = config.rich_presence?.enabled;
+      let liveRpcQuests = config.liveRpcQuests;
+
+      if (liveRpcQuests === true) {
+        rpcEnabled = false;
+      } else if (rpcEnabled === true) {
+        liveRpcQuests = false;
+      }
+
       saveUser(session.userId, {
         username: session.username,
         ...(config.token !== undefined ? { discordToken: config.token ? encrypt(config.token) : "" } : {}),
@@ -95,7 +104,7 @@ export async function POST(request: Request) {
         ...(config.device !== undefined ? { device: config.device } : {}),
         ...(config.custom_status?.text !== undefined ? { customStatusText: config.custom_status.text } : {}),
         ...(config.custom_status?.emoji !== undefined ? { customStatusEmoji: config.custom_status.emoji } : {}),
-        ...(config.rich_presence?.enabled !== undefined ? { rpcEnabled: config.rich_presence.enabled } : {}),
+        ...(rpcEnabled !== undefined ? { rpcEnabled } : {}),
         ...(config.rich_presence?.type !== undefined ? { rpcType: Number(config.rich_presence.type) } : {}),
         ...(config.rich_presence?.url !== undefined ? { rpcUrl: config.rich_presence.url } : {}),
         ...(config.rich_presence?.client_id !== undefined ? { rpcClientId: config.rich_presence.client_id } : {}),
@@ -120,12 +129,38 @@ export async function POST(request: Request) {
         ...(config.cloudSyncEnabled !== undefined ? { cloudSyncEnabled: config.cloudSyncEnabled } : {}),
         ...(config.cloudTermsAccepted !== undefined ? { cloudTermsAccepted: config.cloudTermsAccepted } : {}),
         ...(config.autoQuestsEnabled !== undefined ? { autoQuestsEnabled: config.autoQuestsEnabled } : {}),
-        ...(config.liveRpcQuests !== undefined ? { liveRpcQuests: config.liveRpcQuests } : {}),
+        ...(liveRpcQuests !== undefined ? { liveRpcQuests } : {}),
       });
 
       const user = getUser(session.userId);
       if (user?.cloudSyncEnabled || action === "SYNC") {
         syncUserToCloud(session.userId).catch(() => {});
+      }
+
+      if (config.liveRpcQuests && user?.discordToken && !getDaemonStatus(session.userId)) {
+        const token = decrypt(user.discordToken);
+        if (token) {
+          saveUser(session.userId, { botEnabled: true });
+          startDaemon(session.userId, {
+            token,
+            status: user.status || "online",
+            device: user.device || "desktop",
+            webhookUrl: user.webhookUrl || "",
+            rotationEnabled: user.rotationEnabled || false,
+            custom_status: { text: user.customStatusText || "", emoji: user.customStatusEmoji || "" },
+            rich_presence: {
+              enabled: false,
+              client_id: "1018195507560063039",
+              name: "Stray",
+              state: "",
+              details: "",
+              large_image: "",
+              large_text: "",
+              small_image: "",
+              small_text: "",
+            },
+          });
+        }
       }
     }
 

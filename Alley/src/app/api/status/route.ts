@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { isDaemonRunning, getDaemonLogs, restoreAllDaemons } from "@/lib/daemon";
+import { isDaemonRunning, getDaemonLogs, restoreAllDaemons, getQuestProcessingStatus } from "@/lib/daemon";
 import { getUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { restoreUserFromCloud } from "@/lib/cloudDb";
@@ -26,6 +26,17 @@ export async function GET() {
   const isRunning = isDaemonRunning(session.userId);
   const logs = getDaemonLogs(session.userId);
 
+  const questStatus = getQuestProcessingStatus(session.userId);
+  const isProcessingQuests = Boolean(questStatus?.isProcessing);
+  const activeQuestRpc = questStatus?.activeQuestName
+    ? {
+        name: questStatus.activeQuestName,
+        details: "Completing Discord Quest",
+        state: questStatus.progressPct !== undefined ? `Progress: ${questStatus.progressPct}%` : "In Progress",
+        application_id: questStatus.appId || "1018195507560063039",
+      }
+    : null;
+
   let token = "";
   if (user?.discordToken) {
     try {
@@ -43,6 +54,8 @@ export async function GET() {
     isRunning,
     logs,
     updateNotification,
+    isProcessingQuests,
+    activeQuestRpc,
     config: user
       ? {
           token,

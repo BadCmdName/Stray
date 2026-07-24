@@ -1,4 +1,4 @@
-import { addLog } from "./daemon";
+import { addLog, setQuestProcessingStatus } from "./daemon";
 
 export interface QuestTask {
   target: number;
@@ -148,6 +148,7 @@ export class QuestManager {
 
   async completeVideoQuest(quest: QuestConfig, secondsNeeded: number, secondsDone: number): Promise<boolean> {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
+    const appId = quest.config?.application?.id || "1018195507560063039";
     let currentDone = secondsDone;
 
     addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s)...`);
@@ -169,6 +170,7 @@ export class QuestManager {
           const data = await res.json();
           currentDone = timestamp;
           const pct = Math.floor((currentDone / secondsNeeded) * 100);
+          setQuestProcessingStatus(this.userId, true, questName, pct, appId);
           addLog(this.userId, `[DQACS] Progress: ${pct}% (${Math.floor(currentDone)}s / ${secondsNeeded}s) for “${questName}”`);
           if (data.completed_at) {
             return true;
@@ -193,6 +195,7 @@ export class QuestManager {
   async completePlayQuest(quest: QuestConfig, secondsNeeded: number, taskName: string): Promise<boolean> {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     const appName = quest.config?.application?.name || questName;
+    const appId = quest.config?.application?.id || "1018195507560063039";
     let completed = false;
 
     addLog(this.userId, `[DQACS] Heartbeat / Presence starting for “${questName}” (${appName})...`);
@@ -216,6 +219,7 @@ export class QuestManager {
           }
           const done = data.progress?.[taskName]?.value || 0;
           const pct = secondsNeeded > 0 ? Math.floor((done / secondsNeeded) * 100) : 0;
+          setQuestProcessingStatus(this.userId, true, questName, pct, appId);
           addLog(this.userId, `[DQACS] Progress: ${pct}% for “${questName}”`);
         }
       } catch {}
@@ -239,6 +243,7 @@ export class QuestManager {
 
   async processQuest(quest: QuestConfig): Promise<boolean> {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
+    const appId = quest.config?.application?.id || "1018195507560063039";
 
     if (quest.user_status?.completed_at) {
       return true;
@@ -261,11 +266,16 @@ export class QuestManager {
     const secondsNeeded = tasks[taskName]?.target || 0;
     const secondsDone = quest.user_status?.progress?.[taskName]?.value || 0;
 
+    setQuestProcessingStatus(this.userId, true, questName, 0, appId);
+
+    let result = false;
     if (taskName === "WATCH_VIDEO" || taskName === "WATCH_VIDEO_ON_MOBILE") {
-      return await this.completeVideoQuest(quest, secondsNeeded, secondsDone);
+      result = await this.completeVideoQuest(quest, secondsNeeded, secondsDone);
     } else {
-      return await this.completePlayQuest(quest, secondsNeeded, taskName);
+      result = await this.completePlayQuest(quest, secondsNeeded, taskName);
     }
+
+    return result;
   }
 
   async runAllQuests(): Promise<void> {
@@ -285,6 +295,7 @@ export class QuestManager {
       }
     }
 
+    setQuestProcessingStatus(this.userId, false);
     addLog(this.userId, `[DQACS] Completed ${completedCount}/${total} quests!`);
   }
 }

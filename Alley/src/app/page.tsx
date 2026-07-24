@@ -69,6 +69,7 @@ export default function Home() {
   const [questsList, setQuestsList] = useState<any[]>([]);
   const [loadingQuests, setLoadingQuests] = useState(false);
   const [processingQuests, setProcessingQuests] = useState(false);
+  const [activeQuestRpc, setActiveQuestRpc] = useState<any>(null);
 
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [cooldownErrorMsg, setCooldownErrorMsg] = useState<string | null>(null);
@@ -119,6 +120,14 @@ export default function Home() {
           .then((res) => res.json())
           .then((data) => {
             setIsRunning(data.isRunning || false);
+            if (data.isProcessingQuests !== undefined) {
+              setProcessingQuests(Boolean(data.isProcessingQuests));
+            }
+            if (data.activeQuestRpc) {
+              setActiveQuestRpc(data.activeQuestRpc);
+            } else {
+              setActiveQuestRpc(null);
+            }
             if (data.logs) {
               setLogs(data.logs);
             }
@@ -129,7 +138,7 @@ export default function Home() {
             }
           })
           .catch(() => {});
-      }, 2000);
+      }, 1500);
       return () => clearInterval(interval);
     }
   }, [session]);
@@ -194,7 +203,8 @@ export default function Home() {
     setCustomStatus(cfg.custom_status?.text || "");
     setCustomStatusEmoji(cfg.custom_status?.emoji || "");
     if (cfg.rich_presence) {
-      setRpcEnabled(cfg.rich_presence.enabled || false);
+      const isCustomRpc = Boolean(cfg.rich_presence.enabled) && !cfg.liveRpcQuests;
+      setRpcEnabled(isCustomRpc);
       setRpcType(cfg.rich_presence.type ?? 0);
       setRpcUrl(cfg.rich_presence.url || "");
       setRpcClientId(cfg.rich_presence.client_id || "1018195507560063039");
@@ -232,6 +242,14 @@ export default function Home() {
       .then((data) => {
         if (data.config) {
           applyConfigToState(data.config);
+        }
+        if (data.isProcessingQuests !== undefined) {
+          setProcessingQuests(Boolean(data.isProcessingQuests));
+        }
+        if (data.activeQuestRpc) {
+          setActiveQuestRpc(data.activeQuestRpc);
+        } else {
+          setActiveQuestRpc(null);
         }
         if (data.updateNotification) {
           setUpdateNotification(data.updateNotification);
@@ -364,10 +382,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      setTimeout(() => {
-        fetchUserQuests();
-        setProcessingQuests(false);
-      }, 4000);
+      setIsRunning(true);
     } catch {
       setProcessingQuests(false);
     }
@@ -375,6 +390,9 @@ export default function Home() {
 
   const handleLiveRpcToggle = async (enabled: boolean) => {
     setLiveRpcQuests(enabled);
+    if (enabled) {
+      setRpcEnabled(false);
+    }
     try {
       await fetch("/api/control", {
         method: "POST",
@@ -384,10 +402,23 @@ export default function Home() {
           config: {
             token,
             liveRpcQuests: enabled,
+            rich_presence: {
+              enabled: false,
+            },
           },
         }),
       });
+      if (enabled) {
+        setIsRunning(true);
+      }
     } catch {}
+  };
+
+  const handleCustomRpcToggle = async (enabled: boolean) => {
+    setRpcEnabled(enabled);
+    if (enabled) {
+      setLiveRpcQuests(false);
+    }
   };
 
   const handleSave = async () => {
@@ -412,7 +443,7 @@ export default function Home() {
             cloudSyncEnabled,
             cloudTermsAccepted,
             autoQuestsEnabled,
-            liveRpcQuests,
+            liveRpcQuests: rpcEnabled ? false : liveRpcQuests,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -494,7 +525,7 @@ export default function Home() {
             cloudSyncEnabled,
             cloudTermsAccepted,
             autoQuestsEnabled,
-            liveRpcQuests,
+            liveRpcQuests: rpcEnabled ? false : liveRpcQuests,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -642,6 +673,8 @@ export default function Home() {
 
   const rpcLargeImgSrc = getRpcImageUrl(rpcClientId, rpcLargeImage);
   const rpcSmallImgSrc = getRpcImageUrl(rpcClientId, rpcSmallImage);
+
+  const displayQuestRpc = (liveRpcQuests || processingQuests) && activeQuestRpc;
 
   if (!authChecked) {
     return (
@@ -945,12 +978,15 @@ export default function Home() {
 
             <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Rich Activity (RPC)</span>
+                <div>
+                  <span className="text-xs font-bold text-white uppercase tracking-wide block">Enable Custom Rich Activity (RPC)</span>
+                  <span className="text-[10px] text-zinc-400 block mt-0.5">Note: Disables Quest LIVE-RPC while active.</span>
+                </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={rpcEnabled}
-                    onChange={(e) => setRpcEnabled(e.target.checked)}
+                    onChange={(e) => handleCustomRpcToggle(e.target.checked)}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
@@ -1211,7 +1247,24 @@ export default function Home() {
                   </div>
                 )}
 
-                {rpcEnabled && (
+                {displayQuestRpc ? (
+                  <div className="py-4 flex flex-col gap-3">
+                    <span className="text-[10px] text-amber-400 block font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                      <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping inline-block" />
+                      Quest Live-RPC Active
+                    </span>
+                    <div className="flex gap-4 items-start">
+                      <div className="relative h-16 w-16 bg-[#0e0e11] rounded-xl flex items-center justify-center text-amber-400 border-2 border-amber-400/50 shrink-0">
+                        <QuestIcon />
+                      </div>
+                      <div className="flex-1 flex flex-col min-w-0">
+                        <h4 className="text-xs font-bold text-white truncate">{activeQuestRpc.name}</h4>
+                        <p className="text-[10px] text-amber-300 truncate mt-0.5 font-semibold">{activeQuestRpc.details}</p>
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5 font-mono">{activeQuestRpc.state}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : rpcEnabled ? (
                   <div className="py-4 flex flex-col gap-3">
                     <span className="text-[10px] text-purple-400 block font-bold uppercase tracking-wider flex items-center gap-1.5">
                       {rpcType === 1 && (
@@ -1240,7 +1293,7 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -1287,7 +1340,7 @@ export default function Home() {
               Rewards notice: Rewards are only claimed via the official Discord client or web app.
             </span>
             <div className="text-xs text-zinc-300 font-mono flex items-center justify-between border-t border-zinc-900 pt-3">
-              <span>Status: {processingQuests ? "Auto-completing quests..." : questsList.length > 0 ? "Quests ready for completion" : "No active quests found"}</span>
+              <span>Status: {processingQuests ? "Auto-completing quests in progress..." : questsList.length > 0 ? "Quests ready for completion" : "No active quests found"}</span>
               <button
                 onClick={fetchUserQuests}
                 disabled={loadingQuests || !token}
@@ -1295,80 +1348,6 @@ export default function Home() {
               >
                 {loadingQuests ? "Refreshing..." : "Refresh Total"}
               </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-          <h2 className="text-base font-black text-white uppercase tracking-wider border-b border-zinc-800 pb-3">
-            Settings Menu
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white uppercase tracking-wide block">Cloud DB Auto-Backup</span>
-                  <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
-                    Encrypts and backs up user configuration to private <code className="font-mono text-amber-400">Stray-DB</code> storage.
-                  </span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-                  <input
-                    type="checkbox"
-                    checked={cloudSyncEnabled}
-                    onChange={(e) => handleCloudToggle(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-[#16161a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-zinc-900">
-                <span className="text-[10px] text-emerald-400 font-bold">
-                  {lastSyncTimestamp ? `Backup: ${new Date(lastSyncTimestamp).toLocaleString()}` : "No backup committed yet"}
-                </span>
-                <button
-                  onClick={handleManualCloudRestore}
-                  disabled={restoringCloud}
-                  className="px-3 py-1 bg-[#16161a] border border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-[10px] font-bold uppercase transition"
-                >
-                  {restoringCloud ? "Restoring..." : "Restore From Cloud"}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white uppercase tracking-wide block">Discord Webhook Log Stream</span>
-                  <span className="text-[10px] text-zinc-400 font-medium block mt-0.5">
-                    Broadcast gateway connection logs to your custom Discord webhook.
-                  </span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
-                  <input
-                    type="checkbox"
-                    checked={webhookEnabled}
-                    onChange={(e) => setWebhookEnabled(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-[#16161a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
-                </label>
-              </div>
-
-              {webhookEnabled && (
-                <div className="flex flex-col gap-1.5 animate-fadeIn pt-2 border-t border-zinc-900">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Webhook Endpoint URL</label>
-                  <input
-                    type="text"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    placeholder="https://discord.com/api/webhooks/..."
-                    className="w-full bg-[#16161a] border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>
