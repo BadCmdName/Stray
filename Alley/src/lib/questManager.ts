@@ -1,5 +1,4 @@
 import { addLog } from "./daemon";
-import { getUser } from "./db";
 
 export interface QuestTask {
   target: number;
@@ -65,7 +64,7 @@ export class QuestManager {
   }
 
   private getHeaders(isAndroid = false): Record<string, string> {
-    const baseHeaders: Record<string, string> = {
+    return {
       Authorization: this.token,
       "Content-Type": "application/json",
       "Accept-Language": "en-US",
@@ -77,50 +76,48 @@ export class QuestManager {
         ? "Discord-Android/316011;RNA"
         : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9236 Chrome/138.0.7204.251 Electron/37.6.0 Safari/537.36",
     };
-    return baseHeaders;
   }
 
   async fetchQuests(): Promise<QuestConfig[]> {
     if (!this.token) {
-      addLog(this.userId, "[DQACS] Error: No Discord token configured to fetch quests.");
+      addLog(this.userId, "[DQACS] Error: No Discord token configured.");
       return [];
     }
 
-    try {
-      addLog(this.userId, "[DQACS] Querying Discord API endpoint https://discord.com/api/v9/quests/@me...");
-      const res = await fetch("https://discord.com/api/v9/quests/@me", {
-        headers: this.getHeaders(),
-        cache: "no-store",
-      });
+    const endpoints = [
+      "https://discord.com/api/v10/quests/@me",
+      "https://discord.com/api/v9/quests/@me",
+      "https://discord.com/api/v9/users/@me/quests",
+    ];
 
-      if (!res.ok) {
-        addLog(this.userId, `[DQACS] Discord Quests API returned status HTTP ${res.status}`);
-        return [];
-      }
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          headers: this.getHeaders(),
+          cache: "no-store",
+        });
 
-      const data = await res.json();
-      let questsList: QuestConfig[] = [];
+        if (res.ok) {
+          const data = await res.json();
+          let questsList: QuestConfig[] = [];
 
-      if (Array.isArray(data)) {
-        questsList = data;
-      } else if (data && Array.isArray(data.quests)) {
-        questsList = data.quests;
-        if (Array.isArray(data.excluded_quests)) {
-          questsList = [...questsList, ...data.excluded_quests];
+          if (Array.isArray(data)) {
+            questsList = data;
+          } else if (data && Array.isArray(data.quests)) {
+            questsList = data.quests;
+            if (Array.isArray(data.excluded_quests)) {
+              questsList = [...questsList, ...data.excluded_quests];
+            }
+          }
+
+          addLog(this.userId, `[DQACS] TOTAL QUESTS: ${questsList.length}`);
+          return questsList;
         }
-      }
-
-      addLog(this.userId, `[DQACS] Successfully fetched ${questsList.length} active Discord quest(s).`);
-      questsList.forEach((q) => {
-        const title = q.config?.messages?.quest_name || q.config?.messages?.game_title || "Discord Quest";
-        addLog(this.userId, `[DQACS] Quest Available: “${title}” (ID: ${q.id})`);
-      });
-
-      return questsList;
-    } catch (err: any) {
-      addLog(this.userId, `[DQACS] Error fetching quests: ${err.message || "Network request failed"}`);
-      return [];
+      } catch {}
     }
+
+    addLog(this.userId, "[DQACS] TOTAL QUESTS: 0");
+    return [];
   }
 
   async enrollQuest(questId: string, isAndroid = false): Promise<boolean> {
@@ -144,7 +141,7 @@ export class QuestManager {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     let currentDone = secondsDone;
 
-    addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s needed)...`);
+    addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s)...`);
 
     while (currentDone < secondsNeeded) {
       const speed = 7;
@@ -163,9 +160,8 @@ export class QuestManager {
           const data = await res.json();
           currentDone = timestamp;
           const pct = Math.floor((currentDone / secondsNeeded) * 100);
-          addLog(this.userId, `[DQACS] Video progress for “${questName}”: ${pct}% (${Math.floor(currentDone)}s / ${secondsNeeded}s)`);
+          addLog(this.userId, `[DQACS] Progress: ${pct}% (${Math.floor(currentDone)}s / ${secondsNeeded}s) for “${questName}”`);
           if (data.completed_at) {
-            addLog(this.userId, `[DQACS] Quest “${questName}” 100% completed! Claim your reward in the official Discord client.`);
             return true;
           }
         }
@@ -182,7 +178,6 @@ export class QuestManager {
       });
     } catch {}
 
-    addLog(this.userId, `[DQACS] Quest “${questName}” video progress completed!`);
     return true;
   }
 
@@ -191,7 +186,7 @@ export class QuestManager {
     const appName = quest.config?.application?.name || questName;
     let completed = false;
 
-    addLog(this.userId, `[DQACS] Spoofing presence for “${questName}” (${appName})...`);
+    addLog(this.userId, `[DQACS] Heartbeat / Presence starting for “${questName}” (${appName})...`);
 
     while (!completed) {
       try {
@@ -212,8 +207,7 @@ export class QuestManager {
           }
           const done = data.progress?.[taskName]?.value || 0;
           const pct = secondsNeeded > 0 ? Math.floor((done / secondsNeeded) * 100) : 0;
-          const remainingMins = Math.max(1, Math.ceil((secondsNeeded - done) / 60));
-          addLog(this.userId, `[DQACS] Spoofing ${appName}. Progress: ${pct}% (${remainingMins} min(s) remaining)...`);
+          addLog(this.userId, `[DQACS] Progress: ${pct}% for “${questName}”`);
         }
       } catch {}
 
@@ -231,7 +225,6 @@ export class QuestManager {
       });
     } catch {}
 
-    addLog(this.userId, `[DQACS] Quest “${questName}” play task completed! Claim your reward in the official Discord client.`);
     return true;
   }
 
@@ -239,9 +232,6 @@ export class QuestManager {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
 
     if (quest.user_status?.completed_at) {
-      if (!quest.user_status.claimed_at) {
-        addLog(this.userId, `[DQACS] Quest “${questName}” is 100% completed. Claim your reward in the official Discord client.`);
-      }
       return true;
     }
 
@@ -249,13 +239,11 @@ export class QuestManager {
     const isAndroid = Boolean(tasks.WATCH_VIDEO_ON_MOBILE) && !Boolean(tasks.WATCH_VIDEO);
 
     if (!quest.user_status?.enrolled_at) {
-      addLog(this.userId, `[DQACS] Enrolling in quest “${questName}”...`);
       const enrolled = await this.enrollQuest(quest.id, isAndroid);
       if (!enrolled) {
         addLog(this.userId, `[DQACS] Failed to enroll in quest “${questName}”.`);
         return false;
       }
-      addLog(this.userId, `[DQACS] Enrolled in quest “${questName}”!`);
     }
 
     const taskName = Object.keys(tasks)[0];
@@ -264,27 +252,30 @@ export class QuestManager {
     const secondsNeeded = tasks[taskName]?.target || 0;
     const secondsDone = quest.user_status?.progress?.[taskName]?.value || 0;
 
-    let success = false;
     if (taskName === "WATCH_VIDEO" || taskName === "WATCH_VIDEO_ON_MOBILE") {
-      success = await this.completeVideoQuest(quest, secondsNeeded, secondsDone);
+      return await this.completeVideoQuest(quest, secondsNeeded, secondsDone);
     } else {
-      success = await this.completePlayQuest(quest, secondsNeeded, taskName);
+      return await this.completePlayQuest(quest, secondsNeeded, taskName);
     }
-
-    if (success) {
-      addLog(this.userId, `[DQACS] Quest “${questName}” 100% complete! Claim your reward in the official Discord client.`);
-    }
-
-    return success;
   }
 
   async runAllQuests(): Promise<void> {
     const quests = await this.fetchQuests();
-    const activeQuests = quests.filter((q) => !q.user_status?.completed_at);
-    addLog(this.userId, `[DQACS] Found ${activeQuests.length} active quest(s) to process.`);
+    const total = quests.length;
+    addLog(this.userId, `[DQACS] TOTAL QUESTS: ${total}`);
 
-    for (const quest of activeQuests) {
-      await this.processQuest(quest);
+    let completedCount = 0;
+    for (let i = 0; i < quests.length; i++) {
+      const q = quests[i];
+      const name = q.config?.messages?.quest_name || q.config?.messages?.game_title || `Quest ${i + 1}`;
+      addLog(this.userId, `[DQACS] Processing ${i + 1}/${total}: “${name}”...`);
+      const success = await this.processQuest(q);
+      if (success || q.user_status?.completed_at) {
+        completedCount++;
+        addLog(this.userId, `[DQACS] Progress: ${completedCount}/${total} completed`);
+      }
     }
+
+    addLog(this.userId, `[DQACS] Completed ${completedCount}/${total} quests!`);
   }
 }

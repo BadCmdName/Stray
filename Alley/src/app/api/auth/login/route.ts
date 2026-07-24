@@ -55,10 +55,7 @@ export async function POST(req: Request) {
       expires: new Date(expires),
     });
 
-    let existingUser = getUser(payload.id);
-    if (!existingUser || !existingUser.discordToken) {
-      await restoreUserFromCloud(payload.id);
-    }
+    await restoreUserFromCloud(payload.id);
 
     saveUser(payload.id, {
       username: payload.username,

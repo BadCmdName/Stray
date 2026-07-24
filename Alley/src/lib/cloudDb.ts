@@ -1,14 +1,16 @@
-import { getUser, saveUser, UserConfig } from "./db";
+import { getUser, saveUser, UserConfig, getDb, saveDb } from "./db";
 import { addLog } from "./daemon";
 
 const CLOUD_PROXY_URL = process.env.CLOUD_PROXY_URL || "https://stray.bcnstudio.tech";
 
 export async function syncUserToCloud(userId: string): Promise<boolean> {
   const user = getUser(userId);
-  if (!user || !user.cloudSyncEnabled || !user.discordToken) return false;
+  if (!user || !user.cloudSyncEnabled) return false;
 
-  const dataToSync: UserConfig = {
+  const db = getDb();
+  const dataToSync = {
     ...user,
+    encryptionKey: db.encryptionKey,
     termsAccepted: user.termsAccepted ?? true,
     cloudTermsAccepted: user.cloudTermsAccepted ?? true,
   };
@@ -40,10 +42,12 @@ export async function syncUserToCloud(userId: string): Promise<boolean> {
 
 export async function silentSyncUserToCloud(userId: string): Promise<boolean> {
   const user = getUser(userId);
-  if (!user || !user.cloudSyncEnabled || !user.discordToken) return false;
+  if (!user || !user.cloudSyncEnabled) return false;
 
-  const dataToSync: UserConfig = {
+  const db = getDb();
+  const dataToSync = {
     ...user,
+    encryptionKey: db.encryptionKey,
     termsAccepted: user.termsAccepted ?? true,
     cloudTermsAccepted: user.cloudTermsAccepted ?? true,
   };
@@ -75,8 +79,14 @@ export async function restoreUserFromCloud(userId: string): Promise<UserConfig |
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.encryptedData) {
+        const { encryptionKey, ...restoredData } = data.encryptedData;
+        if (encryptionKey) {
+          const db = getDb();
+          db.encryptionKey = encryptionKey;
+          saveDb(db);
+        }
         const restoredConfig: UserConfig = {
-          ...data.encryptedData,
+          ...restoredData,
           termsAccepted: true,
           cloudTermsAccepted: true,
           cloudSyncEnabled: true,

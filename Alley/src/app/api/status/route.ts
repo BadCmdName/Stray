@@ -1,50 +1,30 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { getDaemonStatus, getLogs, restoreAllDaemons } from "@/lib/daemon";
-import { decrypt } from "@/lib/encryption";
+import { isDaemonRunning, getDaemonLogs, restoreAllDaemons } from "@/lib/daemon";
 import { getUser } from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 import { restoreUserFromCloud } from "@/lib/cloudDb";
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
 
-function getGitInfo() {
-  try {
-    const remoteUrl = execSync("git remote -v", { encoding: "utf-8" });
-    if (remoteUrl && !remoteUrl.includes("BadCmdName/Stray")) {
-      return { isFork: true };
-    }
-  } catch {}
-  return { isFork: false };
-}
-
-async function getOfficialVersion(): Promise<string | null> {
-  try {
-    const res = await fetch("https://raw.githubusercontent.com/BadCmdName/Stray/main/Alley/package.json", {
-      headers: { "User-Agent": "Stray-Alley" },
-      next: { revalidate: 3600 }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.version || null;
-    }
-  } catch {}
-  return null;
-}
+const LATEST_VERSION = "2.1.0";
+const ORIGINAL_REPO = "BadCmdName/Stray";
+const CURRENT_REPO = process.env.VERCEL_GIT_REPO_SLUG || process.env.RENDER_GIT_REPO_SLUG || "BadCmdName/Stray";
 
 export async function GET() {
   const session = await getSession();
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
-  await restoreAllDaemons();
+  restoreAllDaemons();
 
   let user = getUser(session.userId);
   if (!user || !user.discordToken) {
     await restoreUserFromCloud(session.userId);
     user = getUser(session.userId);
   }
+
+  const isRunning = isDaemonRunning(session.userId);
+  const logs = getDaemonLogs(session.userId);
 
   let token = "";
   if (user?.discordToken) {
@@ -53,33 +33,27 @@ export async function GET() {
     } catch {}
   }
 
-  const officialVersion = await getOfficialVersion();
-  const packageJsonPath = path.resolve(process.cwd(), "package.json");
-  let currentVersion = "2.1.0";
-  try {
-    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-    currentVersion = pkg.version;
-  } catch {}
-
-  const hasUpdate = officialVersion && officialVersion !== currentVersion;
+  const isFork = CURRENT_REPO.toLowerCase() !== ORIGINAL_REPO.toLowerCase();
+  const updateNotification = isFork
+    ? { latestVersion: LATEST_VERSION, isFork: true }
+    : null;
 
   return NextResponse.json({
-    isRunning: getDaemonStatus(session.userId),
-    logs: getLogs(session.userId),
-    updateNotification: hasUpdate ? {
-      latestVersion: `v${officialVersion}`,
-      isFork: getGitInfo().isFork,
-    } : null,
+    authenticated: true,
+    isRunning,
+    logs,
+    updateNotification,
     config: user
       ? {
           token,
-          status: user.status,
-          device: user.device,
+          status: user.status || "online",
+          device: user.device || "desktop",
           termsAccepted: user.termsAccepted || false,
           cloudSyncEnabled: user.cloudSyncEnabled || false,
           cloudTermsAccepted: user.cloudTermsAccepted || false,
           lastSyncTimestamp: user.lastSyncTimestamp || null,
           autoQuestsEnabled: user.autoQuestsEnabled || false,
+          liveRpcQuests: user.liveRpcQuests || false,
           webhookEnabled: user.webhookEnabled || false,
           webhookUrl: user.webhookUrl || "",
           rotationEnabled: user.rotationEnabled || false,
@@ -95,10 +69,10 @@ export async function GET() {
             emoji: user.customStatusEmoji || "",
           },
           rich_presence: {
-            enabled: user.rpcEnabled,
+            enabled: user.rpcEnabled || false,
             type: user.rpcType ?? 0,
             url: user.rpcUrl || "",
-            client_id: user.rpcClientId || "",
+            client_id: user.rpcClientId || "1018195507560063039",
             name: user.rpcName || "",
             state: user.rpcState || "",
             details: user.rpcDetails || "",

@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 
 const dbPath = path.resolve(process.cwd(), "db.json");
+const MASTER_KEY = "stray_master_encryption_key_v1";
 
 export interface UserConfig {
   id: string;
@@ -39,12 +40,13 @@ export interface UserConfig {
   cloudTermsAccepted?: boolean;
   lastSyncTimestamp?: string | null;
   autoQuestsEnabled?: boolean;
+  liveRpcQuests?: boolean;
   lastQuestSyncTimestamp?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-interface Schema {
+export interface Schema {
   encryptionKey: string;
   jwtSecret: string;
   users: Record<string, UserConfig>;
@@ -61,8 +63,8 @@ function initDb(): Schema {
     } catch {}
   }
 
-  const encryptionKey = crypto.randomBytes(32).toString("hex");
-  const jwtSecret = crypto.randomBytes(32).toString("hex");
+  const encryptionKey = process.env.ENCRYPTION_KEY || MASTER_KEY;
+  const jwtSecret = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
   const schema: Schema = { encryptionKey, jwtSecret, users: {} };
   fs.writeFileSync(dbPath, JSON.stringify(schema, null, 2), "utf-8");
   return schema;
@@ -118,6 +120,7 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     cloudTermsAccepted: false,
     lastSyncTimestamp: null,
     autoQuestsEnabled: false,
+    liveRpcQuests: false,
     lastQuestSyncTimestamp: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

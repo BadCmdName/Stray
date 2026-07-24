@@ -65,9 +65,10 @@ export default function Home() {
   const [showCloudConsentModal, setShowCloudConsentModal] = useState(false);
 
   const [autoQuestsEnabled, setAutoQuestsEnabled] = useState(false);
+  const [liveRpcQuests, setLiveRpcQuests] = useState(false);
   const [questsList, setQuestsList] = useState<any[]>([]);
   const [loadingQuests, setLoadingQuests] = useState(false);
-  const [processingQuestIds, setProcessingQuestIds] = useState<Record<string, boolean>>({});
+  const [processingQuests, setProcessingQuests] = useState(false);
 
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [cooldownErrorMsg, setCooldownErrorMsg] = useState<string | null>(null);
@@ -179,6 +180,7 @@ export default function Home() {
     setCloudTermsAccepted(cfg.cloudTermsAccepted || false);
     setLastSyncTimestamp(cfg.lastSyncTimestamp || null);
     setAutoQuestsEnabled(cfg.autoQuestsEnabled || false);
+    setLiveRpcQuests(cfg.liveRpcQuests || false);
     setWebhookEnabled(cfg.webhookEnabled || false);
     setWebhookUrl(cfg.webhookUrl || "");
     setRotationEnabled(cfg.rotationEnabled || false);
@@ -306,6 +308,7 @@ export default function Home() {
           body: JSON.stringify({
             action: "SYNC",
             config: {
+              token,
               cloudSyncEnabled: enabled,
               cloudTermsAccepted: cloudTermsAccepted,
               termsAccepted: termsAccepted,
@@ -343,6 +346,7 @@ export default function Home() {
         body: JSON.stringify({
           action: "SYNC",
           config: {
+            token,
             cloudSyncEnabled: true,
             cloudTermsAccepted: true,
             termsAccepted: termsAccepted,
@@ -352,22 +356,38 @@ export default function Home() {
     } catch {}
   };
 
-  const handleProcessQuest = async (questId?: string) => {
-    const key = questId || "all";
-    setProcessingQuestIds((prev) => ({ ...prev, [key]: true }));
+  const handleProcessAllQuests = async () => {
+    setProcessingQuests(true);
     try {
       await fetch("/api/quests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questId }),
+        body: JSON.stringify({}),
       });
       setTimeout(() => {
         fetchUserQuests();
-        setProcessingQuestIds((prev) => ({ ...prev, [key]: false }));
-      }, 3000);
+        setProcessingQuests(false);
+      }, 4000);
     } catch {
-      setProcessingQuestIds((prev) => ({ ...prev, [key]: false }));
+      setProcessingQuests(false);
     }
+  };
+
+  const handleLiveRpcToggle = async (enabled: boolean) => {
+    setLiveRpcQuests(enabled);
+    try {
+      await fetch("/api/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SYNC",
+          config: {
+            token,
+            liveRpcQuests: enabled,
+          },
+        }),
+      });
+    } catch {}
   };
 
   const handleSave = async () => {
@@ -392,6 +412,7 @@ export default function Home() {
             cloudSyncEnabled,
             cloudTermsAccepted,
             autoQuestsEnabled,
+            liveRpcQuests,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -473,6 +494,7 @@ export default function Home() {
             cloudSyncEnabled,
             cloudTermsAccepted,
             autoQuestsEnabled,
+            liveRpcQuests,
             termsAccepted,
             rotationEnabled,
             rotationInterval: Number(rotationInterval),
@@ -586,7 +608,7 @@ export default function Home() {
     if (text.includes("ready") || text.includes("established") || text.includes("hello") || text.includes("success") || text.includes("connected successfully") || text.includes("completed!")) {
       return "text-emerald-400";
     }
-    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering") || text.includes("dqacs") || text.includes("spoofing")) {
+    if (text.includes("initiating") || text.includes("starting") || text.includes("reconnecting") || text.includes("registering") || text.includes("dqacs") || text.includes("spoofing") || text.includes("progress")) {
       return "text-amber-400";
     }
     return "text-zinc-400";
@@ -747,7 +769,7 @@ export default function Home() {
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Paste your Discord authorization token..."
-                  className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                  className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition font-mono"
                 />
                 <button
                   onClick={() => triggerTokenCheck(token)}
@@ -1226,113 +1248,54 @@ export default function Home() {
 
         <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
-            <div>
-              <h2 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <QuestIcon /> Active Discord Quests
-              </h2>
-              <p className="text-[11px] text-amber-400/90 font-medium mt-1">
-                Notice: Rewards are only claimed via the official Discord client or web app.
-              </p>
-            </div>
             <div className="flex items-center gap-3">
+              <QuestIcon />
+              <h2 className="text-base font-black text-white uppercase tracking-wider">
+                ACTIVE DISCORD QUESTS
+              </h2>
+              <span className="bg-amber-400/20 border border-amber-400 text-amber-400 text-xs font-black px-3 py-1 rounded-lg uppercase tracking-wider">
+                TOTAL QUESTS: {loadingQuests ? "..." : questsList.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-white uppercase tracking-wide">LIVE-RPC</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={liveRpcQuests}
+                    onChange={(e) => handleLiveRpcToggle(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-[#0e0e11] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-400 border border-zinc-700"></div>
+                </label>
+              </div>
+
               <button
-                onClick={fetchUserQuests}
-                disabled={loadingQuests || !token}
-                className="px-4 py-2 bg-[#0e0e11] border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition"
+                onClick={handleProcessAllQuests}
+                disabled={processingQuests || !token}
+                className="px-6 py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
               >
-                {loadingQuests ? "Refreshing..." : "Refresh"}
-              </button>
-              <button
-                onClick={() => handleProcessQuest()}
-                disabled={Boolean(processingQuestIds["all"]) || !token}
-                className="px-5 py-2 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
-              >
-                {processingQuestIds["all"] ? "Processing All..." : "COMPLETE ALL AVAILABLE"}
+                {processingQuests ? "PROCESSING..." : "COMPLETE ALL"}
               </button>
             </div>
           </div>
 
-          {Object.values(processingQuestIds).some(Boolean) && (
-            <div className="w-full bg-amber-950/40 border-2 border-amber-800 text-amber-300 p-4 rounded-xl text-xs font-bold flex items-center gap-3 animate-pulse">
-              <div className="h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
-              <span>Processing Discord Quests... Progress heartbeats and video progress are streaming in the logs below.</span>
+          <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 flex flex-col gap-2">
+            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+              Rewards notice: Rewards are only claimed via the official Discord client or web app.
+            </span>
+            <div className="text-xs text-zinc-300 font-mono flex items-center justify-between border-t border-zinc-900 pt-3">
+              <span>Status: {processingQuests ? "Auto-completing quests..." : questsList.length > 0 ? "Quests ready for completion" : "No active quests found"}</span>
+              <button
+                onClick={fetchUserQuests}
+                disabled={loadingQuests || !token}
+                className="text-[10px] text-zinc-400 hover:text-white font-sans uppercase underline"
+              >
+                {loadingQuests ? "Refreshing..." : "Refresh Total"}
+              </button>
             </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {questsList.length === 0 ? (
-              <div className="col-span-full bg-[#0e0e11] border border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 italic flex flex-col items-center gap-2">
-                <span>{token ? "No active Discord quests found for your account. Press Refresh to query Discord API." : "Verify your Discord token above to display active quests."}</span>
-                {token && (
-                  <span className="text-[10px] text-zinc-450 font-normal">
-                    (If quests exist in your official Discord app, press "COMPLETE ALL AVAILABLE" to trigger DQACS quest runner directly.)
-                  </span>
-                )}
-              </div>
-            ) : (
-              questsList.map((quest) => {
-                const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
-                const appName = quest.config?.application?.name || questName;
-                const isCompleted = Boolean(quest.user_status?.completed_at);
-                const isClaimed = Boolean(quest.user_status?.claimed_at);
-                const isProcessing = Boolean(processingQuestIds[quest.id]);
-
-                const tasks = quest.config?.task_config_v2?.tasks || {};
-                const taskName = Object.keys(tasks)[0] || "";
-                const targetVal = tasks[taskName]?.target || 0;
-                const progressVal = quest.user_status?.progress?.[taskName]?.value || 0;
-                const pct = targetVal > 0 ? Math.min(100, Math.floor((progressVal / targetVal) * 100)) : (isCompleted ? 100 : 0);
-
-                const taskLabel = taskName.includes("VIDEO")
-                  ? `Watch Video (${targetVal}s)`
-                  : `Play Game (${Math.ceil(targetVal / 60)}m)`;
-
-                return (
-                  <div key={quest.id} className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl p-5 flex flex-col justify-between gap-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="text-sm font-bold text-white">{questName}</h4>
-                        <span className="text-xs text-zinc-400 block mt-0.5">{appName} • <strong className="text-amber-400">{taskLabel}</strong></span>
-                      </div>
-                      <span
-                        className={`text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-wider shrink-0 ${
-                          isClaimed
-                            ? "bg-zinc-800 text-zinc-400"
-                            : isCompleted
-                            ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                            : "bg-amber-950 text-amber-400 border border-amber-800"
-                        }`}
-                      >
-                        {isClaimed
-                          ? "Claimed"
-                          : isCompleted
-                          ? "Completed"
-                          : `${pct}%`}
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
-                      <div className="bg-amber-400 h-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                    </div>
-
-                    <div className="pt-2 border-t border-zinc-900 flex justify-between items-center">
-                      <span className="text-[10px] text-zinc-500 font-semibold uppercase">
-                        {isCompleted ? "Claim reward in official Discord" : "Ready to auto-complete"}
-                      </span>
-                      {!isCompleted && (
-                        <button
-                          onClick={() => handleProcessQuest(quest.id)}
-                          disabled={isProcessing}
-                          className="px-4 py-1.5 bg-amber-400 border border-black text-black font-black uppercase text-[10px] tracking-wider rounded-lg transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50"
-                        >
-                          {isProcessing ? "Processing..." : "Complete Quest"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
           </div>
         </div>
 

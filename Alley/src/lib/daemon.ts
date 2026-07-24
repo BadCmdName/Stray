@@ -510,6 +510,14 @@ export function getDaemonStatus(userId: string): boolean {
   return activeClients.has(userId);
 }
 
+export function isDaemonRunning(userId: string): boolean {
+  return getDaemonStatus(userId);
+}
+
+export function getDaemonLogs(userId: string): string[] {
+  return globalThis.strayLogs?.get(userId) || [];
+}
+
 export async function restoreAllDaemons() {
   const db = getDb();
   if (!db || !db.users) return;

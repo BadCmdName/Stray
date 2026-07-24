@@ -41,6 +41,7 @@ export async function POST(request: Request) {
               cloudTermsAccepted: restoredUser.cloudTermsAccepted || false,
               lastSyncTimestamp: restoredUser.lastSyncTimestamp || null,
               autoQuestsEnabled: restoredUser.autoQuestsEnabled || false,
+              liveRpcQuests: restoredUser.liveRpcQuests || false,
               webhookEnabled: restoredUser.webhookEnabled || false,
               webhookUrl: restoredUser.webhookUrl || "",
               rotationEnabled: restoredUser.rotationEnabled || false,
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
         ...(config.cloudSyncEnabled !== undefined ? { cloudSyncEnabled: config.cloudSyncEnabled } : {}),
         ...(config.cloudTermsAccepted !== undefined ? { cloudTermsAccepted: config.cloudTermsAccepted } : {}),
         ...(config.autoQuestsEnabled !== undefined ? { autoQuestsEnabled: config.autoQuestsEnabled } : {}),
+        ...(config.liveRpcQuests !== undefined ? { liveRpcQuests: config.liveRpcQuests } : {}),
       });
 
       const user = getUser(session.userId);
