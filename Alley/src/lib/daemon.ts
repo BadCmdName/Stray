@@ -38,7 +38,7 @@ declare global {
   var activeStrayClients: Map<string, StrayClient> | undefined;
   var hasBootRestored: boolean | undefined;
   var lastPeriodicPolicySync: number | undefined;
-  var activeQuestStatus: Map<string, { isProcessing: boolean; activeQuestName?: string; progressPct?: number; appId?: string }> | undefined;
+  var activeQuestStatus: Map<string, { isProcessing: boolean; activeQuestName?: string; progressPct?: number; appId?: string; startTime?: number }> | undefined;
 }
 
 if (!globalThis.strayLogs) {
@@ -53,11 +53,20 @@ if (!globalThis.activeQuestStatus) {
   globalThis.activeQuestStatus = new Map();
 }
 
+const activeClients = globalThis.activeStrayClients;
+
 export function setQuestProcessingStatus(userId: string, isProcessing: boolean, activeQuestName?: string, progressPct?: number, appId?: string) {
   if (isProcessing) {
-    globalThis.activeQuestStatus?.set(userId, { isProcessing: true, activeQuestName, progressPct, appId });
+    const existing = globalThis.activeQuestStatus?.get(userId);
+    const startTime = existing?.startTime || Date.now();
+    globalThis.activeQuestStatus?.set(userId, { isProcessing: true, activeQuestName, progressPct, appId, startTime });
   } else {
     globalThis.activeQuestStatus?.delete(userId);
+  }
+
+  const client = activeClients?.get(userId);
+  if (client) {
+    client.triggerPresenceUpdate();
   }
 }
 
@@ -128,6 +137,8 @@ class StrayClient {
   private currentRotationIndex: number = 0;
   private sequence: number | null = null;
   private active: boolean = true;
+  private lastLargeImage: string = "";
+  private lastSmallImage: string = "";
 
   constructor(userId: string, config: StrayConfig) {
     this.userId = userId;
@@ -153,6 +164,9 @@ class StrayClient {
           smallImage = await registerAsset(token, clientId, smallImage);
         }
       }
+
+      this.lastLargeImage = largeImage;
+      this.lastSmallImage = smallImage;
 
       this.ws = new WebSocket("wss://gateway.discord.gg/?v=9&encoding=json", {
         headers: {
@@ -354,7 +368,6 @@ class StrayClient {
 
   private updateRotationPresence(currentStatus: { text: string; emoji: string }, largeImage: string, smallImage: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    addLog(this.userId, `Broadcasting custom status rotation: “${currentStatus.text}”`);
 
     const activities: any[] = [];
 
@@ -385,9 +398,12 @@ class StrayClient {
     this.ws.send(JSON.stringify(payload));
   }
 
+  public triggerPresenceUpdate() {
+    this.updatePresence(this.lastLargeImage, this.lastSmallImage);
+  }
+
   private updatePresence(largeImage: string, smallImage: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    addLog(this.userId, "Broadcasting presence update payload...");
 
     const activities: any[] = [];
 
@@ -424,14 +440,22 @@ class StrayClient {
     const isQuestRpcActive = user?.liveRpcQuests || qStatus?.isProcessing;
 
     if (isQuestRpcActive && qStatus?.activeQuestName) {
-      const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}%` : "In Progress";
+      const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}% | via Stray` : "In Progress | via Stray";
       return {
         name: qStatus.activeQuestName,
         type: 0,
         details: "Completing Discord Quest",
         state: pct,
-        application_id: qStatus.appId || "1018195507560063039",
-        timestamps: { start: Date.now() },
+        application_id: "1018195507560063039",
+        assets: {
+          large_image: "mp:external/Stray/https/stray.bcnstudio.tech/Stray.png",
+          large_text: "Completing with Stray Alley",
+        },
+        buttons: ["Completing with Stray", "Get Stray"],
+        metadata: {
+          button_urls: ["https://stray.bcnstudio.tech", "https://github.com/BadCmdName/Stray"],
+        },
+        timestamps: { start: qStatus.startTime || Date.now() },
       };
     }
 
@@ -526,8 +550,6 @@ async function registerAsset(token: string, clientId: string, imageUrl: string):
     return imageUrl;
   }
 }
-
-const activeClients = globalThis.activeStrayClients;
 
 export function startDaemon(userId: string, config: StrayConfig) {
   stopDaemon(userId);

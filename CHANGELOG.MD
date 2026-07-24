@@ -6,6 +6,20 @@ All notable changes to the Stray Alley project will be documented in this file.
 
 ---
 
+## v2.2.0 - 2026-07-24
+
+### Added
+- **Live Quest RPC Broadcasting with Stray Buttons:** Added real-time OP 3 Presence Updates for active Discord Quests over WebSocket, attaching interactive Stray buttons (`Completing with Stray`, `Get Stray`) to profile cards.
+- **Dynamic Presence Triggering:** Quest progress milestones (e.g. 2%, 4%, 14%, 63%) instantly trigger WebSocket presence frames across Discord client and Stray Alley Live Preview.
+- **Auto-Connect Gateway Daemon:** Triggering **"COMPLETE ALL"** or enabling **"LIVE-RPC"** automatically connects the Gateway daemon using restored credentials without requiring manual "Publish".
+- **Toggle Mutual Exclusion:** Enforced mutual exclusion between Custom Rich Activity (RPC) and Quest LIVE-RPC to eliminate Discord presence payload conflicts.
+
+### Fixed
+- **100% Token Auto-Backup Synchronization:** Resolved multi-key encryption fallback so restored token credentials remain 100% valid across cloud container reboots.
+- **Catalog Quests Count Filter:** Removed expired/catalog history `excluded_quests`, accurately displaying active targetable quests only.
+
+---
+
 ## v2.1.0 - 2026-07-22
 
 ### Added
