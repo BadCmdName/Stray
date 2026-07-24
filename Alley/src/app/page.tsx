@@ -592,8 +592,32 @@ export default function Home() {
     } catch {}
   };
 
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatElapsed = (sec: number) => {
+    const hrs = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    if (hrs > 0) {
+      return `${hrs}:${mins < 10 ? "0" : ""}${mins}:${s < 10 ? "0" : ""}${s} elapsed`;
+    }
+    return `${mins}:${s < 10 ? "0" : ""}${s} elapsed`;
+  };
+
   const getRpcImageUrl = (clientId: string, imageKey: string) => {
-    if (!imageKey) return null;
+    if (!imageKey) {
+      if (!clientId || clientId === "1527635163591348254") {
+        return "https://raw.githubusercontent.com/BadCmdName/Stray/main/Alley/public/Stray.png";
+      }
+      return null;
+    }
     if (imageKey.startsWith("http://") || imageKey.startsWith("https://")) {
       return imageKey;
     }
@@ -1294,7 +1318,7 @@ export default function Home() {
                         <h4 className="text-xs font-bold text-white truncate">{rpcName || "Stray"}</h4>
                         {rpcDetails && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcDetails}</p>}
                         {rpcState && <p className="text-[10px] text-zinc-400 truncate mt-0.5">{rpcState}</p>}
-                        <p className="text-[9px] text-zinc-555 mt-1 uppercase font-semibold">1:37 elapsed</p>
+                        <p className="text-[9px] text-zinc-500 mt-1 uppercase font-semibold font-mono">{formatElapsed(elapsedSeconds)}</p>
                       </div>
                     </div>
                   </div>

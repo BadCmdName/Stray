@@ -1,4 +1,5 @@
-import { addLog, setQuestProcessingStatus } from "./daemon";
+import { addLog, setQuestProcessingStatus, triggerDaemonPresenceUpdate } from "./daemon";
+import { getUser, saveUser } from "./db";
 
 export interface QuestTask {
   target: number;
@@ -358,5 +359,11 @@ export class QuestManager {
 
     setQuestProcessingStatus(this.userId, false);
     addLog(this.userId, `[DQACS] Finished processing! Completed ${completedCount}/${total} quests!`);
+
+    const user = getUser(this.userId);
+    if (user) {
+      saveUser(this.userId, { liveRpcQuests: false, rpcEnabled: true });
+      triggerDaemonPresenceUpdate(this.userId);
+    }
   }
 }

@@ -5,7 +5,7 @@ import { getUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { restoreUserFromCloud } from "@/lib/cloudDb";
 
-const LATEST_VERSION = "2.3.2";
+const LATEST_VERSION = "2.3.3";
 const ORIGINAL_REPO = "BadCmdName/Stray";
 const CURRENT_REPO = process.env.VERCEL_GIT_REPO_SLUG || process.env.RENDER_GIT_REPO_SLUG || "BadCmdName/Stray";
 

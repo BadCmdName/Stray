@@ -404,6 +404,44 @@ class StrayClient {
   private updatePresence(largeImage: string, smallImage: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
+    const user = getUser(this.userId);
+    if (user) {
+      let token = this.config.token;
+      if (user.discordToken) {
+        try {
+          token = decrypt(user.discordToken);
+        } catch {}
+      }
+      this.config = {
+        token,
+        status: user.status || "online",
+        device: user.device || "desktop",
+        webhookUrl: user.webhookUrl || "",
+        rotationEnabled: user.rotationEnabled || false,
+        rotationInterval: user.rotationInterval || 10,
+        rotationStatus1Text: user.rotationStatus1Text || "",
+        rotationStatus1Emoji: user.rotationStatus1Emoji || "",
+        rotationStatus2Text: user.rotationStatus2Text || "",
+        rotationStatus2Emoji: user.rotationStatus2Emoji || "",
+        rotationStatus3Text: user.rotationStatus3Text || "",
+        rotationStatus3Emoji: user.rotationStatus3Emoji || "",
+        custom_status: { text: user.customStatusText || "", emoji: user.customStatusEmoji || "" },
+        rich_presence: {
+          enabled: user.rpcEnabled || false,
+          type: user.rpcType ?? 0,
+          url: user.rpcUrl || "",
+          client_id: user.rpcClientId || "1527635163591348254",
+          name: user.rpcName || "",
+          state: user.rpcState || "",
+          details: user.rpcDetails || "",
+          large_image: user.rpcLargeImage || "",
+          large_text: user.rpcLargeText || "",
+          small_image: user.rpcSmallImage || "",
+          small_text: user.rpcSmallText || "",
+        },
+      };
+    }
+
     const activities: any[] = [];
 
     if (this.config.custom_status?.text || this.config.custom_status?.emoji) {
@@ -436,9 +474,9 @@ class StrayClient {
   private buildRpcActivity(largeImage: string, smallImage: string) {
     const qStatus = getQuestProcessingStatus(this.userId);
     const user = getUser(this.userId);
-    const isQuestRpcActive = user?.liveRpcQuests || qStatus?.isProcessing;
+    const isQuestRpcActive = (user?.liveRpcQuests || qStatus?.isProcessing) && qStatus?.activeQuestName;
 
-    if (isQuestRpcActive && qStatus?.activeQuestName) {
+    if (isQuestRpcActive) {
       const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}% | via Stray` : "In Progress | via Stray";
       return {
         name: qStatus.activeQuestName,
@@ -454,9 +492,11 @@ class StrayClient {
       };
     }
 
-    if (!this.config.rich_presence?.enabled) return null;
+    const isCustomRpc = Boolean(user?.rpcEnabled || this.config.rich_presence?.enabled);
+    if (!isCustomRpc) return null;
 
     const rpc = this.config.rich_presence;
+    if (!rpc) return null;
     const rpcType = Number(rpc.type) || 0;
 
     const activity: any = {
@@ -563,6 +603,13 @@ export function stopDaemon(userId: string) {
 
 export function getDaemonStatus(userId: string): boolean {
   return activeClients.has(userId);
+}
+
+export function triggerDaemonPresenceUpdate(userId: string) {
+  const client = activeClients.get(userId);
+  if (client) {
+    client.triggerPresenceUpdate();
+  }
 }
 
 export function isDaemonRunning(userId: string): boolean {

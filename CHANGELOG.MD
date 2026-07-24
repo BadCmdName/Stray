@@ -4,6 +4,13 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.3.3 - 2026-07-24
+
+### Added
+- **Automatic Custom RPC Reversion:** Configured `questManager` and `daemon` to automatically disable `LIVE-RPC` and restore the user's Custom RPC / status presence as soon as all active quests finish processing.
+- **Dynamic Live Preview Elapsed Timer:** Replaced static `1:37 elapsed` mockup string in the dashboard Live Preview card with a real-time live counting timer (`0:01 elapsed`, `0:02 elapsed`...).
+- **Default App ID Asset Resolution:** Resolved fallback asset key resolution for official application ID `1527635163591348254` across both Live Preview cards and Gateway payloads.
+
 ## v2.3.2 - 2026-07-24
 
 ### Fixed
