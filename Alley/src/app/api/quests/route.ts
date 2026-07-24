@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getUser, saveUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
-import { QuestManager } from "@/lib/questManager";
+import { QuestManager, QuestConfig } from "@/lib/questManager";
 import { startDaemon, getDaemonStatus } from "@/lib/daemon";
+
+const userQuestsCache = new Map<string, QuestConfig[]>();
 
 export async function GET() {
   const session = await getSession();
@@ -22,10 +24,16 @@ export async function GET() {
 
     const manager = new QuestManager(session.userId, token);
     const quests = await manager.fetchQuests();
-    return NextResponse.json({ quests });
+    if (quests.length > 0) {
+      userQuestsCache.set(session.userId, quests);
+      return NextResponse.json({ quests });
+    } else {
+      const cached = userQuestsCache.get(session.userId) || [];
+      return NextResponse.json({ quests: cached });
+    }
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to fetch quests";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    const cached = userQuestsCache.get(session.userId) || [];
+    return NextResponse.json({ quests: cached });
   }
 }
 

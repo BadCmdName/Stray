@@ -98,6 +98,20 @@ export class QuestManager {
           cache: "no-store",
         });
 
+        if (res.status === 429) {
+          let retryAfter = 10;
+          try {
+            const data = await res.json();
+            if (data.retry_after) retryAfter = Math.ceil(data.retry_after);
+          } catch {
+            const h = res.headers.get("retry-after");
+            if (h) retryAfter = parseInt(h, 10) || 10;
+          }
+          addLog(this.userId, `[DQACS] Discord API Rate Limited (HTTP 429). Retrying quest fetch after ${retryAfter}s...`);
+          await new Promise((r) => setTimeout(r, retryAfter * 1000));
+          continue;
+        }
+
         if (res.ok) {
           const data = await res.json();
           let questsList: QuestConfig[] = [];
@@ -140,6 +154,21 @@ export class QuestManager {
           metadata_sealed: null,
         }),
       });
+
+      if (res.status === 429) {
+        let retryAfter = 10;
+        try {
+          const data = await res.json();
+          if (data.retry_after) retryAfter = Math.ceil(data.retry_after);
+        } catch {
+          const h = res.headers.get("retry-after");
+          if (h) retryAfter = parseInt(h, 10) || 10;
+        }
+        addLog(this.userId, `[DQACS] Rate limited on quest enrollment (HTTP 429). Retrying in ${retryAfter}s...`);
+        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        return this.enrollQuest(questId, isAndroid);
+      }
+
       return res.ok;
     } catch {
       return false;
@@ -165,6 +194,20 @@ export class QuestManager {
             timestamp: timestamp + Math.random(),
           }),
         });
+
+        if (res.status === 429) {
+          let retryAfter = 10;
+          try {
+            const data = await res.json();
+            if (data.retry_after) retryAfter = Math.ceil(data.retry_after);
+          } catch {
+            const h = res.headers.get("retry-after");
+            if (h) retryAfter = parseInt(h, 10) || 10;
+          }
+          addLog(this.userId, `[DQACS] Rate limited on video progress (HTTP 429). Retrying in ${retryAfter}s...`);
+          await new Promise((r) => setTimeout(r, retryAfter * 1000));
+          continue;
+        }
 
         if (res.ok) {
           const data = await res.json();
@@ -211,6 +254,20 @@ export class QuestManager {
           }),
         });
 
+        if (res.status === 429) {
+          let retryAfter = 30;
+          try {
+            const data = await res.json();
+            if (data.retry_after) retryAfter = Math.ceil(data.retry_after);
+          } catch {
+            const h = res.headers.get("retry-after");
+            if (h) retryAfter = parseInt(h, 10) || 30;
+          }
+          addLog(this.userId, `[DQACS] Rate limited on quest heartbeat (HTTP 429). Pausing for ${retryAfter}s...`);
+          await new Promise((r) => setTimeout(r, retryAfter * 1000));
+          continue;
+        }
+
         if (res.ok) {
           const data = await res.json();
           if (data.completed_at) {
@@ -221,8 +278,12 @@ export class QuestManager {
           const pct = secondsNeeded > 0 ? Math.floor((done / secondsNeeded) * 100) : 0;
           setQuestProcessingStatus(this.userId, true, questName, pct, appId);
           addLog(this.userId, `[DQACS] Progress: ${pct}% for “${questName}”`);
+        } else {
+          addLog(this.userId, `[DQACS] Warning: Quest heartbeat response HTTP ${res.status} for “${questName}”`);
         }
-      } catch {}
+      } catch (err: any) {
+        addLog(this.userId, `[DQACS] Heartbeat exception for “${questName}”: ${err.message || err}`);
+      }
 
       await new Promise((r) => setTimeout(r, 20000));
     }

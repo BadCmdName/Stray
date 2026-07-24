@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { isDaemonRunning } from "@/lib/daemon";
 
 const SUPER_PROPERTIES = Buffer.from(
   JSON.stringify({
@@ -48,6 +49,12 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       if (res.status === 429) {
+        if (isDaemonRunning(session.userId)) {
+          return NextResponse.json({
+            valid: true,
+            notice: "Discord API Rate Limited (HTTP 429) - Active gateway connection verified",
+          });
+        }
         return NextResponse.json({ valid: false, error: "Discord API Rate Limited (HTTP 429) - Wait a few seconds" });
       }
       if (res.status === 401) {

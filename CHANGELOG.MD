@@ -4,6 +4,13 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.3.2 - 2026-07-24
+
+### Fixed
+- **Discord API HTTP 429 Rate Limit Handling:** Integrated explicit `retry_after` backoff handling across `QuestManager` heartbeat and video progress loops, preventing quest progress from getting stuck.
+- **Active Gateway Token Verification Fallback:** Added active gateway status verification fallback to `/api/check-token` so temporary 429 rate limits do not mark active client tokens as invalid in the dashboard.
+- **Active Quests Cache Fallback:** Cached active quest lists in `/api/quests` to prevent `TOTAL QUESTS` from dropping to 0 during temporary API rate limit spikes.
+
 ## v2.3.1 - 2026-07-24
 
 ### Fixed
