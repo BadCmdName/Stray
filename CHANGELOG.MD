@@ -11,6 +11,9 @@ All notable changes to the Stray Alley project will be documented in this file.
 - **Dynamic Live Preview Elapsed Timer:** Replaced static `1:37 elapsed` mockup string in the dashboard Live Preview card with a real-time live counting timer (`0:01 elapsed`, `0:02 elapsed`...).
 - **Default App ID Asset Resolution:** Resolved fallback asset key resolution for official application ID `1527635163591348254` across both Live Preview cards and Gateway payloads.
 
+### Fixed
+- **Dynamic Remote Update Notification Banner:** Replaced static version string checks in `/api/status` with dynamic GitHub remote `package.json` version fetching (`isVersionNewer`), ensuring deployed instances trigger amber update notifications whenever a newer release is published on `main`.
+
 ## v2.3.2 - 2026-07-24
 
 ### Fixed
