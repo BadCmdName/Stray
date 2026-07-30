@@ -393,6 +393,21 @@ export default function Home() {
     }
   };
 
+  const [isStoppingQuests, setIsStoppingQuests] = useState(false);
+
+  const handleStopQuests = async () => {
+    setIsStoppingQuests(true);
+    try {
+      await fetch("/api/quests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop" }),
+      });
+      setProcessingQuests(false);
+    } catch {}
+    setIsStoppingQuests(false);
+  };
+
   const handleLiveRpcToggle = async (enabled: boolean) => {
     setLiveRpcQuests(enabled);
     if (enabled) {
@@ -1354,13 +1369,23 @@ export default function Home() {
                 </label>
               </div>
 
-              <button
-                onClick={handleProcessAllQuests}
-                disabled={processingQuests || !token}
-                className="px-6 py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
-              >
-                {processingQuests ? "PROCESSING..." : "COMPLETE ALL"}
-              </button>
+              {processingQuests ? (
+                <button
+                  onClick={handleStopQuests}
+                  disabled={isStoppingQuests}
+                  className="px-6 py-2.5 bg-rose-500 border-2 border-black text-white font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
+                >
+                  {isStoppingQuests ? "STOPPING..." : "STOP PROCESSING"}
+                </button>
+              ) : (
+                <button
+                  onClick={handleProcessAllQuests}
+                  disabled={loadingQuests || !token}
+                  className="px-6 py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
+                >
+                  COMPLETE ALL
+                </button>
+              )}
             </div>
           </div>
 

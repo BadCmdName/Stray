@@ -1,6 +1,22 @@
 import { addLog, setQuestProcessingStatus, triggerDaemonPresenceUpdate } from "./daemon";
 import { getUser, saveUser } from "./db";
 
+const activeAborts = new Set<string>();
+
+export function stopQuestProcessing(userId: string) {
+  activeAborts.add(userId);
+  setQuestProcessingStatus(userId, false);
+  addLog(userId, "[DQACS] Quest processing stopped by user.");
+}
+
+export function clearQuestAbort(userId: string) {
+  activeAborts.delete(userId);
+}
+
+export function isQuestAborted(userId: string): boolean {
+  return activeAborts.has(userId);
+}
+
 export interface QuestTask {
   target: number;
 }
@@ -99,6 +115,11 @@ export class QuestManager {
           cache: "no-store",
         });
 
+        if (res.status === 401 || res.status === 403) {
+          addLog(this.userId, "[DQACS] Error: Discord API returned HTTP 401/403 Unauthorized. Check your Discord token.");
+          return [];
+        }
+
         if (res.status === 429) {
           let retryAfter = 10;
           try {
@@ -156,6 +177,11 @@ export class QuestManager {
         }),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        addLog(this.userId, "[DQACS] Error: Quest enrollment returned HTTP 401/403 Unauthorized.");
+        return false;
+      }
+
       if (res.status === 429) {
         let retryAfter = 10;
         try {
@@ -184,6 +210,10 @@ export class QuestManager {
     addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s)...`);
 
     while (currentDone < secondsNeeded) {
+      if (isQuestAborted(this.userId)) {
+        return false;
+      }
+
       const speed = 7;
       const timestamp = Math.min(secondsNeeded, currentDone + speed);
 
@@ -195,6 +225,11 @@ export class QuestManager {
             timestamp: timestamp + Math.random(),
           }),
         });
+
+        if (res.status === 401 || res.status === 403) {
+          addLog(this.userId, `[DQACS] Error: Quest video progress returned HTTP ${res.status} Unauthorized for “${questName}”. Aborting.`);
+          return false;
+        }
 
         if (res.status === 429) {
           let retryAfter = 10;
@@ -245,6 +280,10 @@ export class QuestManager {
     addLog(this.userId, `[DQACS] Heartbeat / Presence starting for “${questName}” (${appName})...`);
 
     while (!completed) {
+      if (isQuestAborted(this.userId)) {
+        return false;
+      }
+
       try {
         const res = await fetch(`https://discord.com/api/v9/quests/${quest.id}/heartbeat`, {
           method: "POST",
@@ -254,6 +293,11 @@ export class QuestManager {
             terminal: false,
           }),
         });
+
+        if (res.status === 401 || res.status === 403) {
+          addLog(this.userId, `[DQACS] Error: Quest heartbeat returned HTTP ${res.status} Unauthorized for “${questName}”. Aborting.`);
+          return false;
+        }
 
         if (res.status === 429) {
           let retryAfter = 30;
@@ -304,6 +348,8 @@ export class QuestManager {
   }
 
   async processQuest(quest: QuestConfig): Promise<boolean> {
+    if (isQuestAborted(this.userId)) return false;
+
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     const appId = quest.config?.application?.id || "1527635163591348254";
 
@@ -341,12 +387,19 @@ export class QuestManager {
   }
 
   async runAllQuests(): Promise<void> {
+    clearQuestAbort(this.userId);
+
     const quests = await this.fetchQuests();
     const total = quests.length;
     addLog(this.userId, `[DQACS] TOTAL UNCOMPLETED QUESTS: ${total}`);
 
     let completedCount = 0;
     for (let i = 0; i < quests.length; i++) {
+      if (isQuestAborted(this.userId)) {
+        addLog(this.userId, "[DQACS] Quest processing aborted.");
+        break;
+      }
+
       const q = quests[i];
       const name = q.config?.messages?.quest_name || q.config?.messages?.game_title || `Quest ${i + 1}`;
       addLog(this.userId, `[DQACS] Processing ${i + 1}/${total}: “${name}”...`);
@@ -354,6 +407,8 @@ export class QuestManager {
       if (success || q.user_status?.completed_at) {
         completedCount++;
         addLog(this.userId, `[DQACS] Progress: ${completedCount}/${total} completed`);
+      } else {
+        if (isQuestAborted(this.userId)) break;
       }
     }
 

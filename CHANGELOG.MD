@@ -4,6 +4,14 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.4.1 - 2026-07-30
+
+### Added
+- **Manual Quest Stop Control:** Added a dedicated, bright red `STOP PROCESSING` button in the Active Discord Quests dashboard panel, allowing instant manual cancellation of active quest loops.
+
+### Fixed
+- **HTTP 401/403 Quest Heartbeat Loop Termination:** Fixed infinite looping on HTTP 401 Unauthorized / HTTP 403 Forbidden responses during quest heartbeats, video progress, and enrollments by logging explicit error diagnostics and terminating quest processing cleanly.
+
 ## v2.4.0 - 2026-07-24
 
 ### Added

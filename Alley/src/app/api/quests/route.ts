@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getUser, saveUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
-import { QuestManager, QuestConfig } from "@/lib/questManager";
+import { QuestManager, QuestConfig, stopQuestProcessing } from "@/lib/questManager";
 import { startDaemon, getDaemonStatus } from "@/lib/daemon";
 
 const userQuestsCache = new Map<string, QuestConfig[]>();
@@ -78,6 +78,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
+    if (body.action === "stop") {
+      stopQuestProcessing(session.userId);
+      return NextResponse.json({ success: true, message: "Stopped quest processing" });
+    }
+
     const { questId } = body;
 
     const manager = new QuestManager(session.userId, token);
