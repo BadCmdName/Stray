@@ -353,6 +353,14 @@ export class QuestManager {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     const appId = quest.config?.application?.id || "1527635163591348254";
 
+    if (quest.config?.expires_at) {
+      const expires = new Date(quest.config.expires_at).getTime();
+      if (!isNaN(expires) && expires < Date.now()) {
+        addLog(this.userId, `[DQACS] Skipping expired quest: “${questName}”.`);
+        return false;
+      }
+    }
+
     if (quest.user_status?.completed_at || quest.user_status?.claimed_at) {
       return true;
     }

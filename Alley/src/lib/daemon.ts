@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import * as emoji from "node-emoji";
-import { getUser, getDb } from "./db";
+import { getUser, getDb, saveUser } from "./db";
 import { decrypt } from "./encryption";
 import { restoreUserFromCloud } from "./cloudDb";
 
@@ -77,7 +77,9 @@ export function addLog(userId: string, message: string) {
   const logs = globalThis.strayLogs?.get(userId) || [];
   const time = new Date().toLocaleTimeString();
   logs.push(`[${time}] ${message}`);
-  if (logs.length > 50) logs.shift();
+  if (logs.length > 200) {
+    logs.splice(0, logs.length - 200);
+  }
   globalThis.strayLogs?.set(userId, logs);
 
   const user = getUser(userId);
@@ -138,6 +140,7 @@ class StrayClient {
   private active: boolean = true;
   private lastLargeImage: string = "";
   private lastSmallImage: string = "";
+  private reconnectAttempts: number = 0;
 
   constructor(userId: string, config: StrayConfig) {
     this.userId = userId;
@@ -174,6 +177,7 @@ class StrayClient {
       });
 
       this.ws.on("open", () => {
+        this.reconnectAttempts = 0;
         addLog(this.userId, "Connection established. Awaiting gateway hello...");
       });
 
@@ -192,16 +196,19 @@ class StrayClient {
         this.cleanupTimers();
         if (this.active) {
           if (code === 4004) {
-            addLog(this.userId, "Token is invalid (Code 4004). Stopping client.");
+            addLog(this.userId, "Token is invalid (Code 4004). Stopping client session.");
             this.active = false;
+            saveUser(this.userId, { botEnabled: false });
             return;
           }
           if (code === 4005 || code === 4009) {
             addLog(this.userId, "Session conflict or timeout detected. Forcing immediate reconnect...");
             this.reconnectTimeout = setTimeout(() => this.connect(), 1000);
           } else {
-            addLog(this.userId, "Reconnecting in 5 seconds...");
-            this.reconnectTimeout = setTimeout(() => this.connect(), 5000);
+            this.reconnectAttempts++;
+            const delay = Math.min(60000, Math.pow(2, Math.min(this.reconnectAttempts, 5)) * 1000 + Math.floor(Math.random() * 1000));
+            addLog(this.userId, `Reconnecting in ${Math.round(delay / 1000)}s (Attempt ${this.reconnectAttempts})...`);
+            this.reconnectTimeout = setTimeout(() => this.connect(), delay);
           }
         }
       });

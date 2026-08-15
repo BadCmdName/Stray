@@ -4,6 +4,14 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.4.2 - 2026-08-15
+
+### Fixed
+- **Gateway Exponential Backoff & Jitter:** Implemented exponential backoff with random jitter for Gateway reconnection loops in `daemon.ts`, preventing Discord Gateway connection spam and rate limiting during cloud host network interruptions.
+- **Strict 200-Line Log Memory Cap:** Enforced a strict 200-line memory cap on `userLogs` in memory to eliminate memory leakage during long-term continuous 24/7 uptime.
+- **Invalid Token Auto-Pause Guard:** Added automatic session pausing and UI notification when Discord returns code 4004 (Invalid / Expired Token) during gateway connection attempts.
+- **DQACS Expired Quest Skip Guard:** Added quest expiration timestamp validation in `questManager.ts` to automatically skip outdated quests before starting progress heartbeats.
+
 ## v2.4.1 - 2026-07-30
 
 ### Added
