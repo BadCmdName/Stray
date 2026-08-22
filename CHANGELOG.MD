@@ -4,6 +4,13 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.4.3 - 2026-08-22
+
+### Fixed
+- **Discord API Rate Limit Guards:** Implemented strict `maxRetries` (3 attempts) on exponential backoff loops across all DQACS processes (fetch, enroll, heartbeat, video progress) to prevent infinite looping and potential Discord API bans.
+- **Session Conflict Backoff:** Fixed Gateway code 4005 and 4009 causing unconditional 1-second reconnect spamming, ensuring these drops now respect proper exponential backoff rules.
+- **Unauthenticated Token Pausing:** Handled Gateway close code 4003 exactly like 4004 (Invalid Token), forcing the daemon to immediately stop and auto-pause rather than endlessly retrying.
+
 ## v2.4.2 - 2026-08-15
 
 ### Fixed

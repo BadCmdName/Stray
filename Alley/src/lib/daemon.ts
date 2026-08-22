@@ -195,21 +195,19 @@ class StrayClient {
         addLog(this.userId, `Connection closed (Code: ${code}, Reason: ${reasonStr})`);
         this.cleanupTimers();
         if (this.active) {
-          if (code === 4004) {
-            addLog(this.userId, "Token is invalid (Code 4004). Stopping client session.");
+          if (code === 4004 || code === 4003) {
+            addLog(this.userId, `Token is invalid or unauthenticated (Code ${code}). Stopping client session.`);
             this.active = false;
             saveUser(this.userId, { botEnabled: false });
             return;
           }
           if (code === 4005 || code === 4009) {
-            addLog(this.userId, "Session conflict or timeout detected. Forcing immediate reconnect...");
-            this.reconnectTimeout = setTimeout(() => this.connect(), 1000);
-          } else {
-            this.reconnectAttempts++;
-            const delay = Math.min(60000, Math.pow(2, Math.min(this.reconnectAttempts, 5)) * 1000 + Math.floor(Math.random() * 1000));
-            addLog(this.userId, `Reconnecting in ${Math.round(delay / 1000)}s (Attempt ${this.reconnectAttempts})...`);
-            this.reconnectTimeout = setTimeout(() => this.connect(), delay);
+            addLog(this.userId, "Session conflict or timeout detected.");
           }
+          this.reconnectAttempts++;
+          const delay = Math.min(60000, Math.pow(2, Math.min(this.reconnectAttempts, 5)) * 1000 + Math.floor(Math.random() * 1000));
+          addLog(this.userId, `Reconnecting in ${Math.round(delay / 1000)}s (Attempt ${this.reconnectAttempts})...`);
+          this.reconnectTimeout = setTimeout(() => this.connect(), delay);
         }
       });
 

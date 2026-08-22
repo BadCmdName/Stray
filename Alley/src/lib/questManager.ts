@@ -108,6 +108,9 @@ export class QuestManager {
       "https://discord.com/api/v9/users/@me/quests",
     ];
 
+    let retries = 0;
+    const maxRetries = 3;
+
     for (const url of endpoints) {
       try {
         const res = await fetch(url, {
@@ -121,6 +124,11 @@ export class QuestManager {
         }
 
         if (res.status === 429) {
+          if (retries >= maxRetries) {
+             addLog(this.userId, `[DQACS] Max retries (${maxRetries}) reached for rate limits on fetchQuests. Aborting.`);
+             return [];
+          }
+          retries++;
           let retryAfter = 10;
           try {
             const data = await res.json();
@@ -129,7 +137,7 @@ export class QuestManager {
             const h = res.headers.get("retry-after");
             if (h) retryAfter = parseInt(h, 10) || 10;
           }
-          addLog(this.userId, `[DQACS] Discord API Rate Limited (HTTP 429). Retrying quest fetch after ${retryAfter}s...`);
+          addLog(this.userId, `[DQACS] Discord API Rate Limited (HTTP 429). Retrying quest fetch after ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           continue;
         }
@@ -165,7 +173,8 @@ export class QuestManager {
     return [];
   }
 
-  async enrollQuest(questId: string, isAndroid = false): Promise<boolean> {
+  async enrollQuest(questId: string, isAndroid = false, retries = 0): Promise<boolean> {
+    const maxRetries = 3;
     try {
       const res = await fetch(`https://discord.com/api/v9/quests/${questId}/enroll`, {
         method: "POST",
@@ -183,6 +192,10 @@ export class QuestManager {
       }
 
       if (res.status === 429) {
+        if (retries >= maxRetries) {
+          addLog(this.userId, `[DQACS] Max retries (${maxRetries}) reached for rate limits on enrollQuest. Aborting.`);
+          return false;
+        }
         let retryAfter = 10;
         try {
           const data = await res.json();
@@ -191,9 +204,9 @@ export class QuestManager {
           const h = res.headers.get("retry-after");
           if (h) retryAfter = parseInt(h, 10) || 10;
         }
-        addLog(this.userId, `[DQACS] Rate limited on quest enrollment (HTTP 429). Retrying in ${retryAfter}s...`);
+        addLog(this.userId, `[DQACS] Rate limited on quest enrollment (HTTP 429). Retrying in ${retryAfter}s (Attempt ${retries + 1}/${maxRetries})...`);
         await new Promise((r) => setTimeout(r, retryAfter * 1000));
-        return this.enrollQuest(questId, isAndroid);
+        return this.enrollQuest(questId, isAndroid, retries + 1);
       }
 
       return res.ok;
@@ -206,6 +219,8 @@ export class QuestManager {
     const questName = quest.config?.messages?.quest_name || quest.config?.messages?.game_title || "Discord Quest";
     const appId = quest.config?.application?.id || "1527635163591348254";
     let currentDone = secondsDone;
+    let retries = 0;
+    const maxRetries = 3;
 
     addLog(this.userId, `[DQACS] Video quest starting for “${questName}” (${secondsNeeded}s)...`);
 
@@ -232,6 +247,11 @@ export class QuestManager {
         }
 
         if (res.status === 429) {
+          if (retries >= maxRetries) {
+             addLog(this.userId, `[DQACS] Max retries (${maxRetries}) reached for rate limits on completeVideoQuest. Aborting.`);
+             return false;
+          }
+          retries++;
           let retryAfter = 10;
           try {
             const data = await res.json();
@@ -240,7 +260,7 @@ export class QuestManager {
             const h = res.headers.get("retry-after");
             if (h) retryAfter = parseInt(h, 10) || 10;
           }
-          addLog(this.userId, `[DQACS] Rate limited on video progress (HTTP 429). Retrying in ${retryAfter}s...`);
+          addLog(this.userId, `[DQACS] Rate limited on video progress (HTTP 429). Retrying in ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           continue;
         }
@@ -276,6 +296,8 @@ export class QuestManager {
     const appName = quest.config?.application?.name || questName;
     const appId = quest.config?.application?.id || "1527635163591348254";
     let completed = false;
+    let retries = 0;
+    const maxRetries = 3;
 
     addLog(this.userId, `[DQACS] Heartbeat / Presence starting for “${questName}” (${appName})...`);
 
@@ -300,6 +322,11 @@ export class QuestManager {
         }
 
         if (res.status === 429) {
+          if (retries >= maxRetries) {
+             addLog(this.userId, `[DQACS] Max retries (${maxRetries}) reached for rate limits on completePlayQuest. Aborting.`);
+             return false;
+          }
+          retries++;
           let retryAfter = 30;
           try {
             const data = await res.json();
@@ -308,7 +335,7 @@ export class QuestManager {
             const h = res.headers.get("retry-after");
             if (h) retryAfter = parseInt(h, 10) || 30;
           }
-          addLog(this.userId, `[DQACS] Rate limited on quest heartbeat (HTTP 429). Pausing for ${retryAfter}s...`);
+          addLog(this.userId, `[DQACS] Rate limited on quest heartbeat (HTTP 429). Pausing for ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           continue;
         }
