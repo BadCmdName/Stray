@@ -4,8 +4,10 @@ import pkg from "../../package.json";
 
 let cachedRemoteVersion = "";
 let lastFetchTime = 0;
+let cachedLocalVersion = "";
 
 export function getLocalVersion(): string {
+  if (cachedLocalVersion) return cachedLocalVersion;
   try {
     const cwd = process.cwd();
     const readmePaths = [
@@ -20,13 +22,15 @@ export function getLocalVersion(): string {
         const content = fs.readFileSync(p, "utf-8");
         const match = content.match(/#\s*Stray Alley\s*\(v?([0-9]+\.[0-9]+\.[0-9]+)\)/i);
         if (match && match[1]) {
-          return match[1];
+          cachedLocalVersion = match[1];
+          return cachedLocalVersion;
         }
       }
     }
   } catch { }
 
-  return pkg.version ? pkg.version.replace(/^v/i, "") : "ERROR";
+  cachedLocalVersion = pkg.version ? pkg.version.replace(/^v/i, "") : "ERROR";
+  return cachedLocalVersion;
 }
 
 export async function getRemoteLatestVersion(): Promise<string> {

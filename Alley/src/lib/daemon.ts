@@ -140,6 +140,7 @@ class StrayClient {
   private active: boolean = true;
   private lastLargeImage: string = "";
   private lastSmallImage: string = "";
+  private isConnecting: boolean = false;
   private reconnectAttempts: number = 0;
 
   constructor(userId: string, config: StrayConfig) {
@@ -149,6 +150,16 @@ class StrayClient {
 
   async connect() {
     if (!this.active) return;
+    if (this.isConnecting) return;
+    this.isConnecting = true;
+
+    if (this.ws) {
+      try {
+        this.ws.close();
+      } catch {}
+      this.ws = null;
+    }
+
     addLog(this.userId, "Initiating gateway connection...");
     try {
       let largeImage = this.config.rich_presence?.large_image || "";
@@ -170,18 +181,19 @@ class StrayClient {
       this.lastLargeImage = largeImage;
       this.lastSmallImage = smallImage;
 
-      this.ws = new WebSocket("wss://gateway.discord.gg/?v=9&encoding=json", {
+      const currentWs = new WebSocket("wss://gateway.discord.gg/?v=9&encoding=json", {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
       });
+      this.ws = currentWs;
 
-      this.ws.on("open", () => {
+      currentWs.on("open", () => {
         this.reconnectAttempts = 0;
         addLog(this.userId, "Connection established. Awaiting gateway hello...");
       });
 
-      this.ws.on("message", (data: any) => {
+      currentWs.on("message", (data: any) => {
         try {
           const msg = JSON.parse(data.toString());
           this.handleMessage(msg, largeImage, smallImage);
@@ -190,11 +202,15 @@ class StrayClient {
         }
       });
 
-      this.ws.on("close", (code: number, reason: Buffer) => {
+      currentWs.on("close", (code: number, reason: Buffer) => {
         const reasonStr = reason ? reason.toString() : "No reason provided";
         addLog(this.userId, `Connection closed (Code: ${code}, Reason: ${reasonStr})`);
-        this.cleanupTimers();
-        if (this.active) {
+        
+        if (this.ws === currentWs) {
+          this.cleanupTimers();
+        }
+
+        if (this.active && this.ws === currentWs) {
           if (code === 4004 || code === 4003) {
             addLog(this.userId, `Token is invalid or unauthenticated (Code ${code}). Stopping client session.`);
             this.active = false;
@@ -211,11 +227,13 @@ class StrayClient {
         }
       });
 
-      this.ws.on("error", (err: any) => {
+      currentWs.on("error", (err: any) => {
         addLog(this.userId, `Gateway WebSocket error: ${err.message}`);
       });
     } catch (err: any) {
       addLog(this.userId, `Connection setup error: ${err.message}`);
+    } finally {
+      this.isConnecting = false;
     }
   }
 

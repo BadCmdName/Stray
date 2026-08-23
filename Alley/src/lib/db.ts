@@ -52,12 +52,17 @@ export interface Schema {
   users: Record<string, UserConfig>;
 }
 
+let cachedDb: Schema | null = null;
+
 function initDb(): Schema {
+  if (cachedDb) return cachedDb;
+
   if (fs.existsSync(dbPath)) {
     try {
       const content = fs.readFileSync(dbPath, "utf-8");
       const parsed = JSON.parse(content);
       if (parsed.encryptionKey && parsed.jwtSecret && parsed.users) {
+        cachedDb = parsed;
         return parsed;
       }
     } catch {}
@@ -75,6 +80,7 @@ export function getDb(): Schema {
 }
 
 export function saveDb(data: Schema) {
+  cachedDb = data;
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), "utf-8");
 }
 

@@ -4,6 +4,12 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v2.4.4 - 2026-08-23
+
+### Fixed
+- **Gateway Memory Leak & Socket Exhaustion (BSOD Fix):** Fixed a critical loop in `daemon.ts` where overlapping connection closures spawned infinite parallel WebSocket connection routines. This previously triggered runaway TCP socket allocation resulting in OS-level port exhaustion (Windows BSOD).
+- **Synchronous File System Blocking:** Mitigated severe event loop blocking by introducing runtime memory caching for `getLocalVersion` (`version.ts`) and `initDb` (`db.ts`), preventing I/O lockups when `/api/status` is heavily polled by background dashboard tabs.
+
 ## v2.4.3 - 2026-08-22
 
 ### Fixed
