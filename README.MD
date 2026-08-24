@@ -2,7 +2,7 @@
   <img src="Alley/public/Stray.png" alt="Stray Logo" width="120" height="120" />
 </p>
 
-# Stray Alley (v2.4.4)
+# Stray Alley (v3.0.0)
 
 Stray Alley is a self-hosted, secure Discord presence playground built on Next.js. It features active session device spoofing, custom rich activity presence, and client connection management.
 
@@ -23,18 +23,10 @@ To install, configure, or troubleshoot Stray Alley, navigate to the documents be
 
 ---
 
-## Previews
+## Preview
 
 <p align="center">
-  <img src="public/image.png" alt="Dashboard Setup Screen" width="100%" />
-</p>
-
-<p align="center">
-  <img src="public/image1.png" alt="RPC Parameters Customization" width="100%" />
-</p>
-
-<p align="center">
-  <img src="public/image2-clean.png" alt="Live Status Preview Console" width="100%" />
+  <img src="public/v3.0.0%20LTM.png" alt="Stray Dashboard Preview" width="100%" />
 </p>
 
 ---

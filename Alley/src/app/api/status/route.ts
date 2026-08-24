@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { isDaemonRunning, getDaemonLogs, restoreAllDaemons, getQuestProcessingStatus } from "@/lib/daemon";
+import { isDaemonRunning, getDaemonLogs, getDaemonErrorLogs, restoreAllDaemons, autoStartUserIfEnabled, getQuestProcessingStatus } from "@/lib/daemon";
 import { getUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { restoreUserFromCloud } from "@/lib/cloudDb";
@@ -15,18 +15,20 @@ export async function GET() {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
-  restoreAllDaemons();
+  await restoreAllDaemons();
 
   let user = getUser(session.userId);
   if (!user || !user.discordToken) {
     await restoreUserFromCloud(session.userId);
     user = getUser(session.userId);
+    autoStartUserIfEnabled(session.userId);
   }
 
   const isRunning = isDaemonRunning(session.userId);
   const logs = getDaemonLogs(session.userId);
-
+  const errorLogs = getDaemonErrorLogs(session.userId);
   const questStatus = getQuestProcessingStatus(session.userId);
+
   const isProcessingQuests = Boolean(questStatus?.isProcessing);
   const activeQuestRpc = questStatus?.activeQuestName
     ? {
@@ -57,6 +59,7 @@ export async function GET() {
     authenticated: true,
     isRunning,
     logs,
+    errorLogs,
     updateNotification,
     isProcessingQuests,
     activeQuestRpc,

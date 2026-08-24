@@ -4,6 +4,18 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v3.0.0 - 2026-08-24
+
+### Changed
+- **Stray Alley Phase Shift:** Project is now officially in the LTM (Long Term Maintenance) phase.
+- **Glassmorphism Redesign:** Completely overhauled the Alley dashboard with a sleek, premium Glassmorphic aesthetic, replacing the older brutalist/flat dark themes with semi-transparent frosted cards and consistent 50/50 split grids.
+
+### Fixed
+- **Gateway Auto-Reconnect & Zombie Socket Recovery:** Implemented Discord Opcode 11 (Heartbeat ACK) tracking to detect and auto-reconnect dead TCP connections, and added backoff retry routines on asset registration and setup failures.
+- **Auto-Restoration on Server Reboot:** Enhanced `restoreAllDaemons()` and `/api/status` with async restoration locking and immediate auto-start for cloud-restored profiles on container reboots (e.g. Render, Railway).
+- **Dashboard Frontend Memory Leaks:** Capped the connection/quest log UI array limit to exactly 30 entries. Prior iterations allowed endless log stacking which crashed lower-end devices or 1GB RAM servers due to massive DOM growth.
+- **Webhook AbortController Timeout:** Replaced stalling webhook POST promises with a strict AbortController timeout mechanism in `daemon.ts` and background tasks.
+
 ## v2.4.4 - 2026-08-23
 
 ### Fixed

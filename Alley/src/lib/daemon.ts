@@ -35,13 +35,24 @@ export interface StrayConfig {
 
 declare global {
   var strayLogs: Map<string, string[]> | undefined;
+  var strayErrorLogs: Map<string, string[]> | undefined;
+  var webhookBackoffs: Map<string, number> | undefined;
   var activeStrayClients: Map<string, StrayClient> | undefined;
   var hasBootRestored: boolean | undefined;
   var activeQuestStatus: Map<string, { isProcessing: boolean; activeQuestName?: string; progressPct?: number; appId?: string; startTime?: number }> | undefined;
+  var restoreAllDaemonsPromise: Promise<void> | undefined;
 }
 
 if (!globalThis.strayLogs) {
   globalThis.strayLogs = new Map();
+}
+
+if (!globalThis.strayErrorLogs) {
+  globalThis.strayErrorLogs = new Map();
+}
+
+if (!globalThis.webhookBackoffs) {
+  globalThis.webhookBackoffs = new Map();
 }
 
 if (!globalThis.activeStrayClients) {
@@ -74,25 +85,56 @@ export function getQuestProcessingStatus(userId: string) {
 }
 
 export function addLog(userId: string, message: string) {
-  const logs = globalThis.strayLogs?.get(userId) || [];
   const time = new Date().toLocaleTimeString();
-  logs.push(`[${time}] ${message}`);
-  if (logs.length > 200) {
-    logs.splice(0, logs.length - 200);
+  const formattedMsg = `[${time}] ${message}`;
+  
+  const logs = globalThis.strayLogs?.get(userId) || [];
+  logs.push(formattedMsg);
+  if (logs.length > 30) {
+    logs.splice(0, logs.length - 30);
   }
   globalThis.strayLogs?.set(userId, logs);
 
+  const isError = message.toLowerCase().includes("error") || 
+                  message.toLowerCase().includes("failed") || 
+                  message.toLowerCase().includes("timeout") ||
+                  message.toLowerCase().includes("warning");
+
+  if (isError) {
+    const errorLogs = globalThis.strayErrorLogs?.get(userId) || [];
+    errorLogs.push(formattedMsg);
+    if (errorLogs.length > 50) {
+      errorLogs.splice(0, errorLogs.length - 50);
+    }
+    globalThis.strayErrorLogs?.set(userId, errorLogs);
+  }
+
   const user = getUser(userId);
-  if (user?.webhookUrl) {
+  if (user?.webhookUrl && user?.webhookEnabled) {
+    const backoffUntil = globalThis.webhookBackoffs?.get(userId) || 0;
+    if (Date.now() < backoffUntil) return;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
     fetch(user.webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `\`\`\`[${time}] ${message}\`\`\``,
+        content: `\`\`\`${formattedMsg}\`\`\``,
         username: "Stray Alley Logs",
         avatar_url: "https://stray.bcnstudio.tech/Stray.png",
       }),
-    }).catch(() => {});
+      signal: controller.signal
+    }).then(res => {
+      clearTimeout(timeout);
+      if (!res.ok) {
+        globalThis.webhookBackoffs?.set(userId, Date.now() + 60000);
+      }
+    }).catch(() => {
+      clearTimeout(timeout);
+      globalThis.webhookBackoffs?.set(userId, Date.now() + 60000);
+    });
   }
 }
 
@@ -142,6 +184,7 @@ class StrayClient {
   private lastSmallImage: string = "";
   private isConnecting: boolean = false;
   private reconnectAttempts: number = 0;
+  private lastHeartbeatAck: number = Date.now();
 
   constructor(userId: string, config: StrayConfig) {
     this.userId = userId;
@@ -190,6 +233,7 @@ class StrayClient {
 
       currentWs.on("open", () => {
         this.reconnectAttempts = 0;
+        this.lastHeartbeatAck = Date.now();
         addLog(this.userId, "Connection established. Awaiting gateway hello...");
       });
 
@@ -232,6 +276,12 @@ class StrayClient {
       });
     } catch (err: any) {
       addLog(this.userId, `Connection setup error: ${err.message}`);
+      if (this.active) {
+        this.reconnectAttempts++;
+        const delay = Math.min(60000, Math.pow(2, Math.min(this.reconnectAttempts, 5)) * 1000 + Math.floor(Math.random() * 1000));
+        addLog(this.userId, `Reconnecting in ${Math.round(delay / 1000)}s (Attempt ${this.reconnectAttempts})...`);
+        this.reconnectTimeout = setTimeout(() => this.connect(), delay);
+      }
     } finally {
       this.isConnecting = false;
     }
@@ -251,6 +301,7 @@ class StrayClient {
         break;
 
       case 11:
+        this.lastHeartbeatAck = Date.now();
         break;
 
       case 0:
@@ -268,8 +319,17 @@ class StrayClient {
 
   private startHeartbeat(intervalMs: number) {
     if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    this.lastHeartbeatAck = Date.now();
     this.heartbeatInterval = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        const timeSinceLastAck = Date.now() - this.lastHeartbeatAck;
+        if (timeSinceLastAck > intervalMs * 2) {
+          addLog(this.userId, "Heartbeat ACK timeout detected. Reconnecting zombie session...");
+          try {
+            this.ws.terminate();
+          } catch {}
+          return;
+        }
         this.ws.send(JSON.stringify({ op: 1, d: this.sequence }));
       }
     }, intervalMs);
@@ -643,64 +703,82 @@ export function getDaemonLogs(userId: string): string[] {
   return globalThis.strayLogs?.get(userId) || [];
 }
 
+export function getDaemonErrorLogs(userId: string): string[] {
+  return globalThis.strayErrorLogs?.get(userId) || [];
+}
+
+export function autoStartUserIfEnabled(userId: string) {
+  const user = getUser(userId);
+  if (!user || !user.botEnabled || !user.discordToken || getDaemonStatus(userId)) return;
+
+  try {
+    const token = decrypt(user.discordToken);
+    if (!token) return;
+
+    const config: StrayConfig = {
+      token,
+      status: user.status || "online",
+      device: user.device || "desktop",
+      webhookUrl: user.webhookUrl || "",
+      rotationEnabled: user.rotationEnabled || false,
+      rotationInterval: user.rotationInterval || 10,
+      rotationStatus1Text: user.rotationStatus1Text || "",
+      rotationStatus1Emoji: user.rotationStatus1Emoji || "",
+      rotationStatus2Text: user.rotationStatus2Text || "",
+      rotationStatus2Emoji: user.rotationStatus2Emoji || "",
+      rotationStatus3Text: user.rotationStatus3Text || "",
+      rotationStatus3Emoji: user.rotationStatus3Emoji || "",
+      custom_status: {
+        text: user.customStatusText || "",
+        emoji: user.customStatusEmoji || "",
+      },
+      rich_presence: {
+        enabled: user.rpcEnabled || false,
+        type: user.rpcType ?? 0,
+        url: user.rpcUrl || "",
+        client_id: user.rpcClientId || "",
+        name: user.rpcName || "",
+        state: user.rpcState || "",
+        details: user.rpcDetails || "",
+        large_image: user.rpcLargeImage || "",
+        large_text: user.rpcLargeText || "",
+        small_image: user.rpcSmallImage || "",
+        small_text: user.rpcSmallText || "",
+      },
+    };
+    addLog(userId, "Auto-restoring gateway session on server boot...");
+    startDaemon(userId, config);
+  } catch (err: any) {
+    addLog(userId, `Failed to auto-restore session: ${err.message}`);
+  }
+}
+
 export async function restoreAllDaemons() {
-  const db = getDb();
-  if (!db || !db.users) return;
-
-  const isBoot = !globalThis.hasBootRestored;
-  if (isBoot) {
-    globalThis.hasBootRestored = true;
+  if (globalThis.restoreAllDaemonsPromise) {
+    return globalThis.restoreAllDaemonsPromise;
   }
 
-  for (const [userId, user] of Object.entries(db.users)) {
-    if (isBoot || (!user.discordToken && user.cloudSyncEnabled)) {
-      await restoreUserFromCloud(userId);
+  const promise = (async () => {
+    const db = getDb();
+    if (!db || !db.users) return;
+
+    const isBoot = !globalThis.hasBootRestored;
+    if (isBoot) {
+      globalThis.hasBootRestored = true;
     }
 
-    const updatedUser = getUser(userId) || user;
-    if (updatedUser.botEnabled && updatedUser.discordToken && !getDaemonStatus(userId)) {
-      try {
-        const token = decrypt(updatedUser.discordToken);
-        if (token) {
-          const config: StrayConfig = {
-            token,
-            status: updatedUser.status || "online",
-            device: updatedUser.device || "desktop",
-            webhookUrl: updatedUser.webhookUrl || "",
-            rotationEnabled: updatedUser.rotationEnabled || false,
-            rotationInterval: updatedUser.rotationInterval || 10,
-            rotationStatus1Text: updatedUser.rotationStatus1Text || "",
-            rotationStatus1Emoji: updatedUser.rotationStatus1Emoji || "",
-            rotationStatus2Text: updatedUser.rotationStatus2Text || "",
-            rotationStatus2Emoji: updatedUser.rotationStatus2Emoji || "",
-            rotationStatus3Text: updatedUser.rotationStatus3Text || "",
-            rotationStatus3Emoji: updatedUser.rotationStatus3Emoji || "",
-            custom_status: {
-              text: updatedUser.customStatusText || "",
-              emoji: updatedUser.customStatusEmoji || "",
-            },
-            rich_presence: {
-              enabled: updatedUser.rpcEnabled || false,
-              type: updatedUser.rpcType ?? 0,
-              url: updatedUser.rpcUrl || "",
-              client_id: updatedUser.rpcClientId || "",
-              name: updatedUser.rpcName || "",
-              state: updatedUser.rpcState || "",
-              details: updatedUser.rpcDetails || "",
-              large_image: updatedUser.rpcLargeImage || "",
-              large_text: updatedUser.rpcLargeText || "",
-              small_image: updatedUser.rpcSmallImage || "",
-              small_text: updatedUser.rpcSmallText || "",
-            },
-          };
-          addLog(userId, "Auto-restoring gateway session from cloud storage on server boot...");
-          startDaemon(userId, config);
-        }
-      } catch (err: any) {
-        addLog(userId, `Failed to auto-restore session: ${err.message}`);
+    for (const [userId, user] of Object.entries(db.users)) {
+      if (isBoot || (!user.discordToken && user.cloudSyncEnabled)) {
+        await restoreUserFromCloud(userId);
       }
+      autoStartUserIfEnabled(userId);
     }
-  }
+  })().finally(() => {
+    globalThis.restoreAllDaemonsPromise = undefined;
+  });
+
+  globalThis.restoreAllDaemonsPromise = promise;
+  return promise;
 }
 
 export type { StrayClient };

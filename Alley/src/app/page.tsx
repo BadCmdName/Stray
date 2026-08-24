@@ -134,7 +134,7 @@ export default function Home() {
               setActiveQuestRpc(null);
             }
             if (data.logs) {
-              setLogs(data.logs);
+              setLogs(data.logs.slice(-30));
             }
             if (data.updateNotification) {
               setUpdateNotification(data.updateNotification);
@@ -263,7 +263,7 @@ export default function Home() {
         }
         setIsRunning(data.isRunning || false);
         if (data.logs) {
-          setLogs(data.logs);
+          setLogs(data.logs.slice(-30));
         }
         setConfigLoaded(true);
         setIsSyncingData(false);
@@ -750,7 +750,7 @@ export default function Home() {
               value={keyInput}
               onChange={(e) => setKeyInput(e.target.value)}
               placeholder="Paste your Stray Key here..."
-              className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition font-mono"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition font-mono"
             />
             <button
               type="submit"
@@ -784,12 +784,12 @@ export default function Home() {
           <span className="text-lg font-black tracking-wider text-white uppercase">STRAY ALLEY</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs font-bold text-zinc-400 bg-[#0e0e11] border border-zinc-800 px-3 py-1.5 rounded-lg">
+          <span className="text-xs font-bold text-zinc-400 bg-black/40 border border-white/10 px-3 py-1.5 rounded-lg">
             {session.username}
           </span>
           <button
             onClick={() => setShowLogoutModal(true)}
-            className="px-4 py-1.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            className="px-4 py-1.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-md hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             Leave Alley
           </button>
@@ -826,10 +826,11 @@ export default function Home() {
       )}
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-8 flex flex-col gap-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
-              <h2 className="text-base font-black text-white uppercase tracking-wider">Stray Parameters</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="flex flex-col gap-8">
+            <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <h2 className="text-base font-black text-white uppercase tracking-wider">Core Parameters</h2>
               <div className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-full ${isRunning ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -846,12 +847,12 @@ export default function Home() {
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Paste your Discord authorization token..."
-                  className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition font-mono"
+                  className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition font-mono"
                 />
                 <button
                   onClick={() => triggerTokenCheck(token)}
                   disabled={verifyingToken}
-                  className="bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                  className="bg-black/40 border border-white/10 text-zinc-400 hover:text-white px-6 py-2.5 rounded-xl font-bold uppercase text-xs transition shadow-md hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                 >
                   {verifyingToken ? "Verifying..." : "Verify Token"}
                 </button>
@@ -870,7 +871,7 @@ export default function Home() {
                   <select
                     value={device}
                     onChange={(e) => setDevice(e.target.value)}
-                    className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition appearance-none cursor-pointer"
                   >
                     <option value="desktop">Desktop Client</option>
                     <option value="mobile">Mobile Application</option>
@@ -891,7 +892,7 @@ export default function Home() {
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition appearance-none cursor-pointer"
                   >
                     <option value="online">Online</option>
                     <option value="idle">Idle / Away</option>
@@ -916,22 +917,28 @@ export default function Home() {
                     value={customStatusEmoji}
                     onChange={(e) => setCustomStatusEmoji(e.target.value)}
                     placeholder=":sob: or <a:name:id>"
-                    className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition text-center"
+                    className="w-1/4 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition text-center"
                   />
                   <input
                     type="text"
                     value={customStatus}
                     onChange={(e) => setCustomStatus(e.target.value)}
                     placeholder="What is stray doing..."
-                    className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition"
                   />
                 </div>
               </div>
             )}
 
-            <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Custom Status Rotation</span>
+            </div>
+
+            <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <h2 className="text-base font-black text-white uppercase tracking-wider">Custom Rotation</h2>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Custom Status Rotation</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -953,7 +960,7 @@ export default function Home() {
                       value={rotationInterval}
                       onChange={(e) => setRotationInterval(Number(e.target.value))}
                       placeholder="10"
-                      className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition"
                     />
                   </div>
 
@@ -965,14 +972,14 @@ export default function Home() {
                         value={rotationStatus1Emoji}
                         onChange={(e) => setRotationStatus1Emoji(e.target.value)}
                         placeholder=":sob: or emoji"
-                        className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                        className="w-1/4 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 text-center"
                       />
                       <input
                         type="text"
                         value={rotationStatus1Text}
                         onChange={(e) => setRotationStatus1Text(e.target.value)}
                         placeholder="Status message 1..."
-                        className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   </div>
@@ -985,14 +992,14 @@ export default function Home() {
                         value={rotationStatus2Emoji}
                         onChange={(e) => setRotationStatus2Emoji(e.target.value)}
                         placeholder=":smile: or emoji"
-                        className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                        className="w-1/4 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 text-center"
                       />
                       <input
                         type="text"
                         value={rotationStatus2Text}
                         onChange={(e) => setRotationStatus2Text(e.target.value)}
                         placeholder="Status message 2..."
-                        className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   </div>
@@ -1005,14 +1012,14 @@ export default function Home() {
                         value={rotationStatus3Emoji}
                         onChange={(e) => setRotationStatus3Emoji(e.target.value)}
                         placeholder=":heart: or emoji"
-                        className="w-1/4 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 text-center"
+                        className="w-1/4 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 text-center"
                       />
                       <input
                         type="text"
                         value={rotationStatus3Text}
                         onChange={(e) => setRotationStatus3Text(e.target.value)}
                         placeholder="Status message 3..."
-                        className="flex-1 bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   </div>
@@ -1020,10 +1027,16 @@ export default function Home() {
               )}
             </div>
 
-            <div className="border-t border-zinc-800 pt-6 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white uppercase tracking-wide block">Enable Custom Rich Activity (RPC)</span>
+            </div>
+
+            <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <h2 className="text-base font-black text-white uppercase tracking-wider">Rich Presence Activity</h2>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-white uppercase tracking-wide block">Enable Custom Rich Activity (RPC)</span>
                   <span className="text-[10px] text-zinc-400 block mt-0.5">Note: Disables Quest LIVE-RPC while active.</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -1046,7 +1059,7 @@ export default function Home() {
                         <select
                           value={rpcType}
                           onChange={(e) => setRpcType(Number(e.target.value))}
-                          className="w-full bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 transition appearance-none cursor-pointer"
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition appearance-none cursor-pointer"
                         >
                           <option value={0}>Playing a Game</option>
                           <option value={1}>Streaming Live</option>
@@ -1070,7 +1083,7 @@ export default function Home() {
                           value={rpcUrl}
                           onChange={(e) => setRpcUrl(e.target.value)}
                           placeholder="https://twitch.tv/username"
-                          className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                          className="bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                         />
                       </div>
                     ) : (
@@ -1081,7 +1094,7 @@ export default function Home() {
                           value={rpcClientId}
                           onChange={(e) => setRpcClientId(e.target.value)}
                           placeholder="1527635163591348254"
-                          className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                          className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                         />
                       </div>
                     )}
@@ -1095,7 +1108,7 @@ export default function Home() {
                         value={rpcClientId}
                         onChange={(e) => setRpcClientId(e.target.value)}
                         placeholder="1527635163591348254"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   )}
@@ -1108,7 +1121,7 @@ export default function Home() {
                         value={rpcName}
                         onChange={(e) => setRpcName(e.target.value)}
                         placeholder="Stray"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
 
@@ -1119,7 +1132,7 @@ export default function Home() {
                         value={rpcDetails}
                         onChange={(e) => setRpcDetails(e.target.value)}
                         placeholder="Meowing at 3 AM"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   </div>
@@ -1132,7 +1145,7 @@ export default function Home() {
                         value={rpcState}
                         onChange={(e) => setRpcState(e.target.value)}
                         placeholder="Chasing dots"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
 
@@ -1143,7 +1156,7 @@ export default function Home() {
                         value={rpcLargeImage}
                         onChange={(e) => setRpcLargeImage(e.target.value)}
                         placeholder="https://... or asset key"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   </div>
@@ -1156,7 +1169,7 @@ export default function Home() {
                         value={rpcLargeText}
                         onChange={(e) => setRpcLargeText(e.target.value)}
                         placeholder="Straying"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
 
@@ -1167,7 +1180,7 @@ export default function Home() {
                         value={rpcSmallImage}
                         onChange={(e) => setRpcSmallImage(e.target.value)}
                         placeholder="https://... or asset key"
-                        className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                        className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                       />
                     </div>
                   </div>
@@ -1179,50 +1192,21 @@ export default function Home() {
                       value={rpcSmallText}
                       onChange={(e) => setRpcSmallText(e.target.value)}
                       placeholder="Purring"
-                      className="bg-[#0e0e11] border-2 border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-400"
+                      className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50"
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            {cooldownErrorMsg && (
-              <div className="bg-rose-950/30 border-2 border-rose-800 text-rose-400 p-3.5 rounded-xl text-xs font-bold animate-pulse">
-                {cooldownErrorMsg}
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-4 border-t border-zinc-800 pt-6">
-              <button
-                onClick={handleSave}
-                disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
-                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 hover:text-white rounded-xl font-bold uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,0.3)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? "Saving..." : cooldownRemaining > 0 ? `Save (${cooldownRemaining}s)` : "Save Changes"}
-              </button>
-              <button
-                onClick={handlePublish}
-                disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
-                className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isPublishing ? "Publishing..." : cooldownRemaining > 0 ? `Publish (${cooldownRemaining}s)` : isRunning ? "Re-Publish" : "Publish"}
-              </button>
-              {isRunning && (
-                <button
-                  onClick={handleStop}
-                  disabled={isSaving || isPublishing || isStopping}
-                  className="flex-1 py-3.5 bg-rose-600 border-2 border-black text-white font-black uppercase text-xs tracking-wider transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1.5px] hover:translate-y-[1.5px] hover:shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-                >
-                  {isStopping ? "Stopping..." : "Stop Client"}
-                </button>
-              )}
             </div>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col gap-6">
-            <h2 className="text-base font-black text-white pb-1 uppercase tracking-wider">Live Preview</h2>
-            
-            <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl overflow-hidden shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
+          <div className="flex flex-col gap-8">
+            <div className="bg-[#111115] border border-white/5 rounded-2xl overflow-hidden shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+              <div className="flex justify-between items-center border-b border-white/5 p-4 pb-3 bg-[#08080c]/50">
+                <h2 className="text-base font-black text-white uppercase tracking-wider">Live Preview</h2>
+              </div>
               <div className="h-20 bg-zinc-800 relative" />
               <div className="px-4 pb-6 relative">
                 <div className="absolute -top-10 left-4 h-20 w-20 bg-[#16161a] rounded-full border-4 border-[#16161a] flex items-center justify-center relative">
@@ -1245,13 +1229,13 @@ export default function Home() {
                       <span className="text-zinc-500 text-xs font-semibold">#{verifiedProfile.discriminator}</span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-500 mt-0.5 border-b border-zinc-800 pb-3 font-mono">
+                  <p className="text-xs text-zinc-500 mt-0.5 border-b border-white/5 pb-3 font-mono">
                     {verifiedProfile?.id || "000000000000000000"}
                   </p>
                 </div>
 
                 {rotationEnabled && (
-                  <div className="py-3 border-b border-zinc-800 flex flex-col gap-1 min-h-[48px]">
+                  <div className="py-3 border-b border-white/5 flex flex-col gap-1 min-h-[48px]">
                     <span className="text-[10px] text-zinc-500 block font-bold uppercase">Rotating Statuses</span>
                     <div className="flex flex-col gap-1">
                       {(rotationStatus1Text || rotationStatus1Emoji) && (
@@ -1280,7 +1264,7 @@ export default function Home() {
                 )}
 
                 {!rotationEnabled && (customStatus || customStatusEmoji) && (
-                  <div className="py-3 border-b border-zinc-800 flex items-center min-h-[48px]">
+                  <div className="py-3 border-b border-white/5 flex items-center min-h-[48px]">
                     <div className="w-full">
                       <span className="text-[10px] text-zinc-500 block font-bold uppercase mb-1">Custom Status</span>
                       <div className="flex items-center text-xs text-zinc-400 italic">
@@ -1340,11 +1324,99 @@ export default function Home() {
                 ) : null}
               </div>
             </div>
+
+            <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <h2 className="text-base font-black text-white uppercase tracking-wider">Gateway Controls</h2>
+              </div>
+              
+              {cooldownErrorMsg && (
+                <div className="bg-rose-950/30 border border-rose-800 text-rose-400 p-3.5 rounded-xl text-xs font-bold animate-pulse">
+                  {cooldownErrorMsg}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
+                  className="flex-1 py-3.5 bg-white/5 border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10 rounded-xl font-bold uppercase text-xs tracking-wider transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? "Saving..." : cooldownRemaining > 0 ? `Save (${cooldownRemaining}s)` : "Save Changes"}
+                </button>
+                <button
+                  onClick={handlePublish}
+                  disabled={isSaving || isPublishing || isStopping || cooldownRemaining > 0}
+                  className="flex-1 py-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-black font-black uppercase text-xs tracking-wider rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(245,158,11,0.1)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                >
+                  {isPublishing ? "Publishing..." : cooldownRemaining > 0 ? `Publish (${cooldownRemaining}s)` : isRunning ? "Re-Publish" : "Publish"}
+                </button>
+                {isRunning && (
+                  <button
+                    onClick={handleStop}
+                    disabled={isSaving || isPublishing || isStopping}
+                    className="flex-1 py-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white font-black uppercase text-xs tracking-wider rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(244,63,94,0.1)] hover:shadow-[0_0_20px_rgba(244,63,94,0.3)]"
+                  >
+                    {isStopping ? "Stopping..." : "Stop Client"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <h2 className="text-base font-black text-white uppercase tracking-wider">Advanced Integrations</h2>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Discord Webhook Logs</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={webhookEnabled}
+                      onChange={(e) => setWebhookEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-black/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 border border-white/10"></div>
+                  </label>
+                </div>
+
+                {webhookEnabled && (
+                  <div className="flex flex-col gap-2 animate-fadeIn">
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Discord Webhook URL</label>
+                    <input
+                      type="password"
+                      value={webhookUrl}
+                      onChange={(e) => setWebhookUrl(e.target.value)}
+                      placeholder="https://discord.com/api/webhooks/..."
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-200 focus:outline-none focus:border-amber-500/50 transition-all duration-300"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-white/5 pt-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wide">Enable Cloud DB Auto-Backup</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cloudSyncEnabled}
+                      onChange={(e) => setCloudSyncEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-black/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 border border-white/10"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 flex flex-col gap-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
               <QuestIcon />
               <h2 className="text-base font-black text-white uppercase tracking-wider">
@@ -1373,7 +1445,7 @@ export default function Home() {
                 <button
                   onClick={handleStopQuests}
                   disabled={isStoppingQuests}
-                  className="px-6 py-2.5 bg-rose-500 border-2 border-black text-white font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
+                  className="px-6 py-2.5 bg-rose-500 border-2 border-black text-white font-black uppercase text-xs tracking-wider rounded-xl transition shadow-md hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
                 >
                   {isStoppingQuests ? "STOPPING..." : "STOP PROCESSING"}
                 </button>
@@ -1381,7 +1453,7 @@ export default function Home() {
                 <button
                   onClick={handleProcessAllQuests}
                   disabled={loadingQuests || !token}
-                  className="px-6 py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
+                  className="px-6 py-2.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-md hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50"
                 >
                   COMPLETE ALL
                 </button>
@@ -1389,7 +1461,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 flex flex-col gap-2">
+          <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
             <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
               Rewards notice: Rewards are only claimed via the official Discord client or web app.
             </span>
@@ -1406,8 +1478,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="bg-[#16161a] border-2 border-zinc-800 rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,0.5)] flex flex-col gap-4">
-          <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+          <div className="bg-[#111115] border border-white/5 rounded-2xl p-6 shadow-xl transition-colors duration-300 hover:border-amber-500/20 flex flex-col gap-4">
+            <div className="flex justify-between items-center border-b border-white/5 pb-3">
             <h2 className="text-sm font-black text-white uppercase tracking-wider">Gateway Connection & Quest Logs</h2>
             <div className="flex items-center gap-4">
               <a
@@ -1428,7 +1500,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-[#0e0e11] border border-zinc-800 rounded-xl p-4 h-52 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
+          <div className="bg-black/40 border border-white/10 rounded-xl p-4 h-52 overflow-y-auto font-mono text-[11px] text-zinc-400 flex flex-col-reverse gap-1.5 scrollbar-thin">
             {logs.length === 0 ? (
               <span className="text-zinc-650 italic">No connection logs available. Press Publish to establish a session.</span>
             ) : (
@@ -1439,12 +1511,13 @@ export default function Home() {
               ))
             )}
           </div>
+          </div>
         </div>
       </main>
 
       {isSyncingData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn select-none">
-          <div className="bg-[#16161a] border-2 border-amber-400 max-w-sm w-full rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col items-center text-center gap-4">
+          <div className="bg-[#111115]/90 backdrop-blur-md border border-amber-500/20 shadow-[0_0_40px_rgba(245,158,11,0.15)] max-w-sm w-full rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col items-center text-center gap-4">
             <div className="h-10 w-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mb-2" />
             <h3 className="text-lg font-black text-white uppercase tracking-wider">Syncing Your Data...</h3>
             <p className="text-xs text-zinc-400 font-medium leading-relaxed">
@@ -1473,13 +1546,13 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-355 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="flex-1 py-3.5 bg-black/40 border border-white/10 text-zinc-355 rounded-xl font-black uppercase text-xs tracking-wider transition shadow-md hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Nevermind
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="flex-1 py-3.5 bg-rose-500 border-2 border-black text-black rounded-xl font-black uppercase text-xs tracking-wider transition shadow-md hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-md active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Logout
               </button>
@@ -1490,7 +1563,7 @@ export default function Home() {
 
       {showCloudConsentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#16161a] border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
+          <div className="bg-[#111115]/90 backdrop-blur-md border border-amber-500/20 shadow-[0_0_40px_rgba(245,158,11,0.15)] max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
             <h3 className="text-xl font-black text-white uppercase tracking-wider">Cloud Database Terms & Privacy</h3>
             
             <div className="text-left text-xs text-zinc-400 flex flex-col gap-3 font-medium leading-relaxed bg-[#0e0e11] p-4 sm:p-5 border border-zinc-800 rounded-xl overflow-y-auto max-h-60">
@@ -1508,13 +1581,13 @@ export default function Home() {
             <div className="flex gap-4">
               <button
                 onClick={() => setShowCloudConsentModal(false)}
-                className="flex-1 py-3.5 bg-[#0e0e11] border-2 border-zinc-800 text-zinc-400 rounded-xl font-black uppercase text-xs tracking-wider transition"
+                className="flex-1 py-3.5 bg-black/40 border border-white/10 text-zinc-400 rounded-xl font-black uppercase text-xs tracking-wider transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAcceptCloudTerms}
-                className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px]"
+                className="flex-1 py-3.5 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-md hover:translate-x-[1px] hover:translate-y-[1px] active:translate-x-[3px] active:translate-y-[3px]"
               >
                 Enable Auto-Backup
               </button>
@@ -1525,7 +1598,7 @@ export default function Home() {
 
       {!termsAccepted && session && configLoaded && !isSyncingData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#16161a] border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
+          <div className="bg-[#111115]/90 backdrop-blur-md border border-amber-500/20 shadow-[0_0_40px_rgba(245,158,11,0.15)] max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(217,119,6,0.3)] flex flex-col gap-6 text-center select-none animate-scaleIn">
             <h3 className="text-xl font-black text-white uppercase tracking-wider">Liability Agreement & Waiver</h3>
             
             <div className="text-left text-xs text-zinc-400 flex flex-col gap-3 font-medium leading-relaxed bg-[#0e0e11] p-4 sm:p-5 border border-zinc-800 rounded-xl overflow-y-auto max-h-60">
@@ -1543,7 +1616,7 @@ export default function Home() {
             <div>
               <button
                 onClick={handleAcceptTerms}
-                className="w-full py-4 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="w-full py-4 bg-amber-400 border-2 border-black text-black font-black uppercase text-xs tracking-wider rounded-xl transition shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-md active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 I Accept All Risks & Responsibilities
               </button>
