@@ -46,13 +46,34 @@ To install, configure, or troubleshoot Stray Alley, navigate to the documents be
 
 ---
 
-## Credits
+## Features Overview
 
-Stray's base is built using connection payloads inspired by the [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creator.
+### 🎮 Discord Badge Spoofer (DBS)
+Stray now integrates Discord Badge Spoofer (DBS) to increment games played and playtime duration statistics directly on your Discord profile:
+* **Playtime Hours Mode:** Choose custom hour increments (10h, 50h, 100h, 500h, or custom) to inflate playtime duration across detectable titles.
+* **Games Played Mode:** Increment unique games played count across 800+ official Discord titles.
+* **Telemetry Engine:** Batched events dispatched directly to Discord's `/api/v9/science` endpoint with Cloudflare `cf_clearance` cookie support and automatic rate-limit backoff.
+
+Stray's Badge Spoofer is built using [DBS](https://github.com/revere-group/discord-badge-spoofer). Massive thanks to the original creator.
+
+---
+
+### ⚡ Auto-Quest Complete (DQACS)
+Automate active Discord gaming and media quests in a prioritized 3-tier hierarchy:
+1. **Tier 1: Orbs (Video):** Accelerated watch and media stream quests (Top priority)
+2. **Tier 2: Orbs (Games):** Discord desktop stream and gameplay simulation (Second priority)
+3. **Tier 3: Decorations & Other:** Avatar decorations, badges, and partner tasks (Optional last priority)
+* **Live-RPC Mode:** Optionally broadcasts the currently active quest game directly onto your Discord Rich Presence.
 
 Stray's Auto-Quest Complete is built using [DQACS](https://github.com/aiko-chan-ai/Discord-Quest-Auto-Completion-Selfbot). Massive thanks to the original creator.
 
-Stray's Badge Spoofer is built using [DBS](https://github.com/revere-group/discord-badge-spoofer). Massive thanks to the original creator.
+---
+
+## Credits
+
+* **Base Client:** Stray's gateway core is built using connection payloads inspired by the [Ghost-Selfbot](https://github.com/ghostselfbot/ghost) project. Massive thanks to the original creator.
+* **Auto-Quest Complete (DQACS):** Stray's Auto-Quest Complete is built using [DQACS](https://github.com/aiko-chan-ai/Discord-Quest-Auto-Completion-Selfbot). Massive thanks to the original creator.
+* **Discord Badge Spoofer (DBS):** Stray's Badge Spoofer is built using [DBS](https://github.com/revere-group/discord-badge-spoofer). Massive thanks to the original creator.
 
 ---
 
