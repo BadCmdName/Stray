@@ -69,6 +69,7 @@ export default function Home() {
   const [questsList, setQuestsList] = useState<any[]>([]);
   const [loadingQuests, setLoadingQuests] = useState(false);
   const [processingQuests, setProcessingQuests] = useState(false);
+  const [includeDecorationQuests, setIncludeDecorationQuests] = useState(true);
   const [activeQuestRpc, setActiveQuestRpc] = useState<any>(null);
 
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -195,6 +196,7 @@ export default function Home() {
     setLastSyncTimestamp(cfg.lastSyncTimestamp || null);
     setAutoQuestsEnabled(cfg.autoQuestsEnabled || false);
     setLiveRpcQuests(cfg.liveRpcQuests || false);
+    setIncludeDecorationQuests(cfg.includeDecorationQuests ?? true);
     setWebhookEnabled(cfg.webhookEnabled || false);
     setWebhookUrl(cfg.webhookUrl || "");
     setRotationEnabled(cfg.rotationEnabled || false);
@@ -385,12 +387,26 @@ export default function Home() {
       await fetch("/api/quests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ includeDecoration: includeDecorationQuests }),
       });
       setIsRunning(true);
     } catch {
       setProcessingQuests(false);
     }
+  };
+
+  const handleIncludeDecorationToggle = async (val: boolean) => {
+    setIncludeDecorationQuests(val);
+    try {
+      await fetch("/api/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "UPDATE",
+          config: { includeDecorationQuests: val },
+        }),
+      });
+    } catch {}
   };
 
   const [isStoppingQuests, setIsStoppingQuests] = useState(false);
@@ -763,7 +779,7 @@ export default function Home() {
           <div className="mt-6 text-xs font-semibold text-zinc-500">
             Need a key?{" "}
             <a
-              href="https://stray.bcnstudio.tech/api/auth/login"
+              href="https://stray-ltm.vercel.app/api/auth/login"
               target="_blank"
               rel="noopener noreferrer"
               className="text-amber-400 hover:text-amber-500 transition underline"
@@ -1461,12 +1477,111 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
-            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
-              Rewards notice: Rewards are only claimed via the official Discord client or web app.
-            </span>
-            <div className="text-xs text-zinc-300 font-mono flex items-center justify-between border-t border-zinc-900 pt-3">
-              <span>Status: {processingQuests ? "Auto-completing quests in progress..." : questsList.length > 0 ? "Quests ready for completion" : "No active quests found"}</span>
+          <div className="bg-black/40 border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2">
+              <span className="text-[10px] text-amber-400 font-black uppercase tracking-wider">
+                DQACS HIERARCHY EXECUTION ORDER
+              </span>
+              <span className="text-[9px] text-zinc-500 font-mono uppercase">
+                AUTOMATED PRIORITY QUEUE
+              </span>
+            </div>
+
+            {/* Hierarchy Mode 3-Tier Breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {/* Tier 1: Orbs (Video) */}
+              <div className="bg-purple-950/20 border border-purple-500/30 rounded-xl p-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-purple-400 tracking-wider">
+                    1. Orbs (Video)
+                  </span>
+                  <span className="text-xs font-mono font-bold text-purple-300 bg-purple-500/20 border border-purple-500/30 px-2 py-0.5 rounded">
+                    {questsList.filter((q) => q.hierarchy?.tier === "ORBS_VIDEO").length}
+                  </span>
+                </div>
+                <span className="text-[10px] text-zinc-400 leading-tight">
+                  First priority · Video Quests
+                </span>
+              </div>
+
+              {/* Tier 2: Orbs (Games) */}
+              <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
+                    2. Orbs (Games)
+                  </span>
+                  <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded">
+                    {questsList.filter((q) => q.hierarchy?.tier === "ORBS_GAME").length}
+                  </span>
+                </div>
+                <span className="text-[10px] text-zinc-400 leading-tight">
+                  Second priority · Game Quests
+                </span>
+              </div>
+
+              {/* Tier 3: Decoration & Other */}
+              <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider">
+                    3. Decoration / Other
+                  </span>
+                  <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded">
+                    {questsList.filter((q) => q.hierarchy?.tier === "DECORATION_OTHER").length}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-0.5">
+                  <span className="text-[10px] text-zinc-400">Optional · Last</span>
+                  <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeDecorationQuests}
+                      onChange={(e) => handleIncludeDecorationToggle(e.target.checked)}
+                      className="rounded border-zinc-700 text-amber-400 focus:ring-0 w-3.5 h-3.5 bg-black/40"
+                    />
+                    <span className="text-[9px] font-bold text-zinc-300 uppercase">Include</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Collapsible active list preview in hierarchy order */}
+            {questsList.length > 0 && (
+              <div className="flex flex-col gap-1.5 max-h-44 overflow-y-auto pr-1 border-t border-white/5 pt-2">
+                {questsList
+                  .filter((q) => includeDecorationQuests || q.hierarchy?.tier !== "DECORATION_OTHER")
+                  .map((q: any) => {
+                    const isOrbVid = q.hierarchy?.tier === "ORBS_VIDEO";
+                    const isOrbGm = q.hierarchy?.tier === "ORBS_GAME";
+                    const tierBadgeClass = isOrbVid
+                      ? "border-purple-500/40 text-purple-300 bg-purple-500/20"
+                      : isOrbGm
+                      ? "border-amber-500/40 text-amber-300 bg-amber-500/20"
+                      : "border-emerald-500/40 text-emerald-300 bg-emerald-500/20";
+
+                    return (
+                      <div
+                        key={q.id}
+                        className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5 text-xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${tierBadgeClass}`}>
+                            {q.hierarchy?.badge || "Tier"}
+                          </span>
+                          <span className="text-zinc-200 font-medium truncate">
+                            {q.config?.messages?.quest_name || q.config?.messages?.game_title || "Discord Quest"}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-zinc-500 font-mono shrink-0 ml-2">
+                          {q.user_status?.enrolled_at ? "Enrolled" : "Ready"}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+            <div className="text-xs text-zinc-300 font-mono flex items-center justify-between border-t border-zinc-900 pt-2">
+              <span>Status: {processingQuests ? "Auto-completing quests in hierarchy order..." : questsList.length > 0 ? "Quests ready in hierarchy priority" : "No active quests found"}</span>
               <button
                 onClick={fetchUserQuests}
                 disabled={loadingQuests || !token}

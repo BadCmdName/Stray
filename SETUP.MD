@@ -27,6 +27,8 @@ cd Stray/Alley
 Create a file named `.env` in the `Alley` directory:
 ```bash
 ALLOWED_USER_IDS="your_discord_user_id"
+# Optional (Defaults to https://stray-ltm.vercel.app):
+# CLOUD_PROXY_URL="https://stray-ltm.vercel.app"
 ```
 *Note: You can specify multiple user IDs separated by commas, for example: `ALLOWED_USER_IDS="12345678,98765432"`.*
 

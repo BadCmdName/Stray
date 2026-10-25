@@ -4,6 +4,17 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v3.0.1 - 2026-10-25
+
+### Added
+- **DQACS Hierarchy Mode:** Integrated sequential multi-tier quest completion: Tier 1 (Orbs Video, highest priority) ➔ Tier 2 (Orbs Games, second) ➔ Tier 3 (Decoration & Other, optional toggle). Added real-time tier counters and badge previews to the Alley dashboard.
+- **Dynamic OAuth Redirect Resolution:** Automatically sanitizes and handles OAuth redirect targets, routing seamlessly to `stray-ltm.vercel.app` with fallback resolution.
+
+### Changed
+- **LTM Production Domain Migration:** Updated cloud sync, documentation, and endpoints to `https://stray-ltm.vercel.app`.
+- **Dashboard Streamlining & Bloat Cleanup:** Removed unnecessary technical jargon across dashboard metrics and quest logs for a clean, user-friendly interface.
+- **Performance Optimizations:** Upgraded top banner to a GPU-accelerated marquee with dismiss capability, and removed CPU-intensive background grain loops.
+
 ## v3.0.0 - 2026-08-24
 
 ### Changed

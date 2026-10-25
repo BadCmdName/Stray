@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: "Stopped quest processing" });
     }
 
-    const { questId } = body;
+    const { questId, includeDecoration } = body;
 
     const manager = new QuestManager(session.userId, token);
     const quests = await manager.fetchQuests();
@@ -97,8 +97,13 @@ export async function POST(request: Request) {
       const questName = targetQuest.config?.messages?.quest_name || targetQuest.config?.messages?.game_title || "Discord Quest";
       return NextResponse.json({ success: true, message: `Started processing quest ${questName}` });
     } else {
-      manager.runAllQuests().catch(() => {});
-      return NextResponse.json({ success: true, message: "Started processing all active quests" });
+      const includeOptional =
+        includeDecoration !== undefined
+          ? Boolean(includeDecoration)
+          : (user.includeDecorationQuests ?? true);
+
+      manager.runAllQuests(includeOptional).catch(() => {});
+      return NextResponse.json({ success: true, message: "Started processing active quests in hierarchy mode" });
     }
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Failed to process quests";

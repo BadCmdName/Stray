@@ -21,6 +21,25 @@ export interface QuestTask {
   target: number;
 }
 
+export interface QuestReward {
+  type?: number;
+  sku_id?: string;
+  orb_quantity?: number;
+  messages?: {
+    name?: string;
+    name_with_article?: string;
+  };
+}
+
+export type QuestTier = "ORBS_VIDEO" | "ORBS_GAME" | "DECORATION_OTHER";
+
+export interface QuestHierarchyInfo {
+  tier: QuestTier;
+  priority: number;
+  label: string;
+  badge: string;
+}
+
 export interface QuestConfig {
   id: string;
   config: {
@@ -43,7 +62,9 @@ export interface QuestConfig {
     };
     rewards_config?: {
       platforms?: number[];
+      rewards?: QuestReward[];
     };
+    video_metadata?: any;
   };
   user_status?: {
     enrolled_at?: string | null;
@@ -52,6 +73,79 @@ export interface QuestConfig {
     progress?: Record<string, { value: number }>;
   } | null;
   raw?: any;
+  hierarchy?: QuestHierarchyInfo;
+}
+
+export function isOrbQuest(quest: QuestConfig | any): boolean {
+  const rewards: QuestReward[] =
+    quest.config?.rewards_config?.rewards ||
+    quest.raw?.config?.rewards_config?.rewards ||
+    [];
+
+  for (const r of rewards) {
+    if (r.orb_quantity && Number(r.orb_quantity) > 0) return true;
+    const name = `${r.messages?.name || ""} ${r.messages?.name_with_article || ""}`.toLowerCase();
+    if (/\borbs?\b/.test(name)) return true;
+    if (r.sku_id && /orb/i.test(String(r.sku_id))) return true;
+  }
+
+  const qName = `${quest.config?.messages?.quest_name || ""} ${quest.config?.messages?.game_title || ""}`.toLowerCase();
+  if (/\borbs?\b/.test(qName)) return true;
+
+  return false;
+}
+
+export function isVideoQuest(quest: QuestConfig | any): boolean {
+  const tasks =
+    quest.config?.task_config_v2?.tasks ||
+    quest.raw?.config?.task_config_v2?.tasks ||
+    {};
+
+  if (Boolean(tasks.WATCH_VIDEO) || Boolean(tasks.WATCH_VIDEO_ON_MOBILE)) return true;
+  if (quest.config?.video_metadata || quest.raw?.config?.video_metadata) return true;
+
+  for (const key of Object.keys(tasks)) {
+    if (/video/i.test(key)) return true;
+  }
+  return false;
+}
+
+export function categorizeQuest(quest: QuestConfig | any): QuestHierarchyInfo {
+  const isOrb = isOrbQuest(quest);
+  const isVideo = isVideoQuest(quest);
+
+  if (isOrb && isVideo) {
+    return {
+      tier: "ORBS_VIDEO",
+      priority: 1,
+      label: "Orbs (Video)",
+      badge: "Tier 1: Orbs (Video)",
+    };
+  }
+
+  if (isOrb && !isVideo) {
+    return {
+      tier: "ORBS_GAME",
+      priority: 2,
+      label: "Orbs (Games)",
+      badge: "Tier 2: Orbs (Games)",
+    };
+  }
+
+  return {
+    tier: "DECORATION_OTHER",
+    priority: 3,
+    label: "Decoration & Other",
+    badge: "Tier 3: Decoration / Other",
+  };
+}
+
+export function sortQuestsByHierarchy(quests: QuestConfig[]): QuestConfig[] {
+  return [...quests].sort((a, b) => {
+    const priorityA = a.hierarchy?.priority ?? categorizeQuest(a).priority;
+    const priorityB = b.hierarchy?.priority ?? categorizeQuest(b).priority;
+    return priorityA - priorityB;
+  });
 }
 
 const SUPER_PROPERTIES = Buffer.from(
@@ -153,18 +247,32 @@ export class QuestManager {
           }
 
           const now = Date.now();
-          const activeQuests = questsList.filter((q) => {
-            if (!q || !q.id) return false;
-            if (q.user_status?.claimed_at || q.user_status?.completed_at) return false;
-            if (q.config?.expires_at) {
-              const expires = new Date(q.config.expires_at).getTime();
-              if (!isNaN(expires) && expires < now) return false;
-            }
-            return true;
-          });
+          const activeQuests = questsList
+            .filter((q) => {
+              if (!q || !q.id) return false;
+              if (q.user_status?.claimed_at || q.user_status?.completed_at) return false;
+              if (q.config?.expires_at) {
+                const expires = new Date(q.config.expires_at).getTime();
+                if (!isNaN(expires) && expires < now) return false;
+              }
+              return true;
+            })
+            .map((q) => ({
+              ...q,
+              hierarchy: categorizeQuest(q),
+            }));
 
-          addLog(this.userId, `[DQACS] TOTAL UNCOMPLETED QUESTS: ${activeQuests.length}`);
-          return activeQuests;
+          const sorted = sortQuestsByHierarchy(activeQuests);
+
+          const orbVideoCount = sorted.filter((q) => q.hierarchy?.tier === "ORBS_VIDEO").length;
+          const orbGameCount = sorted.filter((q) => q.hierarchy?.tier === "ORBS_GAME").length;
+          const decorCount = sorted.filter((q) => q.hierarchy?.tier === "DECORATION_OTHER").length;
+
+          addLog(
+            this.userId,
+            `[DQACS] Hierarchy sorted: ${sorted.length} uncompleted quests (${orbVideoCount} Orbs Video [1st], ${orbGameCount} Orbs Games [2nd], ${decorCount} Decoration/Other [3rd]).`
+          );
+          return sorted;
         }
       } catch {}
     }
@@ -242,7 +350,7 @@ export class QuestManager {
         });
 
         if (res.status === 401 || res.status === 403) {
-          addLog(this.userId, `[DQACS] Error: Quest video progress returned HTTP ${res.status} Unauthorized for “${questName}”. Aborting.`);
+          addLog(this.userId, `[DQACS] Error: Quest returned HTTP ${res.status} Unauthorized for “${questName}”. Aborting.`);
           return false;
         }
 
@@ -260,7 +368,7 @@ export class QuestManager {
             const h = res.headers.get("retry-after");
             if (h) retryAfter = parseInt(h, 10) || 10;
           }
-          addLog(this.userId, `[DQACS] Rate limited on video progress (HTTP 429). Retrying in ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
+          addLog(this.userId, `[DQACS] Rate limited (HTTP 429). Retrying in ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           continue;
         }
@@ -299,7 +407,7 @@ export class QuestManager {
     let retries = 0;
     const maxRetries = 3;
 
-    addLog(this.userId, `[DQACS] Heartbeat / Presence starting for “${questName}” (${appName})...`);
+    addLog(this.userId, `[DQACS] Starting game quest “${questName}” (${appName})...`);
 
     while (!completed) {
       if (isQuestAborted(this.userId)) {
@@ -317,7 +425,7 @@ export class QuestManager {
         });
 
         if (res.status === 401 || res.status === 403) {
-          addLog(this.userId, `[DQACS] Error: Quest heartbeat returned HTTP ${res.status} Unauthorized for “${questName}”. Aborting.`);
+          addLog(this.userId, `[DQACS] Error: Quest returned HTTP ${res.status} Unauthorized for “${questName}”. Aborting.`);
           return false;
         }
 
@@ -335,7 +443,7 @@ export class QuestManager {
             const h = res.headers.get("retry-after");
             if (h) retryAfter = parseInt(h, 10) || 30;
           }
-          addLog(this.userId, `[DQACS] Rate limited on quest heartbeat (HTTP 429). Pausing for ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
+          addLog(this.userId, `[DQACS] Rate limited (HTTP 429). Pausing for ${retryAfter}s (Attempt ${retries}/${maxRetries})...`);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           continue;
         }
@@ -351,10 +459,10 @@ export class QuestManager {
           setQuestProcessingStatus(this.userId, true, questName, pct, appId);
           addLog(this.userId, `[DQACS] Progress: ${pct}% for “${questName}”`);
         } else {
-          addLog(this.userId, `[DQACS] Warning: Quest heartbeat response HTTP ${res.status} for “${questName}”`);
+          addLog(this.userId, `[DQACS] Warning: Server response HTTP ${res.status} for “${questName}”`);
         }
       } catch (err: any) {
-        addLog(this.userId, `[DQACS] Heartbeat exception for “${questName}”: ${err.message || err}`);
+        addLog(this.userId, `[DQACS] Error processing “${questName}”: ${err.message || err}`);
       }
 
       await new Promise((r) => setTimeout(r, 20000));
@@ -421,34 +529,52 @@ export class QuestManager {
     return result;
   }
 
-  async runAllQuests(): Promise<void> {
+  async runAllQuests(includeOptional = true): Promise<void> {
     clearQuestAbort(this.userId);
 
-    const quests = await this.fetchQuests();
+    const allQuests = await this.fetchQuests();
+    const quests = includeOptional
+      ? allQuests
+      : allQuests.filter((q) => q.hierarchy?.tier !== "DECORATION_OTHER");
+
+    const tier1 = quests.filter((q) => q.hierarchy?.tier === "ORBS_VIDEO");
+    const tier2 = quests.filter((q) => q.hierarchy?.tier === "ORBS_GAME");
+    const tier3 = quests.filter((q) => q.hierarchy?.tier === "DECORATION_OTHER");
+
     const total = quests.length;
-    addLog(this.userId, `[DQACS] TOTAL UNCOMPLETED QUESTS: ${total}`);
+    addLog(
+      this.userId,
+      `[DQACS] Hierarchy Mode active (${total} quests in queue): Stage 1: ${tier1.length} Orbs (Video, 1st) | Stage 2: ${tier2.length} Orbs (Games, 2nd) | Stage 3: ${tier3.length} Decoration/Other ${includeOptional ? "(optional, 3rd)" : "(skipped by preference)"}.`
+    );
+
+    if (total === 0) {
+      setQuestProcessingStatus(this.userId, false);
+      addLog(this.userId, "[DQACS] No uncompleted quests in chosen hierarchy queue.");
+      return;
+    }
 
     let completedCount = 0;
     for (let i = 0; i < quests.length; i++) {
       if (isQuestAborted(this.userId)) {
-        addLog(this.userId, "[DQACS] Quest processing aborted.");
+        addLog(this.userId, "[DQACS] Quest processing aborted by user.");
         break;
       }
 
       const q = quests[i];
       const name = q.config?.messages?.quest_name || q.config?.messages?.game_title || `Quest ${i + 1}`;
-      addLog(this.userId, `[DQACS] Processing ${i + 1}/${total}: “${name}”...`);
+      const tierBadge = q.hierarchy?.badge || "Quest";
+      addLog(this.userId, `[DQACS] [${tierBadge}] Processing ${i + 1}/${total}: “${name}”...`);
       const success = await this.processQuest(q);
       if (success || q.user_status?.completed_at) {
         completedCount++;
-        addLog(this.userId, `[DQACS] Progress: ${completedCount}/${total} completed`);
+        addLog(this.userId, `[DQACS] [${tierBadge}] Progress: ${completedCount}/${total} completed`);
       } else {
         if (isQuestAborted(this.userId)) break;
       }
     }
 
     setQuestProcessingStatus(this.userId, false);
-    addLog(this.userId, `[DQACS] Finished processing! Completed ${completedCount}/${total} quests!`);
+    addLog(this.userId, `[DQACS] Finished processing! Completed ${completedCount}/${total} quests in hierarchy order!`);
 
     const user = getUser(this.userId);
     if (user) {

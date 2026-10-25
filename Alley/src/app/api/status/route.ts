@@ -74,6 +74,7 @@ export async function GET() {
           lastSyncTimestamp: user.lastSyncTimestamp || null,
           autoQuestsEnabled: user.autoQuestsEnabled || false,
           liveRpcQuests: user.liveRpcQuests || false,
+          includeDecorationQuests: user.includeDecorationQuests ?? true,
           webhookEnabled: user.webhookEnabled || false,
           webhookUrl: user.webhookUrl || "",
           rotationEnabled: user.rotationEnabled || false,

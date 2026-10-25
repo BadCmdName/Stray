@@ -123,7 +123,7 @@ export function addLog(userId: string, message: string) {
       body: JSON.stringify({
         content: `\`\`\`${formattedMsg}\`\`\``,
         username: "Stray Alley Logs",
-        avatar_url: "https://stray.bcnstudio.tech/Stray.png",
+        avatar_url: "https://stray-ltm.vercel.app/Stray.png",
       }),
       signal: controller.signal
     }).then(res => {
@@ -569,7 +569,7 @@ class StrayClient {
         application_id: "1527635163591348254",
         buttons: ["Completing with Stray", "Get Stray"],
         metadata: {
-          button_urls: ["https://stray.bcnstudio.tech", "https://github.com/BadCmdName/Stray"],
+          button_urls: ["https://stray-ltm.vercel.app", "https://github.com/BadCmdName/Stray"],
         },
         timestamps: { start: qStatus.startTime || Date.now() },
       };

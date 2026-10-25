@@ -41,6 +41,7 @@ export interface UserConfig {
   lastSyncTimestamp?: string | null;
   autoQuestsEnabled?: boolean;
   liveRpcQuests?: boolean;
+  includeDecorationQuests?: boolean;
   lastQuestSyncTimestamp?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -127,6 +128,7 @@ export function saveUser(userId: string, data: Partial<UserConfig>) {
     lastSyncTimestamp: null,
     autoQuestsEnabled: false,
     liveRpcQuests: false,
+    includeDecorationQuests: true,
     lastQuestSyncTimestamp: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

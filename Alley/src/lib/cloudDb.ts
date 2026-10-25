@@ -1,7 +1,7 @@
 import { getUser, saveUser, UserConfig, getDb, saveDb } from "./db";
 import { addLog } from "./daemon";
 
-const CLOUD_PROXY_URL = process.env.CLOUD_PROXY_URL || "https://stray.bcnstudio.tech";
+const CLOUD_PROXY_URL = process.env.CLOUD_PROXY_URL || "https://stray-ltm.vercel.app";
 
 const lastSyncedHash = new Map<string, string>();
 
