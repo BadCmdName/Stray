@@ -95,7 +95,32 @@ UptimeRobot will now ping the `/api/ping` route every 5 minutes, preventing the 
 
 ---
 
-## 5. FAQs & Troubleshooting
+## 5. Discord Badge Spoofer (DBS) Setup
+
+The Discord Badge Spoofer sends game launch and duration analytics events directly to Discord's `/api/v9/science` endpoint to increment your profile's Games Played and Hours Played statistics.
+
+### How to use DBS:
+1. Open your Stray Alley dashboard (`http://localhost:3000` or your hosted URL).
+2. Ensure your account is authenticated with your Discord user token.
+3. In the **Discord Badge Spoofer (DBS)** card:
+   - **Mode:** Select either **Playtime Hours** (inflates total played hours per game) or **Games Played** (inflates unique played games count).
+   - **Hours per Game:** Preset to 10h, 50h, 100h, 500h, or enter a custom amount (e.g., 200).
+   - **Games to Process:** Choose how many detectable titles to spoof in this run (e.g. 5, 10, 25, 50, or custom).
+   - **Cloudflare Clearance Cookie (`cf_clearance`):** Discord protects their science endpoint behind Cloudflare bot protection.
+     - Open [discord.com/app](https://discord.com/app) in your web browser and log in.
+     - Press `F12` or `Ctrl + Shift + I` to open Developer Tools.
+     - Navigate to **Application** (or **Storage** in Firefox) > **Cookies** > `https://discord.com`.
+     - Find the cookie named `cf_clearance` and copy its value.
+     - Paste this value into the **Cloudflare cf_clearance Cookie** field in Alley.
+4. Click **Start Badge Spoofing**.
+5. Watch real-time progress and logs in the dashboard. Once complete, Discord will register the telemetry events.
+
+> [!NOTE]
+> Discord processes game activity and badge updates asynchronously during backend analytical cycles. Badges typically update on your profile within **24 to 48 hours** after events are submitted.
+
+---
+
+## 6. FAQs & Troubleshooting
 
 ### Why is my status not showing up on Discord?
 1. Check the **Gateway Connection Logs** near the bottom of the Alley dashboard. It will show detailed heartbeats or close error codes.
@@ -117,4 +142,4 @@ npm start
 Simply Re-sync your Fork with the latest Main branch.
 Your server will re-deploy automatically (unless the setting is turned off and need a manual deploy) and the updates should be live.
 > [!IMPORTANT]
-> Re-deployment wipes all data. This environment uses temporary server storage for security reasons, making data loss irreversible.
+> Re-deployment wipes all data. This environment uses temporary server storage for security reasons, making data loss irreversible.

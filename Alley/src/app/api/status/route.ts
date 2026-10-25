@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { isDaemonRunning, getDaemonLogs, getDaemonErrorLogs, restoreAllDaemons, autoStartUserIfEnabled, getQuestProcessingStatus } from "@/lib/daemon";
+import { isDaemonRunning, getDaemonLogs, getDaemonErrorLogs, restoreAllDaemons, autoStartUserIfEnabled, getQuestProcessingStatus, getDbsStatus } from "@/lib/daemon";
 import { getUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { restoreUserFromCloud } from "@/lib/cloudDb";
@@ -28,6 +28,7 @@ export async function GET() {
   const logs = getDaemonLogs(session.userId);
   const errorLogs = getDaemonErrorLogs(session.userId);
   const questStatus = getQuestProcessingStatus(session.userId);
+  const dbsStatus = getDbsStatus(session.userId);
 
   const isProcessingQuests = Boolean(questStatus?.isProcessing);
   const activeQuestRpc = questStatus?.activeQuestName
@@ -63,6 +64,7 @@ export async function GET() {
     updateNotification,
     isProcessingQuests,
     activeQuestRpc,
+    dbsStatus,
     config: user
       ? {
           token,
@@ -75,6 +77,14 @@ export async function GET() {
           autoQuestsEnabled: user.autoQuestsEnabled || false,
           liveRpcQuests: user.liveRpcQuests || false,
           includeDecorationQuests: user.includeDecorationQuests ?? true,
+          dbsCookie: user.dbsCookie || "",
+          dbsFingerprint: user.dbsFingerprint || "",
+          dbsHoursPerGame: user.dbsHoursPerGame || 1,
+          dbsGameCount: user.dbsGameCount || 50,
+          dbsMode: user.dbsMode || "hours",
+          dbsTotalGamesClaimed: user.dbsTotalGamesClaimed || 0,
+          dbsTotalHoursClaimed: user.dbsTotalHoursClaimed || 0,
+          dbsLastRunTimestamp: user.dbsLastRunTimestamp || null,
           webhookEnabled: user.webhookEnabled || false,
           webhookUrl: user.webhookUrl || "",
           rotationEnabled: user.rotationEnabled || false,

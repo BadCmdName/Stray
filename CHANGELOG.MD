@@ -4,6 +4,17 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v4.0.0 - 2026-10-25
+
+### Added
+- **DBS Integration (Discord Badge Spoofer):** Integrated full Discord Badge Spoofer engine built using [DBS](https://github.com/revere-group/discord-badge-spoofer) (*massive thanks to the original creator*).
+- **Dual Spoofing Modes:**
+  - **Playtime Hours:** Inflate total playtime hours on Discord profile badges by posting verified `launch_game` and `running_game_heartbeat` analytics payloads to `/api/v9/science`.
+  - **Games Played Count:** Mark games as launched and played to rapidly accumulate and level up the Games Played profile badge.
+- **800+ Detectable Discord Games Support:** Automatically queries and caches Discord's official detectables CDN (`games.json`) with built-in offline fallbacks.
+- **DBS Dashboard Glassmorphism Panel:** Brand new interactive UI panel in Alley with game count selectors, hours-per-game presets, Cloudflare clearance cookie (`cf_clearance`) configuration, optional executable fingerprinting, and live batch progress tracking.
+- **Science Analytics Pipeline:** Automatic ephemeral analytics token acquisition, desktop client super-properties generation, and exponential backoff retry routines on HTTP 429 rate limits.
+
 ## v3.0.1 - 2026-10-25
 
 ### Added

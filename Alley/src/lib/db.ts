@@ -43,6 +43,14 @@ export interface UserConfig {
   liveRpcQuests?: boolean;
   includeDecorationQuests?: boolean;
   lastQuestSyncTimestamp?: string | null;
+  dbsCookie?: string | null;
+  dbsFingerprint?: string | null;
+  dbsHoursPerGame?: number;
+  dbsGameCount?: number;
+  dbsMode?: "hours" | "games";
+  dbsTotalGamesClaimed?: number;
+  dbsTotalHoursClaimed?: number;
+  dbsLastRunTimestamp?: string | null;
   createdAt: string;
   updatedAt: string;
 }

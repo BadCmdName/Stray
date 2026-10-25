@@ -40,7 +40,20 @@ declare global {
   var activeStrayClients: Map<string, StrayClient> | undefined;
   var hasBootRestored: boolean | undefined;
   var activeQuestStatus: Map<string, { isProcessing: boolean; activeQuestName?: string; progressPct?: number; appId?: string; startTime?: number }> | undefined;
+  var activeDbsStatus: Map<string, DbsStatus> | undefined;
   var restoreAllDaemonsPromise: Promise<void> | undefined;
+}
+
+export interface DbsStatus {
+  isRunning: boolean;
+  currentBatch: number;
+  totalBatches: number;
+  gamesProcessed: number;
+  totalGames: number;
+  hoursClaimed: number;
+  mode: "hours" | "games";
+  statusText: string;
+  startTime?: number;
 }
 
 if (!globalThis.strayLogs) {
@@ -63,6 +76,10 @@ if (!globalThis.activeQuestStatus) {
   globalThis.activeQuestStatus = new Map();
 }
 
+if (!globalThis.activeDbsStatus) {
+  globalThis.activeDbsStatus = new Map();
+}
+
 const activeClients = globalThis.activeStrayClients;
 
 export function setQuestProcessingStatus(userId: string, isProcessing: boolean, activeQuestName?: string, progressPct?: number, appId?: string) {
@@ -82,6 +99,18 @@ export function setQuestProcessingStatus(userId: string, isProcessing: boolean, 
 
 export function getQuestProcessingStatus(userId: string) {
   return globalThis.activeQuestStatus?.get(userId) || null;
+}
+
+export function setDbsStatus(userId: string, status: DbsStatus | null) {
+  if (status) {
+    globalThis.activeDbsStatus?.set(userId, status);
+  } else {
+    globalThis.activeDbsStatus?.delete(userId);
+  }
+}
+
+export function getDbsStatus(userId: string): DbsStatus | null {
+  return globalThis.activeDbsStatus?.get(userId) || null;
 }
 
 export function addLog(userId: string, message: string) {

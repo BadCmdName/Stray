@@ -16,8 +16,8 @@ Alley/db.json
 Alley/.env
 Alley/node_modules/
 Alley/.next/
-Website
-Database
-DQACS
-DBS
+/Website
+/Database
+/DQACS
+/DBS
 askpass.bat

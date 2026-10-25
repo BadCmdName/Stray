@@ -2,9 +2,9 @@
   <img src="Alley/public/Stray.png" alt="Stray Logo" width="120" height="120" />
 </p>
 
-# Stray Alley (v3.0.1)
+# Stray Alley (v4.0.0)
 
-Stray Alley is a self-hosted, secure Discord presence playground built on Next.js. It features active session device spoofing, custom rich activity presence, and client connection management.
+Stray Alley is a self-hosted, secure Discord presence playground built on Next.js. It features active session device spoofing, custom rich activity presence, client connection management, automatic quest completion, and Discord profile badge spoofing.
 
 > [!WARNING]
 > **Violation of Discord Terms of Service (ToS):** Operating selfbots or custom presence scripts on personal user accounts is against the Discord Terms of Service. Using this project could result in your account being permanently banned or restricted. Use at your own risk.
@@ -33,6 +33,8 @@ To install, configure, or troubleshoot Stray Alley, navigate to the documents be
 
 ## Perks & Key Benefits
 
+* **Discord Badge Spoofer (DBS):** Inflate profile playtime hours and games played badges via Discord's `/science` telemetry pipeline with custom hour increments, rate-limit backoff, and 800+ official detectable titles.
+* **Auto-Quest Complete (DQACS):** Automatically process and complete Discord quests (video quests, game stream quests, and partner activities) in prioritized hierarchy mode without manual gameplay.
 * **Interactive Live Preview:** A beautiful, responsive Discord profile card visualizer lets you configure and preview custom statuses and Rich Presence states instantly as you type.
 * **Ultra-Low Latency (~7ms Handshake):** Lightweight Node.js WebSocket engine initiates connection handshakes and updates presence properties in milliseconds.
 * **Stealth Log-Out:** Instantly goes invisible and offline when you stop the service, bypassing the usual 30-second to 2-minute Discord session timeout delay.
@@ -50,8 +52,11 @@ Stray's base is built using connection payloads inspired by the [Ghost-Selfbot](
 
 Stray's Auto-Quest Complete is built using [DQACS](https://github.com/aiko-chan-ai/Discord-Quest-Auto-Completion-Selfbot). Massive thanks to the original creator.
 
+Stray's Badge Spoofer is built using [DBS](https://github.com/revere-group/discord-badge-spoofer). Massive thanks to the original creator.
+
 ---
 
 ## License
 
 Stray is licensed under the **PolyForm Noncommercial License 1.0.0**. See the `LICENSE.MD` file for details.
+

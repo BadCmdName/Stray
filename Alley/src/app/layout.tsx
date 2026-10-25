@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   }
 };
 
+import { AlleyProvider } from "@/context/AlleyContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,7 +34,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#0e0e11] text-[#f4f4f5]">
+        <AlleyProvider>{children}</AlleyProvider>
+      </body>
     </html>
   );
 }
