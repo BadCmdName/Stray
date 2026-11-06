@@ -4,6 +4,24 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v5.0.0 LTM - 2026-11-06
+
+> [!NOTE]
+> Major architectural release: Stray Cloud Browser Mode running with high-performance 3-slot queue engine and zero Discord Gateway presence.
+
+### Added
+- **Zero-Install Cloud Browser Mode:** Execute DQACS quest auto-completion and DBS playtime boosts directly inside your web browser without running local desktop clients or opening terminal sessions.
+- **Real-Time 3-Worker FIFO Queue Engine:** Standalone multi-slot worker queue supporting up to 3 concurrent active tasks with dynamic ETA calculation, live log streaming, and slot auto-dispatch.
+- **Universal Multi-Tier Token Grabber:** 1-Click draggable bookmarklet with multi-layer fallback (iframe sandbox, pristine localStorage, and exhaustive Webpack chunk traversal) to auto-extract Discord token, Cloudflare clearance (`cf_clearance`), and user identity.
+- **Interactive Quest Hierarchy & Selection:** Live Discord quest fetching with real-time tier categorization, Orbs-first prioritization, individual selection checkboxes, and fair-use safety caps (max 5 video, max 3 game quests).
+- **Full Legal Suite Overhaul:** Bulletproof Terms of Service, Zero-Retention Privacy Policy, and comprehensive Disclaimer & Liability Waiver tailored to v5.0.0 LTM.
+- **Obsidian Aesthetic & Strict SVG Icons:** Revamped user interface with glassmorphism, glowing Browser Mode navbar highlight with shine animation, zero emojis, and unified design.
+
+### Changed
+- **Zero Gateway Presence in Cloud:** Cloud Browser Mode operates purely through stateless HTTPS endpoints without holding WebSocket Gateway sessions open, eliminating profile status interference.
+- **Streamlined Navigation Header:** Moved internal sub-pages (DQACS, DBS) to footer resources, maintaining a minimalist top navbar with instant Launch Browser CTA.
+- **Deco Toggle Default:** Kept cosmetic and decoration quest toggle off by default, prioritizing high-value Discord Orbs quests.
+
 ## v4.0.1 - 2026-11-06
 
 ### Fixed
