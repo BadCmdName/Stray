@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getUser, saveUser } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 import { QuestManager, QuestConfig, stopQuestProcessing } from "@/lib/questManager";
-import { startDaemon, getDaemonStatus } from "@/lib/daemon";
+import { startDaemon, getDaemonStatus, setQuestProcessingStatus, triggerDaemonPresenceUpdate } from "@/lib/daemon";
 
 const userQuestsCache = new Map<string, QuestConfig[]>();
 
@@ -93,7 +93,14 @@ export async function POST(request: Request) {
       if (!targetQuest) {
         return NextResponse.json({ error: "Quest not found" }, { status: 404 });
       }
-      manager.processQuest(targetQuest).catch(() => {});
+      (async () => {
+        try {
+          await manager.processQuest(targetQuest);
+        } finally {
+          setQuestProcessingStatus(session.userId, false);
+          triggerDaemonPresenceUpdate(session.userId);
+        }
+      })().catch(() => {});
       const questName = targetQuest.config?.messages?.quest_name || targetQuest.config?.messages?.game_title || "Discord Quest";
       return NextResponse.json({ success: true, message: `Started processing quest ${questName}` });
     } else {

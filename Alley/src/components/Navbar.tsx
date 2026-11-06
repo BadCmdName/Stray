@@ -70,7 +70,7 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <span className="text-base font-black tracking-wider text-white uppercase">STRAY ALLEY</span>
               <span className="text-[10px] font-mono font-bold bg-amber-400/20 text-amber-400 border border-amber-400/30 px-1.5 py-0.5 rounded">
-                v4.0.0
+                v4.0.1
               </span>
             </div>
           </Link>

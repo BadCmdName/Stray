@@ -80,7 +80,7 @@ export default function QuestsPage() {
                   Auto-Quest Complete (DQACS)
                 </h1>
                 <span className="text-[10px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
-                  v4.0.0
+                  v4.0.1
                 </span>
                 {processingQuests ? (
                   <span className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-400 text-black px-2.5 py-0.5 rounded-full animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.5)]">

@@ -290,6 +290,17 @@ export function AlleyProvider({ children }: { children: React.ReactNode }) {
             if (data.dbsStatus !== undefined) {
               setDbsStatus(data.dbsStatus);
             }
+            if (data.config) {
+              if (data.config.dbsTotalGamesClaimed !== undefined) {
+                setDbsTotalGamesClaimed(data.config.dbsTotalGamesClaimed);
+              }
+              if (data.config.dbsTotalHoursClaimed !== undefined) {
+                setDbsTotalHoursClaimed(data.config.dbsTotalHoursClaimed);
+              }
+              if (data.config.dbsLastRunTimestamp !== undefined) {
+                setDbsLastRunTimestamp(data.config.dbsLastRunTimestamp);
+              }
+            }
             if (data.logs) {
               setLogs(data.logs.slice(-50));
             }

@@ -586,9 +586,9 @@ class StrayClient {
   private buildRpcActivity(largeImage: string, smallImage: string) {
     const qStatus = getQuestProcessingStatus(this.userId);
     const user = getUser(this.userId);
-    const isQuestRpcActive = (user?.liveRpcQuests || qStatus?.isProcessing) && qStatus?.activeQuestName;
+    const isQuestRpcActive = Boolean(user?.liveRpcQuests && qStatus?.isProcessing && qStatus?.activeQuestName);
 
-    if (isQuestRpcActive) {
+    if (isQuestRpcActive && qStatus) {
       const pct = qStatus.progressPct !== undefined ? `Progress: ${qStatus.progressPct}% | via Stray` : "In Progress | via Stray";
       return {
         name: qStatus.activeQuestName,

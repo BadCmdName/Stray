@@ -31,7 +31,7 @@ export async function GET() {
   const dbsStatus = getDbsStatus(session.userId);
 
   const isProcessingQuests = Boolean(questStatus?.isProcessing);
-  const activeQuestRpc = questStatus?.activeQuestName
+  const activeQuestRpc = (user?.liveRpcQuests && questStatus?.activeQuestName)
     ? {
         name: questStatus.activeQuestName,
         details: "Completing Discord Quest",

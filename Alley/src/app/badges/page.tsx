@@ -16,6 +16,8 @@ export default function BadgesPage() {
     token,
     dbsCookie,
     setDbsCookie,
+    dbsFingerprint,
+    setDbsFingerprint,
     dbsHoursPerGame,
     setDbsHoursPerGame,
     dbsGameCount,
@@ -36,6 +38,7 @@ export default function BadgesPage() {
   } = useAlley();
 
   const [showCookie, setShowCookie] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const dbsLogs = logs.filter(
     (l) =>
@@ -55,7 +58,7 @@ export default function BadgesPage() {
         setDbsCookie(text.trim());
         handleSaveDbsConfig({ cookie: text.trim() });
       }
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -75,7 +78,7 @@ export default function BadgesPage() {
                   Discord Badge Spoofer (DBS)
                 </h1>
                 <span className="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">
-                  v4.0.0
+                  v4.0.1
                 </span>
                 {dbsStatus?.isRunning ? (
                   <span className="flex items-center gap-1.5 text-[10px] font-bold bg-indigo-500 text-white px-2.5 py-0.5 rounded-full animate-pulse shadow-[0_0_12px_rgba(99,102,241,0.5)]">
@@ -132,11 +135,10 @@ export default function BadgesPage() {
               <div
                 className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-2.5 rounded-full transition-all duration-500 ease-out"
                 style={{
-                  width: `${
-                    dbsStatus.totalGames > 0
+                  width: `${dbsStatus.totalGames > 0
                       ? Math.min(100, Math.round((dbsStatus.gamesProcessed / dbsStatus.totalGames) * 100))
                       : 0
-                  }%`,
+                    }%`,
                 }}
               />
             </div>
@@ -160,11 +162,10 @@ export default function BadgesPage() {
               setDbsMode("hours");
               handleSaveDbsConfig({ mode: "hours" });
             }}
-            className={`py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              dbsMode === "hours"
+            className={`py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${dbsMode === "hours"
                 ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
                 : "text-zinc-400 hover:text-white hover:bg-white/5"
-            }`}
+              }`}
           >
             <span>⏱️ Playtime Hours Mode</span>
           </button>
@@ -174,11 +175,10 @@ export default function BadgesPage() {
               setDbsMode("games");
               handleSaveDbsConfig({ mode: "games" });
             }}
-            className={`py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              dbsMode === "games"
+            className={`py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${dbsMode === "games"
                 ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
                 : "text-zinc-400 hover:text-white hover:bg-white/5"
-            }`}
+              }`}
           >
             <span>🎮 Games Played Count Mode</span>
           </button>
@@ -230,11 +230,10 @@ export default function BadgesPage() {
                           setDbsHoursPerGame(h);
                           handleSaveDbsConfig({ hoursPerGame: h });
                         }}
-                        className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
-                          dbsHoursPerGame === h
+                        className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${dbsHoursPerGame === h
                             ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40"
                             : "bg-white/[0.02] text-zinc-400 border-white/[0.06] hover:text-white hover:bg-white/5"
-                        }`}
+                          }`}
                       >
                         +{h}h
                       </button>
@@ -279,11 +278,10 @@ export default function BadgesPage() {
                         setDbsGameCount(c);
                         handleSaveDbsConfig({ gameCount: c });
                       }}
-                      className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
-                        dbsGameCount === c
+                      className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${dbsGameCount === c
                           ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40"
                           : "bg-white/[0.02] text-zinc-400 border-white/[0.06] hover:text-white hover:bg-white/5"
-                      }`}
+                        }`}
                     >
                       {c}
                     </button>
@@ -371,6 +369,44 @@ export default function BadgesPage() {
                   <li>Press <kbd className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[10px]">F12</kbd> &gt; <strong>Application</strong> &gt; <strong>Cookies</strong> &gt; <code className="text-zinc-300">discord.com</code>.</li>
                   <li>Copy the value for the <code className="text-indigo-300 font-mono font-semibold">cf_clearance</code> cookie.</li>
                 </ol>
+              </div>
+              {/* Advanced Properties Collapsible */}
+              <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="w-full px-4 py-2.5 bg-black/20 hover:bg-black/30 flex items-center justify-between text-xs text-zinc-300 font-semibold cursor-pointer transition-colors"
+                >
+                  <span>Advanced Telemetry Properties</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">
+                    {showAdvanced ? "▲" : "▼"}
+                  </span>
+                </button>
+                {showAdvanced && (
+                  <div className="p-3.5 bg-black/40 flex flex-col gap-2.5 border-t border-white/[0.06]">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-semibold text-zinc-300">
+                        Executable Fingerprint
+                      </label>
+                      <span className="text-[10px] text-emerald-400 font-mono font-medium">
+                        {dbsFingerprint ? "Custom Defined" : "Auto-Generated (Active)"}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={dbsFingerprint}
+                      onChange={(e) => {
+                        setDbsFingerprint(e.target.value);
+                        handleSaveDbsConfig({ fingerprint: e.target.value });
+                      }}
+                      placeholder="Leave empty to auto-generate authentic 146-byte signature..."
+                      className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-[11px] text-zinc-200 font-mono focus:border-indigo-500/50 transition-colors"
+                    />
+                    <span className="text-[10px] text-zinc-500 leading-normal">
+                      Discord requires a 146-byte obfuscated PE signature bound to your Discord ID. If left blank, Stray automatically computes a valid cryptographic signature for your account.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

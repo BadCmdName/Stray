@@ -554,31 +554,30 @@ export class QuestManager {
     }
 
     let completedCount = 0;
-    for (let i = 0; i < quests.length; i++) {
-      if (isQuestAborted(this.userId)) {
-        addLog(this.userId, "[DQACS] Quest processing aborted by user.");
-        break;
+    try {
+      for (let i = 0; i < quests.length; i++) {
+        if (isQuestAborted(this.userId)) {
+          addLog(this.userId, "[DQACS] Quest processing aborted by user.");
+          break;
+        }
+
+        const q = quests[i];
+        const name = q.config?.messages?.quest_name || q.config?.messages?.game_title || `Quest ${i + 1}`;
+        const tierBadge = q.hierarchy?.badge || "Quest";
+        addLog(this.userId, `[DQACS] [${tierBadge}] Processing ${i + 1}/${total}: “${name}”...`);
+        const success = await this.processQuest(q);
+        if (success || q.user_status?.completed_at) {
+          completedCount++;
+          addLog(this.userId, `[DQACS] [${tierBadge}] Progress: ${completedCount}/${total} completed`);
+        } else {
+          if (isQuestAborted(this.userId)) break;
+        }
       }
-
-      const q = quests[i];
-      const name = q.config?.messages?.quest_name || q.config?.messages?.game_title || `Quest ${i + 1}`;
-      const tierBadge = q.hierarchy?.badge || "Quest";
-      addLog(this.userId, `[DQACS] [${tierBadge}] Processing ${i + 1}/${total}: “${name}”...`);
-      const success = await this.processQuest(q);
-      if (success || q.user_status?.completed_at) {
-        completedCount++;
-        addLog(this.userId, `[DQACS] [${tierBadge}] Progress: ${completedCount}/${total} completed`);
-      } else {
-        if (isQuestAborted(this.userId)) break;
-      }
-    }
-
-    setQuestProcessingStatus(this.userId, false);
-    addLog(this.userId, `[DQACS] Finished processing! Completed ${completedCount}/${total} quests in hierarchy order!`);
-
-    const user = getUser(this.userId);
-    if (user) {
-      saveUser(this.userId, { liveRpcQuests: false, rpcEnabled: true });
+      addLog(this.userId, `[DQACS] Finished processing! Completed ${completedCount}/${total} quests in hierarchy order!`);
+    } catch (err: any) {
+      addLog(this.userId, `[DQACS] Exception during quest processing: ${err.message || err}`);
+    } finally {
+      setQuestProcessingStatus(this.userId, false);
       triggerDaemonPresenceUpdate(this.userId);
     }
   }

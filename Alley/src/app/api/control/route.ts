@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { startDaemon, stopDaemon, getDaemonStatus } from "@/lib/daemon";
+import { startDaemon, stopDaemon, getDaemonStatus, triggerDaemonPresenceUpdate } from "@/lib/daemon";
 import { encrypt, decrypt } from "@/lib/encryption";
 import { saveUser, getUser } from "@/lib/db";
 import { syncUserToCloud, restoreUserFromCloud } from "@/lib/cloudDb";
@@ -163,6 +163,8 @@ export async function POST(request: Request) {
             },
           });
         }
+      } else if (getDaemonStatus(session.userId)) {
+        triggerDaemonPresenceUpdate(session.userId);
       }
     }
 

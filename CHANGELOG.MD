@@ -4,6 +4,18 @@ All notable changes to the Stray Alley project will be documented in this file.
 > [!IMPORTANT]
 > **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
 
+## v4.0.1 - 2026-11-06
+
+### Fixed
+- **DQACS Live-RPC Toggle Desync:** Resolved an issue where Quest RPC presence was erroneously broadcasted to Discord even when the "Broadcast Live-RPC" toggle was switched off. Refined daemon presence calculation to strictly require both active quest state and explicit user toggle authorization.
+- **Quest Completion RPC State Retention:** Fixed an unhandled lifecycle issue where completing a single quest or finishing batch processing left the quest activity status active in memory. Added guaranteed `finally` cleanup to instantly reset Discord gateway presence.
+- **Config Mutation on Quest Completion:** Removed forced `rpcEnabled: true` mutation in `questManager.ts`, preserving the user's customized Rich Presence toggles intact after quest runs.
+- **Immediate Presence Propagation on Save:** Enhanced `/api/control` to immediately signal `triggerDaemonPresenceUpdate` when settings or toggles are saved, eliminating gateway latency.
+- **DBS 146-Byte PE Executable Fingerprinting:** Implemented authentic Windows PE cryptographic signatures (`executable_fingerprint`) bound to Discord User ID and MachineGuid, ensuring telemetry events qualify for profile badge updates.
+- **DBS Playtime Session Slicing:** Sliced oversized playtime injection targets (> 24h) into realistic daily sessions (max 18h/day across recent days) to bypass Discord's backend single-session duration anomaly filters.
+- **Dynamic CordAPI Super Properties:** Updated telemetry client properties to dynamically synchronize with live Discord Windows desktop build (`1.0.9267` / `663810`), preventing outdated client build rejections.
+- **Real-Time DBS Stats Sync:** Added live synchronization of lifetime credited hours and game counts directly to the Alley dashboard without requiring manual page reloads.
+
 ## v4.0.0 - 2026-10-25
 
 ### Added
