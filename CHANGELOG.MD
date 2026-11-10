@@ -1,234 +1,83 @@
-# Changelog
+# Stray Changelog
 
-All notable changes to the Stray Alley project will be documented in this file.
-> [!IMPORTANT]
-> **Version Understanding:** Patch Updates: `X.X.**X**` (Bug Fixes), Feature Updates: `X.**X**.X` (New Features), Major Updates: `**X**.X.X` (Breaking / Major Changes).
+Simple release notes highlighting new features, improvements, and bug fixes in Stray.
 
 ## v5.0.0 LTM - 2026-11-06
 
+> [!IMPORTANT]
+> **Browser Mode Launch:** Use Stray right from your web browser to finish Discord Quests and boost profile badges — no downloads or PC setup required.
+
+### Added
+- **Browser Mode:** Complete Discord Quests and boost your profile badges straight from the website with zero downloads.
+- **One-Click Sign-In Bookmark:** Connect your Discord account safely in seconds using a simple browser bookmark.
+- **Quest Selection & Orbs Priority:** Pick specific quests to complete, with Discord Orbs prioritized first and cosmetic quests optional.
+- **Live Quest Profile Status:** Show your Discord profile as Online with a live Quest activity while Browser Mode completes quests for you.
+- **Profile Badge Booster:** Add games and playtime hours to your Discord profile directly in Browser Mode (powered by DBS — massive thanks to the original creator).
+- **Live Queue Status:** See active slots, wait estimates, and step-by-step progress updates while your run finishes.
+
+### Changed
+- **Clearer Website Copy & Previews:** Simplified wording across every page for everyday users, added smooth transitions, and added shareable preview cards for links.
+- **Safer Account Handling:** Improved sign-in privacy so sensitive session details are never shown in page URLs.
+
+### Fixed
+- **Quest Loading & Page Scrolling:** Fixed empty quest lists on accounts with available quests, stopped activity logs from locking page scroll, and made disclaimer notices show once.
+
+---
+
+## v4.0.1 LTM - 2026-04-28
+
+### Fixed
+- **One-Click Windows Launch:** Added a simple one-click starter on Windows so anyone can launch Stray without using command prompts.
+- **Better Quest & Account Reliability:** Fixed edge cases when starting quests or switching between Discord accounts.
+
+---
+
+## v4.0.0 LTM - 2026-04-23
+
 > [!NOTE]
-> Major architectural release: Stray Cloud Browser Mode running with high-performance 3-slot queue engine and zero Discord Gateway presence.
+> Major update introducing the desktop dashboard, quest reward automation, and profile badge tools.
 
 ### Added
-- **Zero-Install Cloud Browser Mode:** Execute DQACS quest auto-completion and DBS playtime boosts directly inside your web browser without running local desktop clients or opening terminal sessions.
-- **Real-Time 3-Worker FIFO Queue Engine:** Standalone multi-slot worker queue supporting up to 3 concurrent active tasks with dynamic ETA calculation, live log streaming, and slot auto-dispatch.
-- **Universal Multi-Tier Token Grabber:** 1-Click draggable bookmarklet with multi-layer fallback (iframe sandbox, pristine localStorage, and exhaustive Webpack chunk traversal) to auto-extract Discord token, Cloudflare clearance (`cf_clearance`), and user identity.
-- **Interactive Quest Hierarchy & Selection:** Live Discord quest fetching with real-time tier categorization, Orbs-first prioritization, individual selection checkboxes, and fair-use safety caps (max 5 video, max 3 game quests).
-- **Full Legal Suite Overhaul:** Bulletproof Terms of Service, Zero-Retention Privacy Policy, and comprehensive Disclaimer & Liability Waiver tailored to v5.0.0 LTM.
-- **Obsidian Aesthetic & Strict SVG Icons:** Revamped user interface with glassmorphism, glowing Browser Mode navbar highlight with shine animation, zero emojis, and unified design.
+- **Desktop Dashboard:** Manage multiple Discord accounts, custom statuses, and active quests in one visual dashboard.
+- **Profile Badge Booster (DBS):** Increase your Discord Games Played badge and playtime hours cleanly from the dashboard (thanks to the original DBS creator).
+- **Automatic Quest Rewards:** Complete Discord Orbs, video, and game quests automatically and claim earned rewards effortlessly.
+- **Built-In Update Alerts:** Get notified inside the app whenever a new version of Stray is available.
 
-### Changed
-- **Zero Gateway Presence in Cloud:** Cloud Browser Mode operates purely through stateless HTTPS endpoints without holding WebSocket Gateway sessions open, eliminating profile status interference.
-- **Streamlined Navigation Header:** Moved internal sub-pages (DQACS, DBS) to footer resources, maintaining a minimalist top navbar with instant Launch Browser CTA.
-- **Deco Toggle Default:** Kept cosmetic and decoration quest toggle off by default, prioritizing high-value Discord Orbs quests.
+---
 
-## v4.0.1 - 2026-11-06
-
-### Fixed
-- **DQACS Live-RPC Toggle Desync:** Resolved an issue where Quest RPC presence was erroneously broadcasted to Discord even when the "Broadcast Live-RPC" toggle was switched off. Refined daemon presence calculation to strictly require both active quest state and explicit user toggle authorization.
-- **Quest Completion RPC State Retention:** Fixed an unhandled lifecycle issue where completing a single quest or finishing batch processing left the quest activity status active in memory. Added guaranteed `finally` cleanup to instantly reset Discord gateway presence.
-- **Config Mutation on Quest Completion:** Removed forced `rpcEnabled: true` mutation in `questManager.ts`, preserving the user's customized Rich Presence toggles intact after quest runs.
-- **Immediate Presence Propagation on Save:** Enhanced `/api/control` to immediately signal `triggerDaemonPresenceUpdate` when settings or toggles are saved, eliminating gateway latency.
-- **DBS 146-Byte PE Executable Fingerprinting:** Implemented authentic Windows PE cryptographic signatures (`executable_fingerprint`) bound to Discord User ID and MachineGuid, ensuring telemetry events qualify for profile badge updates.
-- **DBS Playtime Session Slicing:** Sliced oversized playtime injection targets (> 24h) into realistic daily sessions (max 18h/day across recent days) to bypass Discord's backend single-session duration anomaly filters.
-- **Dynamic CordAPI Super Properties:** Updated telemetry client properties to dynamically synchronize with live Discord Windows desktop build (`1.0.9267` / `663810`), preventing outdated client build rejections.
-- **Real-Time DBS Stats Sync:** Added live synchronization of lifetime credited hours and game counts directly to the Alley dashboard without requiring manual page reloads.
-
-## v4.0.0 - 2026-10-25
+## v3.1.0 - 2026-04-06
 
 ### Added
-- **DBS Integration (Discord Badge Spoofer):** Integrated full Discord Badge Spoofer engine built using [DBS](https://github.com/revere-group/discord-badge-spoofer) (*massive thanks to the original creator*).
-- **Dual Spoofing Modes:**
-  - **Playtime Hours:** Inflate total playtime hours on Discord profile badges by posting verified `launch_game` and `running_game_heartbeat` analytics payloads to `/api/v9/science`.
-  - **Games Played Count:** Mark games as launched and played to rapidly accumulate and level up the Games Played profile badge.
-- **800+ Detectable Discord Games Support:** Automatically queries and caches Discord's official detectables CDN (`games.json`) with built-in offline fallbacks.
-- **DBS Dashboard Glassmorphism Panel:** Brand new interactive UI panel in Alley with game count selectors, hours-per-game presets, Cloudflare clearance cookie (`cf_clearance`) configuration, optional executable fingerprinting, and live batch progress tracking.
-- **Science Analytics Pipeline:** Automatic ephemeral analytics token acquisition, desktop client super-properties generation, and exponential backoff retry routines on HTTP 429 rate limits.
+- **Multi-Account Support:** Connect and manage several Discord accounts side by side with separate Rich Presence presets.
 
-## v3.0.1 - 2026-10-25
+---
 
-### Added
-- **DQACS Hierarchy Mode:** Integrated sequential multi-tier quest completion: Tier 1 (Orbs Video, highest priority) ➔ Tier 2 (Orbs Games, second) ➔ Tier 3 (Decoration & Other, optional toggle). Added real-time tier counters and badge previews to the Alley dashboard.
-- **Dynamic OAuth Redirect Resolution:** Automatically sanitizes and handles OAuth redirect targets, routing seamlessly to `stray-ltm.vercel.app` with fallback resolution.
+## v3.0.0 - 2026-04-04
 
-### Changed
-- **LTM Production Domain Migration:** Updated cloud sync, documentation, and endpoints to `https://stray-ltm.vercel.app`.
-- **Dashboard Streamlining & Bloat Cleanup:** Removed unnecessary technical jargon across dashboard metrics and quest logs for a clean, user-friendly interface.
-- **Performance Optimizations:** Upgraded top banner to a GPU-accelerated marquee with dismiss capability, and removed CPU-intensive background grain loops.
-
-## v3.0.0 - 2026-08-24
-
-### Changed
-- **Stray Alley Phase Shift:** Project is now officially in the LTM (Long Term Maintenance) phase.
-- **Glassmorphism Redesign:** Completely overhauled the Alley dashboard with a sleek, premium Glassmorphic aesthetic, replacing the older brutalist/flat dark themes with semi-transparent frosted cards and consistent 50/50 split grids.
-
-### Fixed
-- **Gateway Auto-Reconnect & Zombie Socket Recovery:** Implemented Discord Opcode 11 (Heartbeat ACK) tracking to detect and auto-reconnect dead TCP connections, and added backoff retry routines on asset registration and setup failures.
-- **Auto-Restoration on Server Reboot:** Enhanced `restoreAllDaemons()` and `/api/status` with async restoration locking and immediate auto-start for cloud-restored profiles on container reboots (e.g. Render, Railway).
-- **Dashboard Frontend Memory Leaks:** Capped the connection/quest log UI array limit to exactly 30 entries. Prior iterations allowed endless log stacking which crashed lower-end devices or 1GB RAM servers due to massive DOM growth.
-- **Webhook AbortController Timeout:** Replaced stalling webhook POST promises with a strict AbortController timeout mechanism in `daemon.ts` and background tasks.
-
-## v2.4.4 - 2026-08-23
-
-### Fixed
-- **Gateway Memory Leak & Socket Exhaustion (BSOD Fix):** Fixed a critical loop in `daemon.ts` where overlapping connection closures spawned infinite parallel WebSocket connection routines. This previously triggered runaway TCP socket allocation resulting in OS-level port exhaustion (Windows BSOD).
-- **Synchronous File System Blocking:** Mitigated severe event loop blocking by introducing runtime memory caching for `getLocalVersion` (`version.ts`) and `initDb` (`db.ts`), preventing I/O lockups when `/api/status` is heavily polled by background dashboard tabs.
-
-## v2.4.3 - 2026-08-22
-
-### Fixed
-- **Discord API Rate Limit Guards:** Implemented strict `maxRetries` (3 attempts) on exponential backoff loops across all DQACS processes (fetch, enroll, heartbeat, video progress) to prevent infinite looping and potential Discord API bans.
-- **Session Conflict Backoff:** Fixed Gateway code 4005 and 4009 causing unconditional 1-second reconnect spamming, ensuring these drops now respect proper exponential backoff rules.
-- **Unauthenticated Token Pausing:** Handled Gateway close code 4003 exactly like 4004 (Invalid Token), forcing the daemon to immediately stop and auto-pause rather than endlessly retrying.
-
-## v2.4.2 - 2026-08-15
-
-### Fixed
-- **Gateway Exponential Backoff & Jitter:** Implemented exponential backoff with random jitter for Gateway reconnection loops in `daemon.ts`, preventing Discord Gateway connection spam and rate limiting during cloud host network interruptions.
-- **Strict 200-Line Log Memory Cap:** Enforced a strict 200-line memory cap on `userLogs` in memory to eliminate memory leakage during long-term continuous 24/7 uptime.
-- **Invalid Token Auto-Pause Guard:** Added automatic session pausing and UI notification when Discord returns code 4004 (Invalid / Expired Token) during gateway connection attempts.
-- **DQACS Expired Quest Skip Guard:** Added quest expiration timestamp validation in `questManager.ts` to automatically skip outdated quests before starting progress heartbeats.
-
-## v2.4.1 - 2026-07-30
+> [!NOTE]
+> Introduced automatic Discord Quest completion alongside custom Rich Presence rotation.
 
 ### Added
-- **Manual Quest Stop Control:** Added a dedicated, bright red `STOP PROCESSING` button in the Active Discord Quests dashboard panel, allowing instant manual cancellation of active quest loops.
+- **Auto Quest Completer:** Finish supported Discord video and game quests in the background without installing large games.
+- **Presence Studio:** Save custom status presets with images, buttons, and timers that rotate automatically.
 
-### Fixed
-- **HTTP 401/403 Quest Heartbeat Loop Termination:** Fixed infinite looping on HTTP 401 Unauthorized / HTTP 403 Forbidden responses during quest heartbeats, video progress, and enrollments by logging explicit error diagnostics and terminating quest processing cleanly.
+---
 
-## v2.4.0 - 2026-07-24
-
-### Added
-- **Dynamic README Version Resolver:** Integrated a zero-hardcoding version engine (`lib/version.ts`) that dynamically extracts runtime local and remote release versions from `README.MD`.
-- **Automatic Custom RPC Reversion:** Configured `questManager` and `daemon` to automatically disable `LIVE-RPC` and seamlessly restore the user's Custom RPC / status presence as soon as active quests complete.
-- **Dynamic Live Preview Elapsed Timer:** Replaced static `1:37 elapsed` mockup string in the dashboard Live Preview card with a real-time live counting timer (`0:01 elapsed`, `0:02 elapsed`...).
-- **Default App ID Asset Resolution:** Resolved fallback asset key resolution for official application ID `1527635163591348254` across both Live Preview cards and Gateway payloads.
-
-### Fixed
-- **Dynamic Remote Update Notification Banner:** Replaced static version checks in `/api/status` with dynamic GitHub remote version fetching (`isVersionNewer`), ensuring deployed instances trigger amber update notifications whenever a newer release is published on `main`.
-
-## v2.3.2 - 2026-07-24
-
-### Fixed
-- **Discord API HTTP 429 Rate Limit Handling:** Integrated explicit `retry_after` backoff handling across `QuestManager` heartbeat and video progress loops, preventing quest progress from getting stuck.
-- **Active Gateway Token Verification Fallback:** Added active gateway status verification fallback to `/api/check-token` so temporary 429 rate limits do not mark active client tokens as invalid in the dashboard.
-- **Active Quests Cache Fallback:** Cached active quest lists in `/api/quests` to prevent `TOTAL QUESTS` from dropping to 0 during temporary API rate limit spikes.
-
-## v2.3.1 - 2026-07-24
-
-### Fixed
-- **Discord API Rate Limit Error Formatting:** Differentiated HTTP 429 rate limit responses from HTTP 401 unauthorized errors in `/api/check-token`, displaying explicit temporary rate limit notices instead of false negative invalid token errors.
-
-## v2.3.0 - 2026-07-24
-
-### Changed
-- **Website UI/UX Redesign:** Fully revamped the informational website's design system utilizing a modern 2026 glassmorphic aesthetic.
-- **Enhanced Animations:** Added fluid micro-interactions, gradient borders, and animated backgrounds across the website landing pages.
-
-## v2.2.3 - 2026-07-24
-
-### Fixed
-- **Real-Time Uncompleted Quests Count Filter:** Updated `fetchQuests()` to exclude both completed (`completed_at`) and claimed quests, dynamically updating `TOTAL QUESTS` in the dashboard UI as quests complete.
-- **Direct Application ID Logo for Live-RPC:** Removed external asset wrappers and bound `application_id: "1018195507560063039"` directly, displaying the official Discord Developer Portal app icon cleanly on user profile cards.
-
-## v2.2.2 - 2026-07-24
-
-### Fixed
-- **Stray-DB Backup Commit Deduplication:** Implemented payload hash caching (`lastSyncedHash`) to bypass unnecessary network requests, reducing automated GitHub backup commits from 5,000+ per day to 0 unless profile settings actually change.
-
-## v2.2.1 - 2026-07-24
-
-### Fixed
-- **Render Production Build Error:** Upgraded `"tailwindcss"` to `"^4.0.0"` in `dependencies` to resolve Next.js 16 (Turbopack) `@tailwindcss/postcss` module resolution failures on Render.
-
-## v2.2.0 - 2026-07-24
+## v2.1.0 - 2026-03-31
 
 ### Added
-- **Live Quest RPC Broadcasting with Stray Buttons:** Added real-time OP 3 Presence Updates for active Discord Quests over WebSocket, attaching interactive Stray buttons (`Completing with Stray`, `Get Stray`) to profile cards.
-- **Dynamic Presence Triggering:** Quest progress milestones (e.g. 2%, 4%, 14%, 63%) instantly trigger WebSocket presence frames across Discord client and Stray Alley Live Preview.
-- **Auto-Connect Gateway Daemon:** Triggering **"COMPLETE ALL"** or enabling **"LIVE-RPC"** automatically connects the Gateway daemon using restored credentials without requiring manual "Publish".
-- **Toggle Mutual Exclusion:** Enforced mutual exclusion between Custom Rich Activity (RPC) and Quest LIVE-RPC to eliminate Discord presence payload conflicts.
+- **Smoother Setup & Stability:** Improved first-time setup guidance and automatic reconnection after temporary network drops.
 
-### Fixed
-- **100% Token Auto-Backup Synchronization:** Resolved multi-key encryption fallback so restored token credentials remain 100% valid across cloud container reboots.
-- **Catalog Quests Count Filter:** Removed expired/catalog history `excluded_quests`, accurately displaying active targetable quests only.
+---
 
-## v2.1.0 - 2026-07-22
+## v2.0.0 - 2026-03-29
 
 ### Added
-- **Restructured Dashboard Hierarchy:**
-  - **Top:** Stray Parameters & Live Profile Preview side-by-side cards.
-  - **Middle 1:** Active Discord Quests with individual **"Complete Quest"** buttons and a **"COMPLETE ALL AVAILABLE"** action button.
-  - **Middle 2:** Settings Menu containing Cloud DB Auto-Backup toggle and Webhook Log Stream toggle (with conditional Webhook URL input).
-  - **Bottom:** Gateway Connection & Quest Logs Terminal Console.
-- **Initial Data Synchronization Modal:** Displays a **"Syncing Your Data..."** loading popup upon entering your Stray Key while checking `Stray-DB` for encrypted configuration backups.
-- **Official Client Rewards Notice:** Displayed notice explaining that reward claiming can only be performed in official Discord app/web UI.
+- **Menu-Based Desktop App:** Upgraded Stray into an easy interactive menu experience with saved status profiles.
 
-### Fixed
-- **Discord Token Validation:** Sanitized token strings and appended browser User-Agent headers to prevent valid tokens from returning false negative error responses.
+---
 
-## v2.0.0 - 2026-07-22
+## v1.0.0 - 2026-03-27
 
 ### Added
-- **DQACS Integration (Discord Quest Auto-Completer):** Integrated full quest auto-completion engine supporting video progress heartbeats, game/desktop presence spoofing, and mobile tasks.
-- **Active Quests Dashboard Card:** Real-time active quests listing, task type badges, completion status badges, and manual trigger controls.
-- **Cloud Quest Persistence:** DQACS settings automatically sync to `Stray-DB` cloud storage.
-
-## v1.2.0 - 2026-07-22
-
-### Added
-- **Cloud DB Auto-Backup & Recovery:** End-to-end encrypted backup to private `Stray-DB` repository with zero PAT leakage in open-source Alley. Auto-restores user database and WebSocket client connection on free cloud container restarts.
-- **30-Second Save & Publish Cooldown:** Enforced a 30-second rate-limit cooldown on save/publish actions across API endpoints and UI dashboard buttons.
-
-### Fixed
-- **Container Memory Wipe Recovery:** Automatically pulls cloud backups from `Stray-DB` when container starts and UptimeRobot pings `/api/ping`.
-
-## v1.1.1 - 2026-07-22
-
-### Added
-- **Full RPC Activity Types:** Added support for selection of Discord activity types (Playing, Streaming, Listening, Watching, Competing) and custom Stream URLs.
-
-### Fixed
-- **RPC Gateway Payload Fix:** Fixed Rich Presence activity type being hardcoded to Playing (`type: 0`) in gateway identify and presence update payloads.
-
-## v1.1.0 - 2026-07-20
-
-### Added
-- **Custom Status Rotation:** Rotate dynamically between up to 3 custom statuses (text + emoji) at a customizable interval (in seconds).
-
-### Fixed
-- **Waiver & Webhook Repositioning:** Repositioned the Discord Webhook logs integration input into the logs terminal console card.
-
-## v1.0.3 - 2026-07-20
-
-### Added
-- Live gateway log streaming option to Discord Webhooks.
-- Forced connection reconnecting within 1 second on gateway session conflicts or timeouts.
-- Dynamic version mismatch alert banners customized for local hosting (`Clone the latest build!`), git forks (`Resync your fork now!`), and direct cloud deployments (`Please manually deploy to the latest commit!`).
-
-## v1.0.1 - 2026-07-20
-
-### Added
-- Complete visual overhaul of the self-hosted Alley dashboard using a cohesive neo-brutalist dark mode theme.
-- Context-aware logout dialog showing active token remaining validity countdown or token expiration prompts.
-- Persistent liability agreement waiver overlay for first-time dashboard logins.
-- Colorized gateway logs for improved readability (Red/Rose for errors, Green/Emerald for ready, Amber/Yellow for gateway handshake).
-- Quick link to GitHub issue tracker directly inside gateway connection logs header.
-- Added built-in keep-alive ping endpoint (`/api/ping`) and integration guidelines for UptimeRobot to prevent hosting provider idle timeouts.
-
-### Fixed
-- Fixed config updates overwriting the termsAccepted database value back to undefined on regular saves.
-- Prevented waiver agreement bypass on database/network API connection failures.
-- Fixed crashes and styling bugs caused by custom or non-existent Tailwind color stop classes.
-
-## v1.0.0 - 2026-07-18
-
-### Added
-- Initial stable release of the self-hosted Stray Alley application.
-- Interactive Live Preview Discord profile card layout.
-- Low-latency gateway WebSocket client.
-- Custom Discord status and Rich Presence (RPC) parameters configurations.
-- Custom device spoofing support (Mobile, Desktop, Web, Xbox).
-- Zero-dependency local file database configuration (`db.json`).
-- Live gateway connection milestones log streaming.
+- **First Release:** Launched Stray with custom Discord Rich Presence and automatic activity rotation.
