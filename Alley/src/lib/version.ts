@@ -20,7 +20,7 @@ export function getLocalVersion(): string {
     for (const p of readmePaths) {
       if (fs.existsSync(p)) {
         const content = fs.readFileSync(p, "utf-8");
-        const match = content.match(/#\s*Stray Alley\s*\(v?([0-9]+\.[0-9]+\.[0-9]+)\)/i);
+        const match = content.match(/#\s*Stray Alley\s*\(v?([0-9]+\.[0-9]+\.[0-9]+)(?:\s*LTM)?\)/i);
         if (match && match[1]) {
           cachedLocalVersion = match[1];
           return cachedLocalVersion;
@@ -46,7 +46,7 @@ export async function getRemoteLatestVersion(): Promise<string> {
 
     if (res.ok) {
       const content = await res.text();
-      const match = content.match(/#\s*Stray Alley\s*\(v?([0-9]+\.[0-9]+\.[0-9]+)\)/i);
+      const match = content.match(/#\s*Stray Alley\s*\(v?([0-9]+\.[0-9]+\.[0-9]+)(?:\s*LTM)?\)/i);
       if (match && match[1]) {
         cachedRemoteVersion = match[1];
         lastFetchTime = now;

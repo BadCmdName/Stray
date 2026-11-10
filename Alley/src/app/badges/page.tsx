@@ -78,7 +78,7 @@ export default function BadgesPage() {
                   Discord Badge Spoofer (DBS)
                 </h1>
                 <span className="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">
-                  v4.0.1
+                  v5.0.0 LTM
                 </span>
                 {dbsStatus?.isRunning ? (
                   <span className="flex items-center gap-1.5 text-[10px] font-bold bg-indigo-500 text-white px-2.5 py-0.5 rounded-full animate-pulse shadow-[0_0_12px_rgba(99,102,241,0.5)]">
